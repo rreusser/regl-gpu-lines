@@ -17,8 +17,12 @@ function createAttrSpecs (meta, regl, isEndpoints) {
       if (isEndpoints) {
         attrSpecs[attrOutName] = {
           buffer: regl.prop(`buffers.${attrName}.buffer`),
-          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.isStartCap ? 0 : 3) + i),
-          stride: (ctx, props) => props.buffers[attrName].stride * 3,
+          offset: (ctx, props) => {
+            return props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.isStartCap ? 0 : 3) + i);
+          },
+          stride: (ctx, props) => {
+            return props.buffers[attrName].stride * 6;
+          },
           divisor: 1,
         };
       } else {

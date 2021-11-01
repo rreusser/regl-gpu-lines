@@ -37,6 +37,10 @@ float miterExtension(vec2 t01, vec2 t12) {
   return sinTheta / (1.0 + cosTheta);
 }
 
+bool isnan(float val) {
+  return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
+}
+
 void main() {
   ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = debugInstanceID;' : ''}
@@ -48,7 +52,7 @@ void main() {
   vec4 pC = ${meta.position.generate('C')};
   vec4 pD = ${meta.position.generate('D')};
 
-  if (pA.w == 0.0 || pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0) {
+  if (isnan(pA.x) || isnan(pB.x) || isnan(pC.x) || isnan(pD.x)) {
     gl_Position = vec4(0);
     return;
   }
