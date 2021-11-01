@@ -34,7 +34,7 @@ const drawLines = createDrawLines(regl, {
     }`
 });
 
-const n = 51;
+const n = 101;
 const lineCount = 10;
 const positions = [];
 const endpoints = [];
@@ -47,7 +47,7 @@ function xy (line, i) {
 
 for (let line = 0; line < lineCount; line++) {
   for (let i = 0; i < n; i++) positions.push(xy(line, i));
-  positions.push([NaN, NaN]);
+  positions.push([NaN, NaN]); // Add a line break
 
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
@@ -57,9 +57,9 @@ const lineData = {
   join: 'round',
   cap: 'round',
   vertexCount: positions.length,
-  vertexBuffers: { xy: regl.buffer(positions) },
+  vertexAttributes: { xy: regl.buffer(positions) },
   endpointCount: endpoints.length / 3,
-  endpointBuffers: { xy: regl.buffer(endpoints) }
+  endpointAttributes: { xy: regl.buffer(endpoints) }
 };
 
 function draw () {

@@ -14,6 +14,8 @@ This second point means that projection, colors, blending, and even GLSL attribu
   <img src="./docs/round.png" alt="Lines with round joins and caps" width="600">
 </p>
 
+One notable shortcoming is lines with less than two vertices
+
 ## See also
 
 - [regl-line2d](https://github.com/gl-vis/regl-line2d): The line rendering library used by Plotly.js. If you want production quality lines, you should go here.
@@ -68,11 +70,11 @@ const lineData = {
   join: 'round',
   cap: 'round',
   vertexCount: xy.length,
-  vertexBuffers: {
+  vertexAttributes: {
     xy: regl.buffer(xy)
   },
   endpointCount: 2,
-  endpointBuffers: {
+  endpointAttributes: {
     xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
   }
 };
@@ -132,8 +134,10 @@ This module parses the specified vertex shader for GLSL `#pragma` directives whi
 - `miterLimit` (number): Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins.
 - `vertexCount` (number): Total number of line vertices
 - `endpointCount` (object): Total number of endpoints drawn (number of endpoint vertices divided by three)
-- `vertexBuffers`: (object): Object containing regl buffer objects for each line vertex attribute, indexed by attribute name
-- `endpointBuffers`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
+- `vertexAttributes`: (object): Object containing regl buffer objects for each line vertex attribute, indexed by attribute name
+- `endpointAttributes`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
+
+
 
 ## License
 

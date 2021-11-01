@@ -94,8 +94,8 @@ function createDrawLines(
     const allMiterCaps = [];
 
     for (const line of props) {
-      const vertexBuffers = sanitizeBufferInputs(meta, line.vertexBuffers, 'segment');
-      const endpointBuffers = sanitizeBufferInputs(meta, line.endpointBuffers, 'endpoint');
+      const vertexAttributes = sanitizeBufferInputs(meta, line.vertexAttributes, 'segment');
+      const endpointAttributes = sanitizeBufferInputs(meta, line.endpointAttributes, 'endpoint');
 
       const joinType = sanitizeInclusionInList(line.join, 'miter', VALID_JOIN_TYPES, 'join');
       const capType = sanitizeInclusionInList(line.cap, 'square', VALID_CAP_TYPES, 'cap');
@@ -113,9 +113,9 @@ function createDrawLines(
 
       let endpointProps, segmentProps;
 
-      if (line.endpointBuffers) {
+      if (line.endpointAttributes) {
         endpointProps = {
-          buffers: endpointBuffers,
+          buffers: endpointAttributes,
           count: line.endpointCount,
           joinResolution,
           capResolution,
@@ -124,9 +124,9 @@ function createDrawLines(
         };
       }
 
-      if (line.vertexBuffers) {
+      if (line.vertexAttributes) {
         segmentProps = {
-          buffers: vertexBuffers,
+          buffers: vertexAttributes,
           count: line.vertexCount,
           joinResolution,
           capResolution,
@@ -136,10 +136,10 @@ function createDrawLines(
 
       switch (joinType) {
         case 'round':
-          if (line.vertexBuffers) {
+          if (line.vertexAttributes) {
             allRoundedSegments.push(segmentProps);
           }
-          if (line.endpointBuffers) {
+          if (line.endpointAttributes) {
             allRoundedCaps.push(
               {...endpointProps, isStartCap: 1},
               {...endpointProps, isStartCap: 0}
@@ -151,10 +151,10 @@ function createDrawLines(
           segmentProps.miterLimit = 1;
           endpointProps.miterLimit = 1;
         case 'miter':
-          if (line.vertexBuffers) {
+          if (line.vertexAttributes) {
             allMiterSegments.push(segmentProps);
           }
-          if (line.endpointBuffers) {
+          if (line.endpointAttributes) {
             allMiterCaps.push(
               {...endpointProps, isStartCap: 1},
               {...endpointProps, isStartCap: 0}
