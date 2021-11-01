@@ -10,7 +10,7 @@ This module configures a very general command for drawing lines using the [regl]
 This second point means that projection, colors, blending, and even GLSL attributes and varyings are up to you. In this sense it's almost more of a data flow framework for line rendering with which you can build the line rendering you require.
 
 <p align="center">
-  <img src="./docs/round.png" alt="Lines with round joins and caps" width="400">
+  <img src="./docs/round.png" alt="Lines with round joins and caps" width="600">
 </div>
 
 ## See also
