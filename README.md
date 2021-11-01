@@ -11,7 +11,7 @@ This second point means that projection, colors, blending, and even GLSL attribu
 
 <p align="center">
   <img src="./docs/round.png" alt="Lines with round joins and caps" width="600">
-</div>
+</p>
 
 ## See also
 
@@ -32,7 +32,7 @@ The following code implements the image shown below. It passes a single attribut
 
 <p align="center">
   <img src="./docs/example.png" alt="Basic example" width="600">
-</div>
+</p>
 
 ```js
 const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
