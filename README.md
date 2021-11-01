@@ -1,4 +1,4 @@
-# [WIP] regl-gpu-lines
+# regl-gpu-lines
 
 > Pure GPU line drawing for [regl](https://github.com/regl-project/regl)
 
