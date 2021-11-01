@@ -14,7 +14,11 @@ This second point means that projection, colors, blending, and even GLSL attribu
   <img src="./docs/round.png" alt="Lines with round joins and caps" width="600">
 </p>
 
-One notable shortcoming is lines with less than two vertices
+Some features and limitations:
+
+- separate multiple disjoint lines by adding an attribute consisting of NaN(s) to the vertex list (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html))
+- line with only two vertices are not handled well and will consist only of overlapping end caps
+- joins do not take into account variation in width, so varying width works best when varied slowly
 
 ## See also
 
