@@ -7,6 +7,10 @@ This module configures a command for drawing lines using the [regl](https://gith
 2. no unnecessary constraints. This means projection, colors, blending, attributes, etc. are up to you.
 The second is the real reason for this module. It sits on the edge but tries to err on the side of being more of a data flow framework for line rendering with which you can build the line rendering you require.
 
+<div style="text-align:center">
+<img src="./docs/round.png" alt="Lines with round joins and caps" style="max-width:100%;width:400px">
+</div>
+
 ## See also
 
 - [regl-line2d](https://github.com/gl-vis/regl-line2d): Line rendering library used by Plotly.js. If you want production quality lines, you should go here.
