@@ -1,0 +1,36 @@
+{
+  "name": "regl-gpu-lines",
+  "version": "0.0.1",
+  "description": "Pure GPU line drawing for regl",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "budo examples/basic.js --open --live --host localhost --css style.css -- -t [ babelify --presets [ @babel/preset-env ]",
+    "build": "npm run bundle:rollup && npm run minify:rollup",
+    "bundle:rollup": "mkdir -p dist && rollup -c",
+    "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js",
+    "build:example": "rm -rf docs && mkdir -p docs && browserify examples/basic.js -t [ envify --NODE_ENV production ] | indexhtmlify > docs/basic.html",
+    "prepublishOnly": "npm run bundle:rollup && npm run minify:rollup"
+  },
+  "keywords": [],
+  "author": "Ricky Reusser",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "babelify": "^10.0.0",
+    "browserify": "^17.0.0",
+    "budo": "^11.6.4",
+    "controls-gui": "^2.0.0",
+    "controls-state": "^2.0.0",
+    "envify": "^4.1.0",
+    "indexhtmlify": "^2.0.1",
+    "insert-css": "^2.0.0",
+    "regl": "^2.1.0",
+    "rollup": "^2.58.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "terser": "^5.9.0"
+  }
+}
