@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>regl-gpu-lines example</title>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+</head>
+<body>
+<script src="https://unpkg.com/regl@2.1.0/dist/regl.js"></script>
+<script src="../dist/regl-gpu-lines.min.js"></script>
+<script>
+const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
+
+const drawLines = createDrawLines(regl, {
+  vert: `
+    precision highp float;
+
+    #pragma lines: attribute vec2 xy;
+    #pragma lines: position = getPosition(xy);
+    #pragma lines: width = getWidth(xy);
+    #pragma lines: varying float x = getX(xy);
+
+    vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
+    float getWidth(vec2 xy) { return 50.0 * (0.5 + 0.4 * cos(16.0 * xy.x)); }
+    float getX(vec2 xy) { return xy.x; }`,
+  frag: `
+    precision lowp float;
+    varying float x;
+    void main () {
+      gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1);
+    }`
+});
+
+const n = 101;
+const xy = [...Array(n).keys()]
+  .map(i => (i / (n - 1) * 2.0 - 1.0) * 0.8)
+  .map(t => [t, 0.5 * Math.sin(8.0 * t)]);
+
+const lineData = {
+  join: 'round',
+  cap: 'round',
+  vertexCount: xy.length,
+  vertexBuffers: {
+    xy: regl.buffer(xy)
+  },
+  endpointCount: 2,
+  endpointBuffers: {
+    xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
+  }
+};
+
+function draw () {
+  regl.poll();
+  regl.clear({color: [0.2, 0.2, 0.2, 1]});
+  drawLines(lineData);
+}
+
+draw();
+window.addEventListener('resize', draw);
+</script>
+</body>
+</html>

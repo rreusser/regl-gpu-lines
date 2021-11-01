@@ -28,11 +28,14 @@ npm install regl-gpu-lines
 
 ## Example
 
-```js
-import createREGL from 'regl';
-import createDrawLines from 'regl-gpu-lines';
+The following code implements the image shown below. It passes a single attribute and uses preprocessor directives to connect it to the line width and position, as well as to pass the x-component to the fragment shader for coloring.
 
-const regl = createREGL();
+<p align="center">
+  <img src="./docs/example.png" alt="Basic example" width="600">
+</div>
+
+```js
+const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
 
 const drawLines = createDrawLines(regl, {
   vert: `
@@ -40,34 +43,45 @@ const drawLines = createDrawLines(regl, {
 
     #pragma lines: attribute vec2 xy;
     #pragma lines: position = getPosition(xy);
-    #pragma lines: width = getWidth();
+    #pragma lines: width = getWidth(xy);
+    #pragma lines: varying float x = getX(xy);
 
     vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
-    float getWidth() { return 10.0; }`,
+    float getWidth(vec2 xy) { return 50.0 * (0.5 + 0.4 * cos(16.0 * xy.x)); }
+    float getX(vec2 xy) { return xy.x; }`,
   frag: `
     precision lowp float;
+    varying float x;
     void main () {
-      gl_FragColor = vec4(1);
+      gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1);
     }`
 });
 
-const xy = [...Array(10).keys()].map(i => i / 9).map(t => [t, Math.sin(t)]);
+const n = 101;
+const xy = [...Array(n).keys()]
+  .map(i => (i / (n - 1) * 2.0 - 1.0) * 0.8)
+  .map(t => [t, 0.5 * Math.sin(8.0 * t)]);
 
 const lineData = {
   join: 'round',
-  cap: 'square',
-  joinResolution: 8,
+  cap: 'round',
   vertexCount: xy.length,
   vertexBuffers: {
     xy: regl.buffer(xy)
   },
   endpointCount: 2,
-  endpointBufferss: {
+  endpointBuffers: {
     xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
   }
 };
 
-drawLines(lineData);
+function draw () {
+  regl.poll();
+  regl.clear({color: [0.2, 0.2, 0.2, 1]});
+  drawLines(lineData);
+}
+
+draw();
 ```
 
 ## API
