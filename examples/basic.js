@@ -52,15 +52,15 @@ const lineData = {
   cap: 'square',
   joinResolution: 8,
   capResolution: 12,
-  segments: {
+  segmentCount: x.length,
+  segmentBuffers: {
     x: regl.buffer(x),
     color: regl.buffer(color),
-    count: x.length
   },
-  endpoints: {
+  endpointCount: 2,
+  endpointBuffers: {
     x: regl.buffer([x.slice(0, 3), x.slice(-3).reverse()]),
     color: regl.buffer([color.slice(0, 3), color.slice(-3).reverse()]),
-    count: 2
   }
 };
 

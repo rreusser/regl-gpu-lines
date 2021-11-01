@@ -2,7 +2,23 @@
 
 > Pure GPU line drawing for [regl](https://github.com/regl-project/regl)
 
-This module configures a command for drawing basic lines using the [regl](https://github.com/regl-project/regl) WebGL library. It focuses specifically on the case of drawing lines without the data ever touching the CPU.
+This module configures a command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library. Its specific goals are:
+1. data must not touch the CPU
+2. no unnecessary constraints. This means projection, colors, blending, attributes, etc. are up to you.
+The second is the real reason for this module. It sits on the edge but tries to err on the side of being more of a data flow framework for line rendering with which you can build the line rendering you require.
+
+## See also
+
+- [regl-line2d](https://github.com/gl-vis/regl-line2d): Line rendering library used by Plotly.js. If you want production quality lines, you should go here.
+- [regl-line](https://www.npmjs.com/package/regl-line): Another excellent library. A regl function to draw flat 2D and 3D lines.
+
+## Install
+
+Install from npm (WIP; will be published soon)
+
+```bash
+npm install regl-gpu-lines
+```
 
 ## Example
 
@@ -35,25 +51,17 @@ const lineData = {
   join: 'round',
   cap: 'square',
   joinResolution: 8,
-  segments: {
-    xy: regl.buffer(xy),
-    count: xy.length
+  segmentCount: xy.length,
+  segmentBuffers: {
+    xy: regl.buffer(xy)
   },
-  endpoints: {
-    xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()]),
-    count: 2
+  endpointCount: 2,
+  endpointBufferss: {
+    xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
   }
 };
 
 drawLines(lineData);
-```
-
-## Install
-
-Install from npm (WIP; will be published soon)
-
-```bash
-npm install regl-gpu-lines
 ```
 
 ## API
@@ -100,9 +108,10 @@ This module uses carefully constructed data flow to pass the same attribute with
 - `joinResolution` (number): number of triangles used to construct rounded joins
 - `capResolution` (number): number of triangles used to construct rounded end caps
 - `miterLimit` (number): Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins.
-- `segments` (object):  
-- `endpoints` (object):
-
+- `segmentCount` (number): Total number of line segment vertices (including endpoint vertices)
+- `endpointCount` (object): Total number of endpoints drawn (number of endpoint vertices divided by three)
+- `segmentBuffers`: (object): Object containing regl buffer objects for each line segment vertex attribute, indexed by attribute name
+- `endpointBuffers`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
 
 ## License
 

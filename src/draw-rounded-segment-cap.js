@@ -11,7 +11,6 @@ function createDrawRoundedCapCommand({
   indexPrimitive,
   debug
 }) {
-  window.meta = meta;
   return regl({
     vert: `${meta.glsl}
 

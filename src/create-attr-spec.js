@@ -2,8 +2,8 @@ module.exports = createAttrSpecs;
 
 const GLSL_TYPES = require('./glsltypes.js');
 
-function createAttrSpecs (meta, regl, isCap) {
-  const suffixes = isCap ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
+function createAttrSpecs (meta, regl, isEndpoints) {
+  const suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
   const attrLines = [];
   const attrSpecs = {};
   meta.attrs.forEach((attr, attrName) => {
@@ -14,18 +14,18 @@ function createAttrSpecs (meta, regl, isCap) {
       const attrOutName = attrName + suffixes[i]
       attrList.push(attrOutName);
 
-      if (isCap) {
+      if (isEndpoints) {
         attrSpecs[attrOutName] = {
-          buffer: regl.prop(`${attrName}.buffer`),
-          offset: (ctx, props) => props[attrName].offset + props[attrName].stride * ((props.isStartCap ? 0 : 3) + i),
-          stride: (ctx, props) => props[attrName].stride * 3,
+          buffer: regl.prop(`buffers.${attrName}.buffer`),
+          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.isStartCap ? 0 : 3) + i),
+          stride: (ctx, props) => props.buffers[attrName].stride * 3,
           divisor: 1,
         };
       } else {
         attrSpecs[attrOutName] = {
-          buffer: regl.prop(`${attrName}.buffer`),
-          offset: (ctx, props) => props[attrName].offset + props[attrName].stride * i,
-          stride: (ctx, props) => props[attrName].stride,
+          buffer: regl.prop(`buffers.${attrName}.buffer`),
+          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * i,
+          stride: (ctx, props) => props.buffers[attrName].stride,
           divisor: 1,
         };
       }
