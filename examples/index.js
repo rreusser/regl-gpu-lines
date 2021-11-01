@@ -36,15 +36,15 @@ window.addEventListener('resize', () => draw());
 const points = [[-0.75, 0.75], [-0.5, 0.5], [-0.25, 0.75], [0.0, -0.7], [0.25, 0.75], [0.5, 0.0], [0.75, 0.75]];
 const widths = [1, 2, 1, 2, 1, 2, 1];
 const lineData = window.linedata = {
-  segments: {
+  vertexCount: points.length,
+  vertexBuffers: {
     point: regl.buffer(points),
     width: regl.buffer(widths),
-    count: points.length
   },
-  endpoints: {
+  endpointCount: 2,
+  endpointBuffers: {
     point: regl.buffer([points.slice(0, 3), points.slice(-3).reverse()]),
     width: regl.buffer([widths.slice(0, 3), widths.slice(-3).reverse()]),
-    count: 2
   }
 };
 

@@ -94,7 +94,7 @@ function createDrawLines(
     const allMiterCaps = [];
 
     for (const line of props) {
-      const segmentBuffers = sanitizeBufferInputs(meta, line.segmentBuffers, 'segment');
+      const vertexBuffers = sanitizeBufferInputs(meta, line.vertexBuffers, 'segment');
       const endpointBuffers = sanitizeBufferInputs(meta, line.endpointBuffers, 'endpoint');
 
       const joinType = sanitizeInclusionInList(line.join, 'miter', VALID_JOIN_TYPES, 'join');
@@ -124,10 +124,10 @@ function createDrawLines(
         };
       }
 
-      if (line.segmentBuffers) {
+      if (line.vertexBuffers) {
         segmentProps = {
-          buffers: segmentBuffers,
-          count: line.segmentCount,
+          buffers: vertexBuffers,
+          count: line.vertexCount,
           joinResolution,
           capResolution,
           miterLimit
@@ -136,7 +136,7 @@ function createDrawLines(
 
       switch (joinType) {
         case 'round':
-          if (line.segmentBuffers) {
+          if (line.vertexBuffers) {
             allRoundedSegments.push(segmentProps);
           }
           if (line.endpointBuffers) {
@@ -151,7 +151,7 @@ function createDrawLines(
           segmentProps.miterLimit = 1;
           endpointProps.miterLimit = 1;
         case 'miter':
-          if (line.segmentBuffers) {
+          if (line.vertexBuffers) {
             allMiterSegments.push(segmentProps);
           }
           if (line.endpointBuffers) {

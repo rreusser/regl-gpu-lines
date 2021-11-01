@@ -4,7 +4,7 @@
   "description": "Pure GPU line drawing for regl",
   "main": "src/index.js",
   "scripts": {
-    "start": "budo examples/basic.js --open --live --host localhost --css style.css -- -t [ babelify --presets [ @babel/preset-env ]",
+    "start": "budo examples/index.js --open --live --host localhost --css style.css -- -t [ babelify --presets [ @babel/preset-env ]",
     "build": "npm run bundle:rollup && npm run minify:rollup",
     "bundle:rollup": "mkdir -p dist && rollup -c",
     "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js",

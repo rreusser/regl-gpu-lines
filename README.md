@@ -2,10 +2,12 @@
 
 > Pure GPU line drawing for [regl](https://github.com/regl-project/regl)
 
-This module configures a command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library. Its specific goals are:
-1. data must not touch the CPU
-2. no unnecessary constraints. This means projection, colors, blending, attributes, etc. are up to you.
-The second is the real reason for this module. It sits on the edge but tries to err on the side of being more of a data flow framework for line rendering with which you can build the line rendering you require.
+This module configures a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library. Its specific goals are:
+
+- Data must not touch the CPU.
+- No unnecessary constraints.
+
+This second point means that projection, colors, blending, and even GLSL attributes and varyings are up to you. In this sense it's almost more of a data flow framework for line rendering with which you can build the line rendering you require.
 
 <p align="center">
   <img src="./docs/round.png" alt="Lines with round joins and caps" width="400">
@@ -13,12 +15,12 @@ The second is the real reason for this module. It sits on the edge but tries to 
 
 ## See also
 
-- [regl-line2d](https://github.com/gl-vis/regl-line2d): Line rendering library used by Plotly.js. If you want production quality lines, you should go here.
+- [regl-line2d](https://github.com/gl-vis/regl-line2d): The line rendering library used by Plotly.js. If you want production quality lines, you should go here.
 - [regl-line](https://www.npmjs.com/package/regl-line): Another excellent library. A regl function to draw flat 2D and 3D lines.
 
 ## Install
 
-Install from npm (WIP; will be published soon)
+Install from npm.
 
 ```bash
 npm install regl-gpu-lines
@@ -55,8 +57,8 @@ const lineData = {
   join: 'round',
   cap: 'square',
   joinResolution: 8,
-  segmentCount: xy.length,
-  segmentBuffers: {
+  vertexCount: xy.length,
+  vertexBuffers: {
     xy: regl.buffer(xy)
   },
   endpointCount: 2,
@@ -71,12 +73,12 @@ drawLines(lineData);
 ## API
 
 ```js
-import { createDrawLines } from 'regl-gpu-lines';
+import createDrawLines from 'regl-gpu-lines';
 ```
 
 ### `createDrawLines(regl, {vert, frag, debug})`
 
-Creates a regl drawing command for drawing lines using the specified shaders.
+Instantiate a drawing command using the specified shaders.
 
 - `regl`: [regl](https://github.com/regl-project/regl) instance
 - `vert` (string): vertex shader, using pragma specification defined below
@@ -85,7 +87,7 @@ Creates a regl drawing command for drawing lines using the specified shaders.
 
 ### Vertex shader data flow
 
-This module uses carefully constructed data flow to pass the same attribute with different offsets, so that miters and positions may be computed in the vertex shader. So that you can still extend the shader and modify it to suit your needs, the module uses GLSL `#pragma` directive to define data flow.
+This module parses the specified vertex shader for GLSL `#pragma` directives which define the line properties and data flow.
 
 #### `#pragma lines: attribute <dataType> <attributeName>`
 - `dataType`: one of `float`, `vec2`, `vec3`, `vec4`
@@ -112,9 +114,9 @@ This module uses carefully constructed data flow to pass the same attribute with
 - `joinResolution` (number): number of triangles used to construct rounded joins
 - `capResolution` (number): number of triangles used to construct rounded end caps
 - `miterLimit` (number): Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins.
-- `segmentCount` (number): Total number of line segment vertices (including endpoint vertices)
+- `vertexCount` (number): Total number of line segment vertices (including endpoint vertices)
 - `endpointCount` (object): Total number of endpoints drawn (number of endpoint vertices divided by three)
-- `segmentBuffers`: (object): Object containing regl buffer objects for each line segment vertex attribute, indexed by attribute name
+- `vertexBuffers`: (object): Object containing regl buffer objects for each line segment vertex attribute, indexed by attribute name
 - `endpointBuffers`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
 
 ## License

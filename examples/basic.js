@@ -52,8 +52,8 @@ const lineData = {
   cap: 'square',
   joinResolution: 8,
   capResolution: 12,
-  segmentCount: x.length,
-  segmentBuffers: {
+  vertexCount: x.length,
+  vertexBuffers: {
     x: regl.buffer(x),
     color: regl.buffer(color),
   },
