@@ -128,9 +128,9 @@ This module parses the specified vertex shader for GLSL `#pragma` directives whi
 - `joinResolution` (number): number of triangles used to construct rounded joins
 - `capResolution` (number): number of triangles used to construct rounded end caps
 - `miterLimit` (number): Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins.
-- `vertexCount` (number): Total number of line segment vertices (including endpoint vertices)
+- `vertexCount` (number): Total number of line vertices
 - `endpointCount` (object): Total number of endpoints drawn (number of endpoint vertices divided by three)
-- `vertexBuffers`: (object): Object containing regl buffer objects for each line segment vertex attribute, indexed by attribute name
+- `vertexBuffers`: (object): Object containing regl buffer objects for each line vertex attribute, indexed by attribute name
 - `endpointBuffers`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
 
 ## License
