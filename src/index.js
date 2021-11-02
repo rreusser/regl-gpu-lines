@@ -139,10 +139,10 @@ function createDrawLines(
 
       switch (joinType) {
         case 'round':
-          if (line.vertexAttributes) {
+          if (segmentProps) {
             allRoundedSegments.push(segmentProps);
           }
-          if (line.endpointAttributes) {
+          if (endpointProps) {
             if (meta.startcap) {
               allRoundedCaps.push({...endpointProps, split: false});
             } else {
@@ -155,13 +155,13 @@ function createDrawLines(
           break;
 
         case 'bevel':
-          segmentProps.miterLimit = 1;
-          endpointProps.miterLimit = 1;
+          if (segmentProps) segmentProps.miterLimit = 1;
+          if (endpointProps) endpointProps.miterLimit = 1;
         case 'miter':
-          if (line.vertexAttributes) {
+          if (segmentProps) {
             allMiterSegments.push(segmentProps);
           }
-          if (line.endpointAttributes) {
+          if (endpointProps) {
             if (meta.startcap) {
               allMiterCaps.push({...endpointProps, split: false});
             } else {

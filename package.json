@@ -1,6 +1,6 @@
 {
   "name": "regl-gpu-lines",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Pure GPU line drawing for regl",
   "main": "dist/regl-gpu-lines.min.js",
   "repository": {
