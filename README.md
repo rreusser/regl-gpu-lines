@@ -7,6 +7,8 @@ This module configures a very general command for drawing lines using the [regl]
 - Data must not touch the CPU.
 - No unnecessary constraints.
 
+The first point means that this function performs very little CPU work at runtime and is optimized for the GPU. You can draw thousands of separate lines with just two WebGL draw calls.
+
 This second point means that projection, colors, blending, and even GLSL attributes and varyings are up to you. In this sense it's almost more of a data flow framework for line rendering with which you can build the line rendering you require.
 
 <p align="center">
@@ -109,7 +111,7 @@ Instantiate a drawing command using the specified shaders.
 
 ### Vertex shader data flow
 
-This module parses the specified vertex shader for GLSL `#pragma` directives which define the line properties and data flow.
+This module parses the specified vertex shader for GLSL `#pragma` directives which define the line properties and data flow. This should handle vertex attributes and varying parameters. If you require uniform values, you may pass them yourself by wrapping line drawing in your own `regl` command.
 
 #### `#pragma lines: attribute <dataType> <attributeName>`
 - `dataType`: one of `float`, `vec2`, `vec3`, `vec4`
@@ -138,6 +140,8 @@ A builtin property which defines whether a given line cap is at the beginning or
 
 ### Drawing lines
 
+Drawing is invoked by passing an object with the following optional properties to the constructed draw command.
+
 - `join` (string): `'round' | 'miter' | 'bevel'`
 - `cap` (string): `'round' | 'square' | 'none'`
 - `joinResolution` (number): number of triangles used to construct rounded joins
@@ -147,8 +151,6 @@ A builtin property which defines whether a given line cap is at the beginning or
 - `endpointCount` (object): Total number of endpoints drawn (number of endpoint vertices divided by three)
 - `vertexAttributes`: (object): Object containing regl buffer objects for each line vertex attribute, indexed by attribute name
 - `endpointAttributes`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
-
-
 
 ## License
 

@@ -13,19 +13,8 @@ function createAttrSpecs (meta, regl, isEndpoints) {
 
     if (!usage) return;
 
-    /*
-    function wrap(label, cb) {
-      return function (ctx, props) {
-        const value = cb(ctx, props);
-        console.log(label, attrName, value);
-        return value;
-      }
-    }
-    */
-
     const attrList = [];
     function emitAttr (index, suffix) {
-      suffix = suffix || '';
       const attrOutName = attrName + suffix
       attrList.push(attrOutName);
 
@@ -48,7 +37,7 @@ function createAttrSpecs (meta, regl, isEndpoints) {
     }
 
     if (usage & ATTR_USAGE.PER_INSTANCE) {
-      emitAttr(0);
+      emitAttr(0, '');
     }
     if (usage & ATTR_USAGE.REGULAR || usage & ATTR_USAGE.EXTENDED) {
       for (let i = 0; i < suffixes.length; i++) {
