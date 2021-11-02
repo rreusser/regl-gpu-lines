@@ -26,6 +26,7 @@ Some features and limitations:
 
 - [regl-line2d](https://github.com/gl-vis/regl-line2d): The line rendering library used by Plotly.js. If you want production quality lines, you should go here.
 - [regl-line](https://www.npmjs.com/package/regl-line): Another excellent library. A regl function to draw flat 2D and 3D lines.
+- [screen-projected-lines](https://github.com/substack/screen-projected-lines): An excellent, concise module. Lines without joins and caps are *dramatically* simpler.
 
 ## Install
 
