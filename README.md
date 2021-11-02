@@ -130,7 +130,7 @@ A builtin property which defines whether a given line cap is at the beginning or
 - `functionName`: name of function which returns a `bool` indicating whether the cap is at the beginning or end of a line.
 - `attributeList`: vertex attributes passed to the function. Attributes consumed by a `startcap` function advance at a rate of one stride per instance.
 
-#### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)
+#### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)`
 - `type`: type of varying parameter passed to fragment shader. One of `float`, `vec2`, `vec3`, vec4`.
 - `name`: name of varying parameter passed to fragment shader
 - `attributeList`: vertex attributes passed to the function
