@@ -23,13 +23,14 @@ function createDrawLines(
   if (!frag) throw new Error('Missing fragment shader, `frag`');
 
   const meta = parseShaderPragmas(vert);
-  const segmentSpec = createAttrSpec(meta, regl);
+  const segmentSpec = createAttrSpec(meta, regl, false);
   const endpointSpec = createAttrSpec(meta, regl, true);
 
   const configureLineRendering = regl({
     uniforms: {
       resolution: ctx => [ctx.viewportWidth, ctx.viewportHeight],
     },
+    cull: {enable: false},
   });
 
   // Round geometry is used for both joins and end caps. We use an integer
@@ -94,8 +95,8 @@ function createDrawLines(
     const allMiterCaps = [];
 
     for (const line of props) {
-      const vertexAttributes = sanitizeBufferInputs(meta, line.vertexAttributes, 'segment');
-      const endpointAttributes = sanitizeBufferInputs(meta, line.endpointAttributes, 'endpoint');
+      const vertexAttributes = sanitizeBufferInputs(meta, line.vertexAttributes, false);
+      const endpointAttributes = sanitizeBufferInputs(meta, line.endpointAttributes, true);
 
       const joinType = sanitizeInclusionInList(line.join, 'miter', VALID_JOIN_TYPES, 'join');
       const capType = sanitizeInclusionInList(line.cap, 'square', VALID_CAP_TYPES, 'cap');
@@ -112,6 +113,7 @@ function createDrawLines(
       const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
 
       let endpointProps, segmentProps;
+      let splitEndpoints = true;
 
       if (line.endpointAttributes) {
         endpointProps = {
@@ -122,6 +124,7 @@ function createDrawLines(
           capScale,
           miterLimit,
         };
+        splitEndpoints = !!meta.startcap;
       }
 
       if (line.vertexAttributes) {
@@ -140,10 +143,14 @@ function createDrawLines(
             allRoundedSegments.push(segmentProps);
           }
           if (line.endpointAttributes) {
-            allRoundedCaps.push(
-              {...endpointProps, isStartCap: 1},
-              {...endpointProps, isStartCap: 0}
-            );
+            if (meta.startcap) {
+              allRoundedCaps.push({...endpointProps, split: false});
+            } else {
+              allRoundedCaps.push(
+                {...endpointProps, isStartCap: 1, split: true},
+                {...endpointProps, isStartCap: 0, split: true},
+              );
+            }
           }
           break;
 
@@ -155,10 +162,14 @@ function createDrawLines(
             allMiterSegments.push(segmentProps);
           }
           if (line.endpointAttributes) {
-            allMiterCaps.push(
-              {...endpointProps, isStartCap: 1},
-              {...endpointProps, isStartCap: 0}
-            );
+            if (meta.startcap) {
+              allMiterCaps.push({...endpointProps, split: false});
+            } else {
+              allMiterCaps.push(
+                {...endpointProps, isStartCap: 1, split: true},
+                {...endpointProps, isStartCap: 0, split: true}
+              );
+            }
           }
       }
     }

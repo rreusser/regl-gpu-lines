@@ -8,6 +8,7 @@
 <body>
 <script src="https://unpkg.com/regl@2.1.0/dist/regl.js"></script>
 <script src="https://unpkg.com/regl-gpu-lines@latest/dist/regl-gpu-lines.min.js"></script>
+<!--script src="../dist/regl-gpu-lines.js"></script-->
 <script>
 const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
 
@@ -16,8 +17,10 @@ const drawLines = createDrawLines(regl, {
     precision highp float;
 
     #pragma lines: attribute vec2 xy;
+    #pragma lines: attribute float startcap;
     #pragma lines: position = getPosition(xy);
     #pragma lines: width = getWidth();
+    #pragma lines: startcap = isStartCap(startcap);
     #pragma lines: varying float x = getX(xy);
 
     vec4 getPosition(vec2 xy) {
@@ -25,7 +28,8 @@ const drawLines = createDrawLines(regl, {
     }
 
     float getWidth() { return 10.0; }
-    float getX(vec2 xy) { return xy.x; }`,
+    float getX(vec2 xy) { return xy.x; }
+    bool isStartCap(float startcap) { return startcap > 0.0; }`,
   frag: `
     precision lowp float;
     varying float x;
@@ -34,10 +38,11 @@ const drawLines = createDrawLines(regl, {
     }`
 });
 
-const n = 101;
+const n = 11;
 const lineCount = 10;
 const positions = [];
 const endpoints = [];
+const isstart = [];
 
 function xy (line, i) {
   let t = (i / (n - 1) * 2 - 1) * 0.9;
@@ -51,15 +56,21 @@ for (let line = 0; line < lineCount; line++) {
 
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
+  isstart.push(1, 0);
 }
 
 const lineData = {
   join: 'round',
   cap: 'round',
   vertexCount: positions.length,
-  vertexAttributes: { xy: regl.buffer(positions) },
+  vertexAttributes: {
+    xy: regl.buffer(positions)
+  },
   endpointCount: endpoints.length / 3,
-  endpointAttributes: { xy: regl.buffer(endpoints) }
+  endpointAttributes: {
+    xy: regl.buffer(endpoints),
+    startcap: regl.buffer(isstart)
+  }
 };
 
 function draw () {

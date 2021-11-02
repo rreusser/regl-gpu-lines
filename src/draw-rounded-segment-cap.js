@@ -19,7 +19,7 @@ ${endpointSpec.glsl}
 
 uniform float joinResolution, capResolution2;
 uniform vec2 resolution, capScale;
-uniform float isStartCap;
+${meta.startcap ? '' : 'uniform float uIsStartCap;'}
 
 varying vec2 lineCoord;
 varying float computedWidth;
@@ -42,6 +42,8 @@ void main() {
   ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = -1.0;' : ''}
   lineCoord = vec2(0);
+
+  bool isStartCap = ${meta.startcap ? meta.startcap.generate('') : 'uIsStartCap>0.0'};
 
   // Project points
   vec4 pB = ${meta.position.generate('B')};
@@ -106,7 +108,7 @@ void main() {
       xy = vec2(sin(theta), -cos(theta) * dirC);
       if (abs(xy.x) > 0.1) xy *= capScale;
       lineCoord = xy;
-      if (isStartCap == 0.0) lineCoord.y = -lineCoord.y;
+      if (!isStartCap) lineCoord.y = -lineCoord.y;
       gl_Position.xy += computedWidth * (xyBasis * xy);
     }
   } else {
@@ -138,7 +140,7 @@ void main() {
     gl_Position = pC;
 
     bool isSegment = i <= 2.0 || i == iLast;
-    if (!isSegment && isStartCap == 0.0) i = 3.0;
+    if (!isSegment && !isStartCap) i = 3.0;
     if (i <= 2.0 || i == iLast) {
       // We're in the miter/segment portion
 
@@ -192,7 +194,7 @@ void main() {
       }
     }
 
-    if (isStartCap == 0.0) lineCoord.y = -lineCoord.y;
+    if (!isStartCap) lineCoord.y = -lineCoord.y;
 
     // Compute the final position
     gl_Position.xy += computedWidth * (xyBasis * xy);
@@ -211,11 +213,11 @@ void main() {
     uniforms: {
       joinResolution: regl.prop('joinResolution'),
       capResolution2: (ctx, props) => props.capResolution * 2,
-      isStartCap: regl.prop('isStartCap'),
+      uIsStartCap: regl.prop('isStartCap'),
       capScale: regl.prop('capScale')
     },
     primitive: indexPrimitive,
-    instances: (ctx, props) => props.isStartCap ? Math.ceil(props.count / 2) : Math.floor(props.count / 2),
+    instances: (ctx, props) => props.split ? (props.isStartCap ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count,
     count: debug
       ? (ctx, props) => (props.joinResolution + props.capResolution) * 2 * 3 + 9
       : (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5

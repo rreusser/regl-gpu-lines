@@ -4,14 +4,18 @@ module.exports = sanitizeBufferInput;
 
 const DTYPE_SIZES = require('./dtypesizes.js');
 const DTYPES = require('./dtypes.json');
+const ATTR_USAGE = require('./attr-usage.js');
 
-function sanitizeBufferInput (metadata, buffersObj, kind) {
+function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
   const outputs = {};
 
   if (!buffersObj) return outputs;
 
   for (let [attrName, attrMeta] of metadata.attrs) {
     const input = buffersObj[attrName];
+    const usage = isEndpoints ? attrMeta.endpointUsage : attrMeta.vertexUsage;
+
+    if (!usage) continue;
 
     const output = {
       buffer: null,
@@ -19,11 +23,12 @@ function sanitizeBufferInput (metadata, buffersObj, kind) {
       offset: 0,
       type: NaN,
       stride: NaN,
+      divisor: 1,
       bytesPerElement: NaN
     };
 
     if (!input) {
-      throw new Error(`Missing line ${kind} buffer for attribute '${attrName}'`);
+      throw new Error(`Missing buffer for ${isEndpoints ? 'endpoint' : 'vertex'} attribute '${attrName}'`);
     } else if (input._reglType === 'buffer') {
       output.buffer = input;
       output.type = output.buffer._buffer.dtype
@@ -38,6 +43,9 @@ function sanitizeBufferInput (metadata, buffersObj, kind) {
         output.type = DTYPES[input.type];
       } else {
         output.type = output.buffer._buffer.dtype
+      }
+      if (input.hasOwnProperty('divisor')) {
+        output.divisor = divisor;
       }
       if (input.hasOwnProperty('stride')) output.stride = input.stride;
     } else {

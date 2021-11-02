@@ -19,7 +19,7 @@ ${endpointSpec.glsl}
 
 uniform float miterLimit, capResolution2;
 uniform vec2 resolution, capScale;
-uniform float isStartCap;
+${meta.startcap ? '' : 'uniform float uIsStartCap;'}
 
 varying vec2 lineCoord;
 varying float computedWidth;
@@ -41,6 +41,8 @@ void main() {
   ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = -1.0;' : ''}
   lineCoord = vec2(0);
+
+  bool isStartCap = ${meta.startcap ? meta.startcap.generate('') : 'uIsStartCap>0.0'};
 
   // Project points
   vec4 pB = ${meta.position.generate('B')};
@@ -84,7 +86,7 @@ void main() {
   // Left/right turning at each vertex
   // Note: don't use sign for this! It's zero when the line is straight.
   float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
-  float endSign = isStartCap == 1.0 ? 1.0 : -1.0;
+  float endSign = isStartCap ? 1.0 : -1.0;
 
   float i = index;
   float iLast = capResolution2 + 4.0;
@@ -119,7 +121,7 @@ void main() {
     if (i == 0.0) position = vec2(0, 1);
     if (i == 1.0) position = vec2(1, -1);
     if (i >= 2.0) position = vec2(1, 1);
-    if (i == 3.0 && isStartCap == 1.0) position = vec2(2, 1);
+    if (i == 3.0 && isStartCap) position = vec2(2, 1);
 
     position.y *= dirC;
     lineCoord.y = position.y * endSign;
@@ -144,7 +146,7 @@ void main() {
         float m1 = min(m * computedWidth, lBC);
         bool cIsOuter = dirC * position.y > 0.0;
         bool clipC = abs(m) > miterLimit;
-        gl_Position.xy -= tBC * (position.y > 0.0 ? m1 : m0) * (cIsOuter && (clipC || isStartCap == 0.0) ? 0.0 : 1.0);
+        gl_Position.xy -= tBC * (position.y > 0.0 ? m1 : m0) * (cIsOuter && (clipC || !isStartCap) ? 0.0 : 1.0);
       }
     }
   }
@@ -160,15 +162,16 @@ void main() {
       ...endpointSpec.attrs
     },
     uniforms: {
-      isStartCap: regl.prop('isStartCap'),
+      uIsStartCap: regl.prop('isStartCap'),
       capScale: regl.prop('capScale'),
       capResolution2: (ctx, props) => props.capResolution * 2,
       miterLimit: (ctx, props) => Math.sqrt(props.miterLimit * props.miterLimit - 1)
     },
     primitive: indexPrimitive,
-    instances: (ctx, props) => props.isStartCap ? Math.ceil(props.count / 2) : Math.floor(props.count / 2),
+    instances: (ctx, props) => props.split ? (props.isStartCap ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count,
     count: debug
       ? (ctx, props) => 3 * props.capResolution * 2 + 9
       : (ctx, props) => props.capResolution * 2 + 5
   });
+    startcap: regl.buffer(isstart)
 }

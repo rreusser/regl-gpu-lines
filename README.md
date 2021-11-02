@@ -116,12 +116,19 @@ This module parses the specified vertex shader for GLSL `#pragma` directives whi
 - `attributeName`: name of attribute provided to draw command
 
 #### `#pragma lines: position = <functionName>(<attributeList>)`
+A builtin property which defines the `vec4` position of the vertex. Perspective division is performed automatically.
 - `functionName`: name of function which returns the `vec4` position of the vertex
 - `attributeList`: vertex attributes passed to the function
 
 #### `#pragma lines: width = <functionName>(<attributeList>)`
+A builtin property which defines the width of the line at a given vertex.
 - `functionName`: name of function which returns the `float` device pixel width of the line at the given vertex
 - `attributeList`: vertex attributes passed to the function
+
+#### `#pragma lines: startcap = <functionName>(<attributeList>)`
+A builtin property which defines whether a given line cap is at the beginning or end of a line. If `startcap` is not provided, then end caps are rendered in two passes, first starting caps, then ending caps. If provided, then end caps are rendered in a single pass.
+- `functionName`: name of function which returns a `bool` indicating whether the cap is at the beginning or end of a line.
+- `attributeList`: vertex attributes passed to the function. Attributes consumed by a `startcap` function advance at a rate of one stride per instance.
 
 #### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)
 - `type`: type of varying parameter passed to fragment shader. One of `float`, `vec2`, `vec3`, vec4`.
