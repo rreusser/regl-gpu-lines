@@ -13,12 +13,20 @@ module.exports = createDrawLines;
 
 function createDrawLines(
   regl,
-  {
+  opts = {}
+) {
+  const {
     vert = null,
     frag = null,
     debug = false
-  } = {}
-) {
+  } = opts;
+
+  // Forward all regl parameters except for vert and frag along to regl. Additionally,
+  // extract uniform separately so that we can merge them with the resolution uniform
+  const forwardedOpts = {...opts};
+  for (const prop of ['vert', 'frag', 'debug']) delete forwardedOpts[prop];
+  const canReorder = Object.keys(forwardedOpts).length === 0;
+
   if (!vert) throw new Error('Missing vertex shader, `vert`');
   if (!frag) throw new Error('Missing fragment shader, `frag`');
 
@@ -26,12 +34,13 @@ function createDrawLines(
   const segmentSpec = createAttrSpec(meta, regl, false);
   const endpointSpec = createAttrSpec(meta, regl, true);
 
-  const configureLineRendering = regl({
+  const setResolution = regl({
     uniforms: {
       resolution: ctx => [ctx.viewportWidth, ctx.viewportHeight],
-    },
-    cull: {enable: false},
+    }
   });
+
+  const userConfig = canReorder ? (props, cb) => cb() : regl(forwardedOpts);
 
   // Round geometry is used for both joins and end caps. We use an integer
   // and divide by the resolution in the shader so that we can allocate a
@@ -87,98 +96,92 @@ function createDrawLines(
 
   return function drawLines(props) {
     if (!props) return;
-    if (!Array.isArray(props)) props = [props];
+    const isArrayProps = Array.isArray(props);
+    if (!isArrayProps) props = [props];
+    const reorder = canReorder && !isArrayProps;
 
     const allRoundedSegments = [];
     const allRoundedCaps = [];
     const allMiterSegments = [];
     const allMiterCaps = [];
-
-    for (const line of props) {
-      const vertexAttributes = sanitizeBufferInputs(meta, line.vertexAttributes, false);
-      const endpointAttributes = sanitizeBufferInputs(meta, line.endpointAttributes, true);
-
-      const joinType = sanitizeInclusionInList(line.join, 'miter', VALID_JOIN_TYPES, 'join');
-      const capType = sanitizeInclusionInList(line.cap, 'square', VALID_CAP_TYPES, 'cap');
-
-      const joinResolution = line.joinResolution === undefined ? 8 : line.joinResolution;
-      let capResolution = line.capResolution === undefined ? 12 : line.capResolution;;
-      if (capType === 'square') {
-        capResolution = 3;
-      } else if (capType === 'none') {
-        capResolution = 1;
-      }
-
-      const miterLimit = line.miterLimit === undefined ? 4 : line.miterLimit;
-      const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
-
-      let endpointProps, segmentProps;
-      let splitEndpoints = true;
-
-      if (line.endpointAttributes) {
-        endpointProps = {
-          buffers: endpointAttributes,
-          count: line.endpointCount,
-          joinResolution,
-          capResolution,
-          capScale,
-          miterLimit,
-        };
-        splitEndpoints = !!meta.startcap;
-      }
-
-      if (line.vertexAttributes) {
-        segmentProps = {
-          buffers: vertexAttributes,
-          count: line.vertexCount,
-          joinResolution,
-          capResolution,
-          miterLimit
-        }
-      }
-
-      switch (joinType) {
-        case 'round':
-          if (segmentProps) {
-            allRoundedSegments.push(segmentProps);
-          }
-          if (endpointProps) {
-            if (meta.startcap) {
-              allRoundedCaps.push({...endpointProps, split: false});
-            } else {
-              allRoundedCaps.push(
-                {...endpointProps, isStartCap: 1, split: true},
-                {...endpointProps, isStartCap: 0, split: true},
-              );
-            }
-          }
-          break;
-
-        case 'bevel':
-          if (segmentProps) segmentProps.miterLimit = 1;
-          if (endpointProps) endpointProps.miterLimit = 1;
-        case 'miter':
-          if (segmentProps) {
-            allMiterSegments.push(segmentProps);
-          }
-          if (endpointProps) {
-            if (meta.startcap) {
-              allMiterCaps.push({...endpointProps, split: false});
-            } else {
-              allMiterCaps.push(
-                {...endpointProps, isStartCap: 1, split: true},
-                {...endpointProps, isStartCap: 0, split: true}
-              );
-            }
-          }
-      }
+    function flush (props) {
+      userConfig(props, () => {
+        if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
+        if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
+        if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
+        if (allMiterCaps.length) drawMiterCap(allMiterCaps);
+        allRoundedSegments.length = 0;
+        allMiterSegments.length = 0;
+        allRoundedCaps.length = 0;
+        allMiterCaps.length = 0;
+      });
     }
 
-    configureLineRendering(() => {
-      if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
-      if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
-      if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
-      if (allMiterCaps.length) drawMiterCap(allMiterCaps);
+    setResolution(() => {
+      for (const lineProps of props) {
+        const vertexAttributes = sanitizeBufferInputs(meta, lineProps.vertexAttributes, false);
+        const endpointAttributes = sanitizeBufferInputs(meta, lineProps.endpointAttributes, true);
+
+        const joinType = sanitizeInclusionInList(lineProps.join, 'miter', VALID_JOIN_TYPES, 'join');
+        const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
+
+        const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
+        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;;
+        if (capType === 'square') {
+          capResolution = 3;
+        } else if (capType === 'none') {
+          capResolution = 1;
+        }
+
+        const miterLimit = joinType === 'bevel' ? 1 : (lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit);
+        const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
+
+        let endpointProps, segmentProps;
+        let splitEndpoints = true;
+
+        if (lineProps.endpointAttributes) {
+          endpointProps = {
+            buffers: endpointAttributes,
+            count: lineProps.endpointCount,
+            joinResolution,
+            capResolution,
+            capScale,
+            miterLimit,
+          };
+          splitEndpoints = !!meta.startcap;
+        }
+
+        if (lineProps.vertexAttributes) {
+          segmentProps = {
+            buffers: vertexAttributes,
+            count: lineProps.vertexCount,
+            joinResolution,
+            capResolution,
+            miterLimit
+          }
+        }
+
+        if (segmentProps) {
+          const segmentDst = joinType === 'round' ? allRoundedSegments : allMiterSegments;
+          segmentDst.push(segmentProps);
+        }
+
+        if (endpointProps) {
+          const endpointDst = joinType === 'round' ? allRoundedCaps : allMiterCaps;
+          if (meta.startcap) {
+            endpointDst.push({...endpointProps, split: false});
+          } else {
+            endpointDst.push(
+              {...endpointProps, isStartCap: 1, split: true},
+              {...endpointProps, isStartCap: 0, split: true}
+            );
+          }
+        }
+
+        if (!reorder) flush(lineProps);
+      }
+
+      if (reorder) flush(props);
     });
   };
 }
