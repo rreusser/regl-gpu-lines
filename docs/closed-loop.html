@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>regl-gpu-lines example</title>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+</head>
+<body>
+<script src="https://unpkg.com/regl@2.1.0/dist/regl.js"></script>
+<script src="https://unpkg.com/regl-gpu-lines@latest/dist/regl-gpu-lines.min.js"></script>
+<!--script src="../dist/regl-gpu-lines.js"></script-->
+<script>
+const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
+
+const drawLines = createDrawLines(regl, {
+  vert: `
+    precision highp float;
+
+    #pragma lines: attribute vec2 xy;
+    #pragma lines: position = getPosition(xy);
+    #pragma lines: width = getWidth(xy);
+
+    uniform vec2 aspect;
+
+    vec4 getPosition(vec2 xy) { return vec4(xy * aspect, 0, 1); }
+    float getWidth(vec2 xy) { return 50.0; }
+    `,
+  frag: `
+    precision lowp float;
+    void main () {
+      gl_FragColor = vec4(vec3(1), 0.5);
+    }`,
+  uniforms: {
+    aspect: ctx => [1, ctx.framebufferWidth / ctx.framebufferHeight]
+  },
+  blend: {
+    enable: true,
+    func: {
+      srcRGB: 'src alpha',
+      srcAlpha: 1,
+      dstRGB: 'one minus src alpha',
+      dstAlpha: 1
+    }
+  },
+  depth: {
+    enable: false
+  }
+});
+
+const n = 7;
+const xy = [...Array(n + 3).keys()]
+  .map(i => i / n)
+  .map(t => {
+    const theta = t * Math.PI * 2 * 2;
+    const r = 0.7;
+    return [
+      r * Math.cos(theta),
+      r * Math.sin(theta)
+    ];
+  });
+
+const lineData = {
+  join: 'round',
+  vertexCount: xy.length,
+  vertexAttributes: {
+    xy: regl.buffer(xy)
+  },
+};
+
+function draw () {
+  regl.poll();
+  regl.clear({color: [0.2, 0.2, 0.2, 1]});
+  drawLines(lineData);
+}
+
+draw();
+window.addEventListener('resize', draw);
+</script>
+</body>
+</html>
