@@ -50,6 +50,11 @@ void main() {
   vec4 pC = ${meta.position.generate('C')};
   vec4 pD = ${meta.position.generate('D')};
 
+  if (pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0) {
+    gl_Position = vec4(0);
+    return;
+  }
+
   float widthB = ${meta.width.generate('B')};
   float widthC = ${meta.width.generate('C')};
   computedWidth = widthC;

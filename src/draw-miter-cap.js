@@ -62,6 +62,11 @@ void main() {
   pC = vec4(pC.xy * resolution, pC.zw) / computedW;
   pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
 
+  if (pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0) {
+    gl_Position = vec4(0);
+    return;
+  }
+
   // Invalidate triangles too far in front of or behind the camera plane
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
     gl_Position = vec4(0);

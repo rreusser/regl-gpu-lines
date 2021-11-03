@@ -52,7 +52,8 @@ void main() {
   vec4 pC = ${meta.position.generate('C')};
   vec4 pD = ${meta.position.generate('D')};
 
-  if (isnan(pA.x) || isnan(pB.x) || isnan(pC.x) || isnan(pD.x)) {
+  if (pA.w == 0.0 || pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0 ||
+    isnan(pA.x) || isnan(pB.x) || isnan(pC.x) || isnan(pD.x)) {
     gl_Position = vec4(0);
     return;
   }
