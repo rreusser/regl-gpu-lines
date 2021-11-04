@@ -34,6 +34,43 @@ Limitations:
 
 ## Examples
 
+A minimal example looks like the following. There are no specified properties, in this case only a `vec2` attribute `xy` which we connect to the position via a GLSL `#pragma`.
+
+```js
+const drawLines = createDrawLines(regl, {
+  vert: `
+    precision highp float;
+
+    #pragma lines: attribute vec2 xy;
+    #pragma lines: position = getPosition(xy);
+    vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
+
+    #pragma lines: width = getWidth();
+    float getWidth() { return 20.0; }`,
+  frag: `
+    precision lowp float;
+    void main () {
+      gl_FragColor = vec4(1);
+    }`
+});
+
+const xy = [[-1, 1], [-0.5, -1], [0, 1], [0.5, -1], [1, 1]];
+const lineData = {
+  join: 'round',
+  cap: 'round',
+  vertexCount: xy.length,
+  vertexAttributes: {
+    xy: regl.buffer(xy)
+  },
+  endpointCount: 2,
+  endpointAttributes: {
+    xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
+  }
+};
+
+drawLines(lineData);
+```
+
 <p align="center">
   <a href="https://observablehq.com/d/ab6cd8bb0137889c"><img src="./docs/lorenz.gif" alt="GPGPU Lorenz Attractor"></a>
 </p>
@@ -69,6 +106,7 @@ See [API documentation](./API.md).
 
 - [regl-line2d](https://github.com/gl-vis/regl-line2d): The line rendering library used by Plotly.js. If you want production quality lines, you should go here.
 - [regl-line](https://www.npmjs.com/package/regl-line): Another excellent library. A regl function to draw flat 2D and 3D lines.
+- [regl-insta-lines](https://github.com/deluksic/regl-insta-lines): 
 - [screen-projected-lines](https://github.com/substack/screen-projected-lines): An excellent, concise module for screen-projected lines. Without joins or caps, such lines are much simpler.
 - [Drawing Lines is Hard](https://mattdesl.svbtle.com/drawing-lines-is-hard): [Matt DesLaurier](https://twitter.com/mattdesl)'s classic post on the topic of drawing lines.
 - [Instanced Line Rendering Part I](https://wwwtyro.net/2019/11/18/instanced-lines.html): [Rye Terrell](https://wwwtyro.net/) first blog post on the topic.
