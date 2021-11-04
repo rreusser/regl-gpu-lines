@@ -2,31 +2,38 @@
 
 > Pure GPU line drawing for [regl](https://github.com/regl-project/regl)
 
-This module configures a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library. Its specific goals are:
+This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library. Architecturally, it has two goals.
 
-- Data must not touch the CPU.
-- No unnecessary constraints.
+**Data lives on the GPU.** The CPU does not ever need to touch the data. Data lives on the GPU, allowing to draw thousands of separate lines with just two WebGL draw calls.
 
-The first point means that this function performs very little CPU work at runtime and is optimized for the GPU. You can draw thousands of separate lines with just two WebGL draw calls.
+**Minimize unnecessary constraints.** Although it facilitates setup, projection, colors, blending, and even GLSL attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
 
-This second point means that projection, colors, blending, and even GLSL attributes and varyings are up to you. In this sense it's almost more of a data flow framework for line rendering with which you can build the line rendering you require.
-
-<p align="center">
+<p>
   <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">Live demo &rarr;</a></div>
-  <img src="./docs/round.png" alt="Lines with round joins and caps" width="600">
+  <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">
+    <img src="./docs/round.png" alt="Lines with round joins and caps" width="600">
+  </a></div>
 </p>
 
-Some features and limitations:
+Features:
 
-- separate multiple disjoint lines by adding an attribute consisting of NaN(s) to the vertex list (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html))
-- line with only two vertices are not handled well and will consist only of overlapping end caps
-- joins do not take into account variation in width, so varying width works best when varied slowly
+- Configure your own attributes, varyings, uniforms, and fragment shaders
+- Round joins, miters, and bevels
+- Square and rounded end caps
+- Use `NaN` to separate disjoint lines (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html))
+- Pass additional regl configuration to the constructor
+
+Limitations:
+
+- Interior miters of sharp-angle corners need better limiting
+- Lines with two vertices are rendered as overlapping end caps
+- Joins do not take into account variation in width, so varying width is best varied slowly
 
 ## See also
 
 - [regl-line2d](https://github.com/gl-vis/regl-line2d): The line rendering library used by Plotly.js. If you want production quality lines, you should go here.
 - [regl-line](https://www.npmjs.com/package/regl-line): Another excellent library. A regl function to draw flat 2D and 3D lines.
-- [screen-projected-lines](https://github.com/substack/screen-projected-lines): An excellent, concise module for lines without joins or caps. Such lines are *dramatically* simpler.
+- [screen-projected-lines](https://github.com/substack/screen-projected-lines): An excellent, concise module for screen-projected lines. Without joins or caps, such lines are much simpler.
 
 ## Install
 
@@ -40,9 +47,11 @@ npm install regl-gpu-lines
 
 The following code implements the image shown below. It passes a single attribute and uses preprocessor directives to connect it to the line width and position, as well as to pass the x-component to the fragment shader for coloring.
 
-<p align="center">
+<p>
   <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/index.html">Live demo &rarr;</a></div>
-  <img src="./docs/example.png" alt="Basic example" width="600">
+  <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/index.html">
+    <img src="./docs/example.png" alt="Basic example" width="600">
+  </a></div>
 </p>
 
 ```js
@@ -57,15 +66,20 @@ const drawLines = createDrawLines(regl, {
     #pragma lines: width = getWidth(xy);
     #pragma lines: varying float x = getX(xy);
 
+    uniform float width;
+
     vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
-    float getWidth(vec2 xy) { return 50.0 * (0.5 + 0.4 * cos(16.0 * xy.x)); }
+    float getWidth(vec2 xy) { return width * (0.5 + 0.4 * cos(16.0 * xy.x)); }
     float getX(vec2 xy) { return xy.x; }`,
   frag: `
     precision lowp float;
     varying float x;
     void main () {
       gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1);
-    }`
+    }`,
+  uniforms: {
+    width: regl.prop('width')
+  }
 });
 
 const n = 101;
@@ -83,7 +97,8 @@ const lineData = {
   endpointCount: 2,
   endpointAttributes: {
     xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
-  }
+  },
+  width: 50
 };
 
 function draw () {
@@ -101,7 +116,7 @@ draw();
 import createDrawLines from 'regl-gpu-lines';
 ```
 
-### `createDrawLines(regl, {vert, frag, debug})`
+### `createDrawLines(regl, {vert, frag, debug, ...})`
 
 Instantiate a drawing command using the specified shaders.
 
@@ -110,48 +125,72 @@ Instantiate a drawing command using the specified shaders.
 - `frag` (string): fragment shader
 - `debug`: Debug mode, which exposes additional properties for viewing triangle mesh
 
+Additional configuration parameters are forwarded to a `regl` command which wraps drawing.
+
+---
+
 ### Vertex shader data flow
 
-This module parses the specified vertex shader for GLSL `#pragma` directives which define the line properties and data flow. This should handle vertex attributes and varying parameters. If you require uniform values, you may pass them yourself by wrapping line drawing in your own `regl` command.
+The vertex shader is parsed for GLSL `#pragma` directives which define data flow as well as line properties.
 
-#### `#pragma lines: attribute <dataType> <attributeName>`
+#### Vertex attributes *(required)*
+##### `#pragma lines: attribute <dataType> <attributeName>`
 - `dataType`: one of `float`, `vec2`, `vec3`, `vec4`
 - `attributeName`: name of attribute provided to draw command
 
-#### `#pragma lines: position = <functionName>(<attributeList>)`
-A builtin property which defines the `vec4` position of the vertex. Perspective division is performed automatically.
-- `functionName`: name of function which returns the `vec4` position of the vertex
-- `attributeList`: vertex attributes passed to the function
+#### Vertex position *(required)*
+A fixed property which defines computation of the `vec4` position of line vertices. Perspective division is performed automatically.
+##### `#pragma lines: position = <functionName>(<attributeList>)`
+- `functionName`: name of function which returns the `vec4`-valued position of the vertex
+- `attributeList`: comma-separated list of vertex attribute names passed to the function
 
-#### `#pragma lines: width = <functionName>(<attributeList>)`
-A builtin property which defines the width of the line at a given vertex.
-- `functionName`: name of function which returns the `float` device pixel width of the line at the given vertex
-- `attributeList`: vertex attributes passed to the function
+#### Line width *(required)*
+A fixed property which defines the width at a given vertex, measured in device pixels. If you want the width consistent across devices, it is up to you to multiply it by the regl context's `pixelRatio`.
+##### `#pragma lines: width = <functionName>(<attributeList>)`
+- `functionName`: name of function which returns the `float`-valued device pixel width of the line at the given vertex
+- `attributeList`: comman-separated list of vertex attributes passed to the function
 
-#### `#pragma lines: startcap = <functionName>(<attributeList>)`
-A builtin property which defines whether a given line cap is at the beginning or end of a line. If `startcap` is not provided, then end caps are rendered in two passes, first starting caps, then ending caps. If provided, then end caps are rendered in a single pass.
-- `functionName`: name of function which returns a `bool` indicating whether the cap is at the beginning or end of a line.
-- `attributeList`: vertex attributes passed to the function. Attributes consumed by a `startcap` function advance at a rate of one stride per instance.
+#### End cap orientation *(optional)*
+A fixed property which defines whether a given line cap is at the beginning or end of a line. If `startcap` is not provided, then end caps are rendered in two passes, first starting caps, then ending caps. If provided, then end caps are rendered in a single pass.
+##### `#pragma lines: startcap = <functionName>(<attributeList>)`
+- `functionName`: name of function which returns a `bool`, `true` if the cap is at the beginning of a line and `false` otherwise.
+- `attributeList`: command-separated list of vertex attributes passed to the function. Attributes consumed by a `startcap` function advance at a rate of one stride per instance.
 
-#### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)`
+#### Varyings *(optional)*
+##### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)`
 - `type`: type of varying parameter passed to fragment shader. One of `float`, `vec2`, `vec3`, vec4`.
 - `name`: name of varying parameter passed to fragment shader
 - `attributeList`: vertex attributes passed to the function
 
+---
+
+### Fragment shader
+
+You may define the fragment shader as you desire. The only builtin parameter is a `varying vec2` called `lineCoord`, which assists in rendering end caps and variation across the width of the line. `lineCoord` lives in the square [-1, 1] &times; [-1, 1]. Starting caps lie in the left half-plane, [-1, 0] &times; [-1, 1]. The full length of the line lies along a vertical slice [0] &times; [-1, 1]. End caps lie in the right half-plane, [0, 1] &times; [-1, 1].
+
+---
 
 ### Drawing lines
 
 Drawing is invoked by passing an object with the following optional properties to the constructed draw command.
 
-- `join` (string): `'round' | 'miter' | 'bevel'`
-- `cap` (string): `'round' | 'square' | 'none'`
-- `joinResolution` (number): number of triangles used to construct rounded joins
-- `capResolution` (number): number of triangles used to construct rounded end caps
-- `miterLimit` (number): Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins.
-- `vertexCount` (number): Total number of line vertices
-- `endpointCount` (object): Total number of endpoints drawn (number of endpoint vertices divided by three)
-- `vertexAttributes`: (object): Object containing regl buffer objects for each line vertex attribute, indexed by attribute name
-- `endpointAttributes`: (object): Object containing regl buffer objects for each line endpoint vertex attribute, indexed by attribute name
+#### `drawLines({...})`
+
+| Property | Type | Default | Description |
+| -------- | ---- | ------- | ----------- |
+| `join` | `'miter'` `'bevel'` `'round'` | `'miter'` | Type of joins |
+| `cap` | `'square'` `'round'` `'none'` | `'square'` | Type of end caps | 
+| `joinResolution` | `number` | 8 | Number of triangles used to construct round joins | 
+| `capResolution` | `number` | 12 | Number of triangles used to construct round end caps | 
+| `miterLimit` | `number` | 4 | Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins. |
+| `vertexCount` | `number` | 0 | Total number of line vertices |
+| `endpointCount` | `number` | 0 | Number end caps drawn (number of endpoint vertices divided by three) |
+| `vertexAttribues` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
+| `endpointAttributes` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
+
+#### Notes
+- `endpointAttributes` requires all attributes used in the computation of `isstart`, but `vertexAttributes` may exclude them.
+- If either `endpointAttributes` or `vertexAttributes` is exluded, the geometry will not be rendered
 
 ## License
 
