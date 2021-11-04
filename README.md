@@ -46,16 +46,21 @@ const drawLines = createDrawLines(regl, {
     vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
 
     #pragma lines: width = getWidth();
-    float getWidth() { return 20.0; }`,
+    uniform float width;
+    float getWidth() { return width; }`,
   frag: `
     precision lowp float;
     void main () {
       gl_FragColor = vec4(1);
-    }`
+    }`,
+  uniforms: {
+    width: regl.prop('customWidth')
+  }
 });
 
 const xy = [[-1, 1], [-0.5, -1], [0, 1], [0.5, -1], [1, 1]];
 const lineData = {
+  customWidth: 20,
   join: 'round',
   cap: 'round',
   vertexCount: xy.length,
