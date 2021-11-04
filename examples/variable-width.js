@@ -7,33 +7,40 @@ const drawLines = createDrawLines(regl, {
   vert: `
     precision highp float;
 
-    // Use a vec2 attribute to construt the vec4 vertex position
     #pragma lines: attribute vec2 xy;
-    #pragma lines: position = getPosition(xy);
-    vec4 getPosition(vec2 xy) {
-      return vec4(xy, 0, 1);
-    }
 
-    // Return the line width from a uniorm
-    #pragma lines: width = getWidth();
+    // Assign a function for computing the vec4 position
+    #pragma lines: position = getPosition(xy);
+
+    // Assign a function for computing the float width
+    #pragma lines: width = getWidth(xy);
+
+    // Compute a varying value from the input attribute
+    #pragma lines: varying float x = getX(xy);
+
     uniform float width;
-    float getWidth() {
-      return width;
-    }`,
+
+    // Implement the functions above
+    vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
+    float getWidth(vec2 xy) { return width * (0.5 + 0.4 * cos(16.0 * xy.x)); }
+    float getX(vec2 xy) { return xy.x; }`,
   frag: `
     precision lowp float;
+    varying float x;
     void main () {
-      gl_FragColor = vec4(1);
+      gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1);
     }`,
 
-  // Multiply the width by the pixel ratio for consistent width
+  // Additional regl command properties are valid
   uniforms: {
-    width: (ctx, props) => ctx.pixelRatio * props.width
+    width: regl.prop('width')
   },
+
+  depth: {enable: false}
 });
 
 // Construct an array of xy pairs
-const n = 11;
+const n = 101;
 const xy = [...Array(n).keys()]
   .map(i => (i / (n - 1) * 2.0 - 1.0) * 0.8)
   .map(t => [t, 0.5 * Math.sin(8.0 * t)]);
@@ -41,13 +48,19 @@ const xy = [...Array(n).keys()]
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
 const lineData = {
-  width: 30,
   join: 'round',
   cap: 'round',
   vertexCount: xy.length,
-  vertexAttributes: { xy: regl.buffer(xy) },
+  vertexAttributes: {
+    xy: regl.buffer(xy)
+  },
   endpointCount: 2,
-  endpointAttributes: { xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()]) }
+  endpointAttributes: {
+    xy: regl.buffer([xy.slice(0, 3), xy.slice(-3).reverse()])
+  },
+
+  // Picked up by regl.prop('width')
+  width: 50
 };
 
 function draw () {
