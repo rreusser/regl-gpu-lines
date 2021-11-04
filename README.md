@@ -37,7 +37,7 @@ Limitations:
   <img src="./docs/lorenz.gif" alt="GPGPU Lorenz Attractor">
 </p>
 
-- [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A basic line with end caps
+- [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A basic line with end caps and varying width
 - [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use NaN to break up lines into multiple segments
 - [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Repeat the first three vertices at the end to create a closed loop
 - [Debug](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): Visually debug line geometry

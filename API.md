@@ -79,3 +79,4 @@ Drawing is invoked by passing an object with the following optional properties t
 ### Notes
 - `endpointAttributes` requires all attributes used in the computation of `isstart`, but `vertexAttributes` may exclude them.
 - If either `endpointAttributes` or `vertexAttributes` is excluded, the corresponding geometry will not be rendered
+- You must at least provide regl buffer objects, but in the style of regl, you may either just provide a buffer, or you may provide an object of the form `{buffer, stride, offset, divisor, type}`.
