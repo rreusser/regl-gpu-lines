@@ -1,4 +1,12 @@
+## 0.0.10
+
+### Bugfixes
+
+- Fix inner miters to clip to the lesser of the two adjacent segment lengths
+
 ## 0.0.9
+
+### Bugfixes
 
 - Remove the minimum-length constraint (was 1/100 pixel) since it sometimes results in missing caps.
 - Improved documentation!
