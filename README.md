@@ -30,7 +30,7 @@ Limitations:
 - Interior miters of sharp-angle corners need better limiting
 - Lines with two vertices are rendered as overlapping end caps
 - Joins do not take into account variation in width, so width is best varied slowly
-- Using the `lineCoord` varying to construct an SDF border requires rounded joins to produce consistent-width borders
+- Using the `lineCoord` varying to construct a SDF border requires rounded joins to produce consistent-width borders
 
 ## Examples
 
