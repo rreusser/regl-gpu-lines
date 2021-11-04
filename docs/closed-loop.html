@@ -52,7 +52,11 @@ const drawLines = createDrawLines(regl, {
   }
 });
 
+// A seven-sided star
 const n = 7;
+
+// Except we repeat the first three vertices again at the end. This
+// results in a closed shape with correct joins.
 const xy = [...Array(n + 3).keys()]
   .map(i => i / n)
   .map(t => {
@@ -64,6 +68,8 @@ const xy = [...Array(n + 3).keys()]
     ];
   });
 
+// Exclude endpointAttributes since there are no end caps to draw in
+// this case.
 const lineData = {
   join: 'round',
   vertexCount: xy.length,
@@ -138,7 +144,11 @@ const drawLines = createDrawLines(regl, {
   }
 });
 
+// A seven-sided star
 const n = 7;
+
+// Except we repeat the first three vertices again at the end. This
+// results in a closed shape with correct joins.
 const xy = [...Array(n + 3).keys()]
   .map(i => i / n)
   .map(t => {
@@ -150,6 +160,8 @@ const xy = [...Array(n + 3).keys()]
     ];
   });
 
+// Exclude endpointAttributes since there are no end caps to draw in
+// this case.
 const lineData = {
   join: 'round',
   vertexCount: xy.length,

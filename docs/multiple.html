@@ -28,10 +28,7 @@ const drawLines = createDrawLines(regl, {
     #pragma lines: startcap = isStartCap(startcap);
     #pragma lines: varying float x = getX(xy);
 
-    vec4 getPosition(vec2 xy) {
-      return vec4(xy, 0, 1);
-    }
-
+    vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
     float getWidth() { return 10.0; }
     float getX(vec2 xy) { return xy.x; }
     bool isStartCap(float startcap) { return startcap > 0.0; }`,
@@ -57,13 +54,17 @@ function xy (line, i) {
 
 for (let line = 0; line < lineCount; line++) {
   for (let i = 0; i < n; i++) positions.push(xy(line, i));
-  positions.push([NaN, NaN]); // Add a line break
 
+  // Add a break in the line by using NaN
+  positions.push([NaN, NaN]);
+
+  // Push a start cap and and end cap for this segment
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
   isstart.push(1, 0);
 }
 
+// After this, render as normal!
 const lineData = {
   join: 'round',
   cap: 'round',
@@ -120,10 +121,7 @@ const drawLines = createDrawLines(regl, {
     #pragma lines: startcap = isStartCap(startcap);
     #pragma lines: varying float x = getX(xy);
 
-    vec4 getPosition(vec2 xy) {
-      return vec4(xy, 0, 1);
-    }
-
+    vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
     float getWidth() { return 10.0; }
     float getX(vec2 xy) { return xy.x; }
     bool isStartCap(float startcap) { return startcap > 0.0; }`,
@@ -149,13 +147,17 @@ function xy (line, i) {
 
 for (let line = 0; line < lineCount; line++) {
   for (let i = 0; i < n; i++) positions.push(xy(line, i));
-  positions.push([NaN, NaN]); // Add a line break
 
+  // Add a break in the line by using NaN
+  positions.push([NaN, NaN]);
+
+  // Push a start cap and and end cap for this segment
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
   isstart.push(1, 0);
 }
 
+// After this, render as normal!
 const lineData = {
   join: 'round',
   cap: 'round',
