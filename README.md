@@ -2,11 +2,11 @@
 
 > Pure GPU line drawing for [regl](https://github.com/regl-project/regl)
 
-This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library. Architecturally, it has two goals.
+This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library.
 
-**Data lives on the GPU.** The CPU does not ever need to touch the data. Data lives on the GPU, allowing to draw thousands of separate lines with just two WebGL draw calls.
-
-**Minimize unnecessary constraints.** Although it facilitates setup, projection, colors, blending, and even GLSL attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
+Architecturally, it has two goals:
+- **Data lives on the GPU.** The CPU does not ever need to touch the data. Data lives on the GPU, allowing to draw thousands of separate lines with just two WebGL draw calls.
+- **Minimize unnecessary constraints.** Although it facilitates setup, projection, colors, blending, and even GLSL attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
 
 <p>
   <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">Live demo &rarr;</a></div>
