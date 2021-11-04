@@ -34,7 +34,7 @@ Limitations:
 ## Examples
 
 <p align="center">
-  <img src="./docs/lorenz.gif" alt="GPGPU Lorenz Attractor">
+  <a href="https://observablehq.com/d/ab6cd8bb0137889c"><img src="./docs/lorenz.gif" alt="GPGPU Lorenz Attractor"></a>
 </p>
 
 - [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A minimal example
