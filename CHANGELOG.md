@@ -1,3 +1,8 @@
+## 0.0.9
+
+- Remove the minimum-length constraint (was 1/100 pixel) since it sometimes results in missing caps.
+- Improved documentation!
+
 ## 0.0.8
 
 ### Bugfixes
