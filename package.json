@@ -1,7 +1,7 @@
 {
   "name": "regl-gpu-lines",
   "version": "0.0.8",
-  "description": "Pure GPU line drawing for regl",
+  "description": "Pure GPU screen-projected lines for regl",
   "main": "dist/regl-gpu-lines.min.js",
   "repository": {
     "type": "git",
@@ -11,11 +11,11 @@
     "url": "https://github.com/rreusser/regl-gpu-lines/issues"
   },
   "scripts": {
-    "start": "budo examples/index.js --open --live --host localhost --css style.css -- -t [ babelify --presets [ @babel/preset-env ]",
+    "start": "node scripts/serve-example.js",
+    "build:examples": "for i in examples/*.js; do node scripts/build-example $i; done",
     "build": "npm run bundle:rollup && npm run minify:rollup",
     "bundle:rollup": "mkdir -p dist && rollup -c",
     "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js",
-    "build:example": "rm -rf docs && mkdir -p docs && browserify examples/basic.js -t [ envify --NODE_ENV production ] | indexhtmlify > docs/basic.html",
     "prepublishOnly": "npm run bundle:rollup && npm run minify:rollup"
   },
   "keywords": [
@@ -33,10 +33,15 @@
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "budo": "^11.6.4",
+    "controls-gui": "^2.0.0",
+    "controls-state": "^2.0.0",
+    "hyperstream": "^1.2.2",
     "regl": "^2.1.0",
     "rollup": "^2.58.3",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
+    "simple-html-index": "^1.5.0",
+    "string-to-stream": "^3.0.1",
     "terser": "^5.9.0"
   }
 }

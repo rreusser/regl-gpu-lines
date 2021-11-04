@@ -84,11 +84,6 @@ void main() {
   float lBC = length(rBC);
   float lCD = length(rCD);
 
-  if (lBC < 0.01) {
-    gl_Position = vec4(0);
-    return;
-  }
-
   vec2 tAB = rAB / lAB;
   vec2 tBC = rBC / lBC;
   vec2 tCD = rCD / lCD;

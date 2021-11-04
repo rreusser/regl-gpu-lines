@@ -84,11 +84,6 @@ void main() {
   vec2 tBC = rBC / lBC;
   vec2 nBC = vec2(-tBC.y, tBC.x);
 
-  if (lBC < 0.01) {
-    gl_Position = vec4(0);
-    return;
-  }
-
   vec2 tAB = normalize(pB.xy - pA.xy);
   vec2 tCD = normalize(pD.xy - pC.xy);
   vec2 nCD = vec2(-tCD.y, tCD.x);

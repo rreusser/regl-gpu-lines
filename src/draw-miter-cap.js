@@ -81,11 +81,6 @@ void main() {
   vec2 nBC = vec2(-tBC.y, tBC.x);
   vec2 nCD = vec2(-tCD.y, tCD.x);
 
-  if (lBC < 0.01) {
-    gl_Position = vec4(0);
-    return;
-  }
-
   gl_Position = pC;
 
   // Left/right turning at each vertex
