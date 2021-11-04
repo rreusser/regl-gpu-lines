@@ -10,7 +10,7 @@ Architecturally, it has two goals:
 - **Data lives on the GPU.** Since the CPU does not ever need to touch the data, you can draw thousands of separate lines very efficiently with just two WebGL draw calls.
 - **Minimize unnecessary constraints.** The module facilitates setup, but projection, colors, blending, and even GLSL attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
 
-<p>
+<p align="center">
   <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">Live demo &rarr;</a></div>
   <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">
     <img src="./docs/debug.png" alt="Lines with round joins and caps" width="600">
@@ -33,10 +33,15 @@ Limitations:
 
 ## Examples
 
+<p align="center">
+  <img src="./docs/lorenz.gif" alt="GPGPU Lorenz Attractor">
+</p>
+
 - [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A basic line with end caps
 - [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use NaN to break up lines into multiple segments
 - [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Repeat the first three vertices at the end to create a closed loop
 - [Debug](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): Visually debug line geometry
+- [GPGPU Strange Attractors](https://observablehq.com/d/ab6cd8bb0137889c): Feed a GPU particle simulation from texture data directly into line rendering
 
 ## Install
 
