@@ -77,8 +77,11 @@ void main() {
   vec2 rBC = pC.xy - pB.xy;
   float lBC = length(rBC);
   vec2 tBC = rBC / lBC;
-  vec2 tCD = normalize(pD.xy - pC.xy);
   vec2 nBC = vec2(-tBC.y, tBC.x);
+
+  vec2 rCD = pD.xy - pC.xy;
+  float lCD = length(rCD);
+  vec2 tCD = rCD / lCD;
   vec2 nCD = vec2(-tCD.y, tCD.x);
 
   gl_Position = pC;
@@ -142,8 +145,9 @@ void main() {
 
       if (!isSegmentStart) {
         float m = miterExtension(tBC, tCD);
-        float m0 = min(-m * computedWidth, lBC);
-        float m1 = min(m * computedWidth, lBC);
+        float lBCD = min(lBC, lCD);
+        float m0 = min(-m * computedWidth, lBCD);
+        float m1 = min(m * computedWidth, lBCD);
         bool cIsOuter = dirC * position.y > 0.0;
         bool clipC = abs(m) > miterLimit;
         gl_Position.xy -= tBC * (position.y > 0.0 ? m1 : m0) * (cIsOuter && (clipC || !isStartCap) ? 0.0 : 1.0);

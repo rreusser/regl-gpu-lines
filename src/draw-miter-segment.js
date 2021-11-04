@@ -107,8 +107,12 @@ void main() {
     }
 
     float m = miterExtension(isStart ? tAB : tBC, isStart ? tBC : tCD);
-    float m0 = min(-m * computedWidth, lBC);
-    float m1 = min(m * computedWidth, lBC);
+    float lABC = min(lAB, lBC);
+    float lBCD = min(lBC, lCD);
+    float m0_abc = min(-m * computedWidth, lABC);
+    float m1_abc = min(m * computedWidth, lABC);
+    float m0_bcd = min(-m * computedWidth, lBCD);
+    float m1_bcd = min(m * computedWidth, lBCD);
 
     gl_Position.xy += linePosition.y * computedWidth * nBC;
 
@@ -116,11 +120,11 @@ void main() {
       gl_Position.z = pB.z;
       float dirB = dot(tAB, nBC) < 0.0 ? -1.0 : 1.0;
       bool bIsOuter = dirB * linePosition.y > 0.0;
-      gl_Position.xy -= tBC * (lBC - (linePosition.y < 0.0 ? m0 : m1) * (bIsOuter ? 0.0 : 1.0));
+      gl_Position.xy -= tBC * (lBC - (linePosition.y < 0.0 ? m0_abc : m1_abc) * (bIsOuter ? 0.0 : 1.0));
     } else {
       bool cIsOuter = dirC * linePosition.y > 0.0;
       bool clipC = abs(m) > miterLimit;
-      gl_Position.xy -= tBC * (linePosition.y > 0.0 ? m1 : m0) * (cIsOuter && clipC ? 0.0 : 1.0);
+      gl_Position.xy -= tBC * (linePosition.y > 0.0 ? m1_bcd : m0_bcd) * (cIsOuter && clipC ? 0.0 : 1.0);
     }
   }
 

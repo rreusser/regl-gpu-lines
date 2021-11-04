@@ -78,8 +78,11 @@ void main() {
   vec2 rBC = pC.xy - pB.xy;
   float lBC = length(rBC);
   vec2 tBC = rBC / lBC;
-  vec2 tCD = normalize(pD.xy - pC.xy);
   vec2 nBC = vec2(-tBC.y, tBC.x);
+
+  vec2 rCD = pD.xy - pC.xy;
+  float lCD = length(rCD);
+  vec2 tCD = rCD / lCD;
   vec2 nCD = vec2(-tCD.y, tCD.x);
 
   // Left/right turning at each vertex
@@ -156,8 +159,9 @@ void main() {
       float mC = miterExtension(tBC, tCD) * widthC;
 
       // Place the corners, with clipping against the opposite end
-      float mC0 = dirC > 0.0 ? min(lBC, -mC) : 0.0;
-      float mC1 = dirC > 0.0 ? 0.0 : min(lBC, mC);
+      float lBCD = min(lBC, lCD);
+      float mC0 = dirC > 0.0 ? min(lBCD, -mC) : 0.0;
+      float mC1 = dirC > 0.0 ? 0.0 : min(lBCD, mC);
 
       xyBasis = mat2(tBC, nBC);
       bool isStart = i < 2.0;
