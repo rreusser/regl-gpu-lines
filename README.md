@@ -30,6 +30,7 @@ Limitations:
 - Interior miters of sharp-angle corners need better limiting
 - Lines with two vertices are rendered as overlapping end caps
 - Joins do not take into account variation in width, so varying width is best varied slowly
+- Using the `lineCoord` varying to construct an SDF border requires rounded joins to produce consistent-width borders
 
 ## Examples
 
@@ -40,6 +41,7 @@ Limitations:
 - [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A basic line with end caps and varying width
 - [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use NaN to break up lines into multiple segments
 - [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Repeat the first three vertices at the end to create a closed loop
+- [Line border](https://rreusser.github.io/regl-gpu-lines/docs/border.html): Use `lineCoord` to draw a line border
 - [Debug](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): Visually debug line geometry
 - [GPGPU Strange Attractors](https://observablehq.com/d/ab6cd8bb0137889c): Feed a GPU particle simulation from texture data directly into line rendering
 
