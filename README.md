@@ -47,13 +47,17 @@ Limitations:
 
 ## Install
 
-Install from npm.
+The `dist/` directory contains UMD bundles. There are two other options. You may install from npm:
 
 ```bash
 npm install regl-gpu-lines
 ```
 
-You can also use from a CDN in environments like Observable or Codepen, e.g. https://unpkg.com/regl-gpu-lines@latest
+Or you may use from a CDN in environments like Observable or Codepen:
+
+```
+https://unpkg.com/regl-gpu-lines@latest
+```
 
 ## API
 
