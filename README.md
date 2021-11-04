@@ -33,10 +33,10 @@ Limitations:
 
 ## Examples
 
-- [Basic example](./docs/basic.html): A basic line with end caps
-- [Multiple lines](./docs/multiple.html): Use NaN to break up lines into multiple segments
-- [Closed loop](./docs/closed-loop.html): Repeat the first three vertices at the end to create a closed loop
-- [Debug](./docs/debug.html): Visually debug line geometry
+- [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A basic line with end caps
+- [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use NaN to break up lines into multiple segments
+- [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Repeat the first three vertices at the end to create a closed loop
+- [Debug](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): Visually debug line geometry
 
 ## Install
 
