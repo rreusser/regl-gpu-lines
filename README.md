@@ -51,6 +51,8 @@ Install from npm.
 npm install regl-gpu-lines
 ```
 
+You can also use from a CDN in environments like Observable or Codepen, e.g. https://unpkg.com/regl-gpu-lines@latest
+
 ## API
 
 See [API documentation](./API.md).
