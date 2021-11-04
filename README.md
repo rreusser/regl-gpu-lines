@@ -2,6 +2,8 @@
 
 > Pure GPU screen-projected lines for [regl](https://github.com/regl-project/regl)
 
+[API documentation &rarr;](./API.md)
+
 This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library.
 
 Architecturally, it has two goals:
