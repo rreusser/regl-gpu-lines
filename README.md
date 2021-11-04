@@ -40,6 +40,7 @@ Limitations:
 - [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A minimal example
 - [Variable width](https://rreusser.github.io/regl-gpu-lines/docs/variable-width.html): A basic line with variable width and color
 - [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use NaN to break up lines into multiple segments
+- [Depth](https://rreusser.github.io/regl-gpu-lines/docs/depth.html): Layer lines using the z-coordinage
 - [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Repeat the first three vertices at the end to create a closed loop
 - [Line border](https://rreusser.github.io/regl-gpu-lines/docs/border.html): Use `lineCoord` to draw a SDF line border
 - [Debug](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): Visually debug line geometry
