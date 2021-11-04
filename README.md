@@ -5,7 +5,7 @@
 This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library.
 
 Architecturally, it has two goals:
-- **Data lives on the GPU.** The CPU does not ever need to touch the data. Data lives on the GPU, allowing to draw thousands of separate lines with just two WebGL draw calls.
+- **Data lives on the GPU.** Since the CPU does not ever need to touch the data, you can draw thousands of separate lines very efficiently with just two WebGL draw calls.
 - **Minimize unnecessary constraints.** Although it facilitates setup, projection, colors, blending, and even GLSL attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
 
 <p>
