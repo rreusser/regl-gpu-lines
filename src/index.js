@@ -15,6 +15,8 @@ module.exports = reglLines;
 module.exports.CAP_START = ORIENTATION.CAP_START
 module.exports.CAP_END = ORIENTATION.CAP_END
 
+const FORBIDDEN_PROPS = new Set(['count', 'instances', 'attributes', 'elements']);
+
 function reglLines(
   regl,
   opts = {}
@@ -29,7 +31,13 @@ function reglLines(
   // extract uniform separately so that we can merge them with the resolution uniform
   const forwardedOpts = {...opts};
   for (const prop of ['vert', 'frag', 'debug']) delete forwardedOpts[prop];
-  const canReorder = Object.keys(forwardedOpts).length === 0;
+  const forwarded = Object.keys(forwardedOpts)
+  const canReorder = forwarded.length === 0;
+  forwarded.forEach(fwd => {
+    if (FORBIDDEN_PROPS.has(fwd)) {
+      throw new Error(`Invalid parameter '${fwd}'. Parameters ${[...FORBIDDEN_PROPS].map(p => `'${p}'`).join(', ')} may not be forwarded to regl.`);
+    }
+  });
 
   if (!vert) throw new Error('Missing vertex shader, `vert`');
   if (!frag) throw new Error('Missing fragment shader, `frag`');
