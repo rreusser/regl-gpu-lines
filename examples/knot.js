@@ -5,7 +5,7 @@ const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
 
-    uniform float width, time, phase;
+    uniform float width, phase;
     uniform vec2 aspect;
 
     #pragma lines: attribute float theta;
@@ -49,7 +49,6 @@ const drawLines = reglLines(regl, {
       : [1, ctx.viewportWidth / ctx.viewportHeight],
     width: (ctx, props) => ctx.pixelRatio * props.width,
     borderWidth: (ctx, props) => ctx.pixelRatio * props.borderWidth,
-    time: regl.context('time'),
     phase: regl.prop('phase'),
     color: regl.prop('color')
   },
@@ -61,15 +60,15 @@ const n = 501;
 
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
+const width = Math.min(window.innerWidth, window.innerHeight) / 20;
 const lineData = {
-  width: Math.min(window.innerWidth, window.innerHeight) / 20,
+  width,
+  borderWidth: width / 6,
   join: 'bevel',
-  cap: 'round',
   vertexCount: n + 3,
   vertexAttributes: {
     theta: regl.buffer([...Array(n + 3).keys()].map(i => i / n * Math.PI * 2))
   },
-  borderWidth: 5
 };
 
 function draw() {
