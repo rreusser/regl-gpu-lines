@@ -13,10 +13,10 @@ Apart from drawing nice lines, architecturally it has two goals:
 - **Minimize unnecessary constraints.** The module facilitates setup but is agnostic toward projection, colors, blending, etc. Attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
 
 <p align="center">
-  <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">Live demo &rarr;</a></div>
   <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">
     <img src="./docs/debug.png" alt="Lines with round joins and caps" width="600">
   </a></div>
+  <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">Live demo &rarr;</a></div>
 </p>
 
 Features:
