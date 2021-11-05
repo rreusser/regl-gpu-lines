@@ -1,6 +1,6 @@
 # API
 
-- [Draw command constructor](#vertex-shader-data-flow)
+- [Draw command constructor](#draw-command-constructor)
 - [Vertex shader data flow](#vertex-shader-data-flow)
   - [attribute](#vertex-attributes-required)
   - [position](#vertex-position-required)
