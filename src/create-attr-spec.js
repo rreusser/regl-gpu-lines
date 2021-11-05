@@ -2,6 +2,7 @@ module.exports = createAttrSpecs;
 
 const ATTR_USAGE = require('./attr-usage.js');
 const GLSL_TYPES = require('./glsltypes.js');
+const ORIENTATION = require('./orientation.json');
 
 function createAttrSpecs (meta, regl, isEndpoints) {
   const suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
@@ -22,8 +23,8 @@ function createAttrSpecs (meta, regl, isEndpoints) {
         const instanceStride = usage & ATTR_USAGE.PER_INSTANCE ? 1 : 3;
         attrSpecs[attrOutName] = {
           buffer: regl.prop(`buffers.${attrName}.buffer`),
-          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.isStartCap || !props.split)? 0 : 3) + index),
-          stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.split ? 2 : 1),
+          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps)? 0 : 3) + index),
+          stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
           divisor: (ctx, props) => props.buffers[attrName].divisor,
         };
       } else {

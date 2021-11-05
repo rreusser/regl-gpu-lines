@@ -6,7 +6,7 @@ module.exports = parseShaderPragmas;
 
 const PRAGMA_REGEX = /^\s*#pragma\s+lines\s*:\s*([^;]*);?$/i;
 const ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
-const PROPERTY_REGEX = /^\s*(position|width|startcap)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
+const PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
 const VARYING_REGEX = /^\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
 
 const DIMENSION_GLSL_TYPES = {
@@ -41,7 +41,7 @@ function parsePragma (pragma) {
     return {type: 'attribute', dimension, name};
   } else if ((match = pragma.match(PROPERTY_REGEX))) {
     const property = match[1];
-    const returnType = {width: 'float', position: 'vec4', startcap: 'bool'}[property];
+    const returnType = {width: 'float', position: 'vec4', orientation: 'bool'}[property];
     const name = match[2];
     const inputs = match[3].split(',').map(str => str.trim()).filter(x => !!x);
     const generate = (label, prefix) => `${name}(${inputs.map(input => (prefix || '') + input + label).join(', ')})`;
@@ -74,7 +74,7 @@ function analyzePragmas (pragmas) {
   }
 
   const lineAttrs = new Set();
-  let width, position, startcap;
+  let width, position, orientation;
   for (const pragma of pragmas) {
     if (pragma.type !== 'property') continue;
 
@@ -87,9 +87,9 @@ function analyzePragmas (pragmas) {
         if (position) throw new Error(`Unexpected duplicate pragma for property "${pragma.property}"`);
         position = pragma;
         break;
-      case 'startcap':
-        if (startcap) throw new Error(`Unexpected duplicate pragma for property "${pragma.property}"`);
-        startcap = pragma;
+      case 'orientation':
+        if (orientation) throw new Error(`Unexpected duplicate pragma for property "${pragma.property}"`);
+        orientation = pragma;
         break;
       default:
         throw new Error(`Invalid pragma property "${pragma.property}"`);
@@ -106,7 +106,7 @@ function analyzePragmas (pragmas) {
         if (pragma.property === 'position') {
           inputAttr.vertexUsage |= ATTR_USAGE.EXTENDED;
           inputAttr.endpointUsage |= ATTR_USAGE.EXTENDED;
-        } else if (pragma.property === 'startcap') {
+        } else if (pragma.property === 'orientation') {
           inputAttr.endpointUsage |= ATTR_USAGE.PER_INSTANCE;
         } else {
           inputAttr.endpointUsage|= ATTR_USAGE.REGULAR;
@@ -115,6 +115,6 @@ function analyzePragmas (pragmas) {
       }
     }
   }
-  return {varyings, attrs, width, position, startcap};
+  return {varyings, attrs, width, position, orientation};
 }
 

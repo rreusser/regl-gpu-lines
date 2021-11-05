@@ -37,7 +37,7 @@ Limitations:
 A minimal example looks like the following. There are no specified properties, in this case only a `vec2` attribute `xy` which we connect to the position via a GLSL `#pragma`.
 
 ```js
-const drawLines = createDrawLines(regl, {
+const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
 

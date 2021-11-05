@@ -15,7 +15,7 @@ const preface = `
   window.wrapGUI = require('controls-gui');
   window.State = require('controls-state');
   window.createREGL = require('regl');
-  window.createDrawLines = require('./src/index.js');
+  window.reglLines = require('./src/index.js');
 `;
 
 budo(path.join(__dirname, 'dummy.js'), {

@@ -3,15 +3,19 @@
 const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
 const createDrawMiterCapCommand = require('./draw-miter-cap.js');
 const createDrawRoundedSegmentCommand = require('./draw-rounded-segment.js');
-const createDrawRoundedCapCommand = require('./draw-rounded-segment-cap.js');
+const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
 const sanitizeBufferInputs = require('./sanitize-buffer.js');
 const createAttrSpec = require('./create-attr-spec.js');
 const sanitizeInclusionInList = require('./sanitize-in-list.js');
+const ORIENTATION = require('./orientation.json');
 
-module.exports = createDrawLines;
+module.exports = reglLines;
 
-function createDrawLines(
+module.exports.CAP_START = ORIENTATION.CAP_START
+module.exports.CAP_END = ORIENTATION.CAP_END
+
+function reglLines(
   regl,
   opts = {}
 ) {
@@ -148,7 +152,7 @@ function createDrawLines(
             capScale,
             miterLimit,
           };
-          splitEndpoints = !!meta.startcap;
+          splitEndpoints = !!meta.orientation;
         }
 
         if (lineProps.vertexAttributes) {
@@ -168,12 +172,12 @@ function createDrawLines(
 
         if (endpointProps) {
           const endpointDst = joinType === 'round' ? allRoundedCaps : allMiterCaps;
-          if (meta.startcap) {
-            endpointDst.push({...endpointProps, split: false});
+          if (meta.orientation) {
+            endpointDst.push({...endpointProps, splitCaps: false});
           } else {
             endpointDst.push(
-              {...endpointProps, isStartCap: 1, split: true},
-              {...endpointProps, isStartCap: 0, split: true}
+              {...endpointProps, orientation: ORIENTATION.CAP_START, splitCaps: true},
+              {...endpointProps, orientation: ORIENTATION.CAP_END, splitCaps: true}
             );
           }
         }

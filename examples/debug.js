@@ -42,7 +42,7 @@ const lineData = window.linedata = {
   }
 };
 
-const drawLines = createDrawLines(regl, {
+const drawLines = reglLines(regl, {
   debug,
   vert: `
     precision highp float;

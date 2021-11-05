@@ -1,6 +1,6 @@
 const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
 
-const drawLines = createDrawLines(regl, {
+const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
 

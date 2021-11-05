@@ -4,7 +4,7 @@ const regl = createREGL({
 });
 
 // Instantiate a command for drawing lines
-const drawLines = createDrawLines(regl, {
+const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
 

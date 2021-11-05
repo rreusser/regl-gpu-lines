@@ -1,10 +1,10 @@
 # API
 
 ```js
-import createDrawLines from 'regl-gpu-lines';
+import reglLines from 'regl-gpu-lines';
 ```
 
-## `createDrawLines(regl, {vert, frag, debug, ...})`
+## `reglLines(regl, {vert, frag, debug, ...})`
 
 Instantiate a drawing command using the specified shaders.
 
@@ -39,10 +39,10 @@ A fixed property which defines the width at a given vertex, measured in device p
 - `attributeList`: comman-separated list of vertex attributes passed to the function
 
 ### End cap orientation *(optional)*
-A fixed property which defines whether a given line cap is at the beginning or end of a line. If `startcap` is not provided, then end caps are rendered in two passes, first starting line caps, then ending line caps. If provided, then end caps are rendered in a single pass. (This complication results from the fact that there's no mechanism to tell which instance we're on, for example with `gl_InstanceID` which does not exist in GLSL ES 1.00.)
-#### `#pragma lines: startcap = <functionName>(<attributeList>)`
-- `functionName`: name of function which returns a `bool`, `true` if the cap is at the beginning of a line and `false` otherwise.
-- `attributeList`: command-separated list of vertex attributes passed to the function. Attributes consumed by a `startcap` function advance at a rate of one stride per instance.
+A fixed property which defines whether a given line cap is at the beginning or end of a line. If `capOrientation` is not provided, then end caps are rendered in two passes, first starting line caps, then ending line caps. If provided, then end caps are rendered in a single pass. (This complication results from the fact that there's no mechanism to tell which instance we're on, for example with `gl_InstanceID` which does not exist in GLSL ES 1.00.)
+#### `#pragma lines: capOrientation = <functionName>(<attributeList>)`
+- `functionName`: name of function which returns a `float`, `reglLines.START_CAP` (`0.0`) if the cap is a start cap and `reglLines.END_CAP` (`1.0`) if an end cap.
+- `attributeList`: command-separated list of vertex attributes passed to the function. Attributes consumed by a `capOrientation` function advance at a rate of one stride per instance.
 
 ### Varyings *(optional)*
 #### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)`

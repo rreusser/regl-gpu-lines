@@ -9,7 +9,7 @@ export default [
     input: 'src/index.js',
     output: 'dist/regl-gpu-lines.js',
     format: 'umd',
-    name: 'createDrawLines',
+    name: 'reglLines',
   },
 ].map(bundle => ({
   input: bundle.input,

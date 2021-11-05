@@ -1,33 +1,33 @@
 const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
 
-const drawLines = createDrawLines(regl, {
+const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
 
     #pragma lines: attribute vec2 xy;
-    #pragma lines: attribute float startcap;
+    #pragma lines: attribute float capOrientation;
     #pragma lines: position = getPosition(xy);
     #pragma lines: width = getWidth();
-    #pragma lines: startcap = isStartCap(startcap);
+    #pragma lines: orientation = getCapOrientation(capOrientation);
     #pragma lines: varying float x = getX(xy);
 
     vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
-    float getWidth() { return 10.0; }
+    float getWidth() { return 40.0; }
     float getX(vec2 xy) { return xy.x; }
-    bool isStartCap(float startcap) { return startcap > 0.0; }`,
+    float getCapOrientation(float orientation) { return orientation; }`,
   frag: `
     precision lowp float;
     varying float x;
     void main () {
-      gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1);
-    }`
+      gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1.0);
+    }`,
 });
 
 const n = 51;
 const lineCount = 10;
 const positions = [];
 const endpoints = [];
-const isstart = [];
+const capOrientation = [];
 
 function xy (line, i) {
   let t = (i / (n - 1) * 2 - 1) * 0.9;
@@ -44,7 +44,7 @@ for (let line = 0; line < lineCount; line++) {
   // Push a start cap and and end cap for this segment
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
   for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
-  isstart.push(1, 0);
+  capOrientation.push(reglLines.CAP_START, reglLines.CAP_END);
 }
 
 // After this, render as normal!
@@ -58,7 +58,7 @@ const lineData = {
   endpointCount: endpoints.length / 3,
   endpointAttributes: {
     xy: regl.buffer(endpoints),
-    startcap: regl.buffer(isstart)
+    capOrientation: regl.buffer(capOrientation)
   }
 };
 
