@@ -75,7 +75,8 @@ const lineData = {
 regl.frame(() => {
   regl.clear({color: [0.2, 0.2, 0.2, 1]});
   drawLines([
-    {...lineData, phase: 0, color: [1, 0, 0]},
-    {...lineData, phase: Math.PI / 2, color: [0, 0, 1]}
+    {...lineData, phase: 0, color: [0.5, 1, 0]},
+    {...lineData, phase: Math.PI / 2, color: [0, 0.5, 1]},
+    {...lineData, phase: Math.PI, color: [1, 0, 0.5]}
   ]);
 });
