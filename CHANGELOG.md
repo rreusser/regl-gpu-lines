@@ -1,3 +1,14 @@
+## 0.0.12
+
+### Bufixes
+
+- Fix an issue in which varying parameters were not triggering inclusion of their respective attributes.
+- Fix custom attribute divisor not set correctly
+
+### Features
+
+- Debugged interleaved attributes. They work great! :tada:
+ 
 ## 0.0.11
 
 ### Features

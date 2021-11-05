@@ -1,6 +1,6 @@
 {
   "name": "regl-gpu-lines",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Pure GPU instanced, screen-projected lines for regl",
   "main": "dist/regl-gpu-lines.min.js",
   "repository": {
@@ -16,7 +16,7 @@
     "build": "npm run bundle:rollup && npm run minify:rollup",
     "bundle:rollup": "mkdir -p dist && rollup -c",
     "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js",
-    "prepublishOnly": "npm run bundle:rollup && npm run minify:rollup"
+    "prepublishOnly": "npm run build:examples && npm run bundle:rollup && npm run minify:rollup"
   },
   "keywords": [
     "regl",
