@@ -1,5 +1,7 @@
 'use strict';
 
+const glslPrelude = require('./glsl-prelude.js');
+
 module.exports = createDrawMiterSegmentCommand;
 
 function createDrawMiterSegmentCommand({
@@ -27,16 +29,7 @@ ${debug ? 'attribute float debugInstanceID;' : ''}
 ${debug ? 'varying vec2 barycentric;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
-float miterExtension(vec2 t01, vec2 t12) {
-  float cosTheta = dot(t01, t12);
-  if (cosTheta < -0.9999999) return 0.0;
-  float sinTheta = t01.x * t12.y - t01.y * t12.x;
-  return sinTheta / (1.0 + cosTheta);
-}
-
-bool isnan(float val) {
-  return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
-}
+${glslPrelude}
 
 void main() {
   ${debug ? 'barycentric = indexBarycentric;' : ''}

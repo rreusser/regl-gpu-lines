@@ -1,6 +1,7 @@
 'use strict';
 
 const ORIENTATION = require('./orientation.json');
+const glslPrelude = require('./glsl-prelude.js');
 
 module.exports = createDrawRoundedCapCommand;
 
@@ -31,17 +32,7 @@ ${debug ? 'attribute float debugInstanceID;' : ''}
 ${debug ? 'varying vec2 barycentric;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
-#define PI ${Math.PI}
-
-float miterExtension(vec2 t01, vec2 t12) {
-  float cosTheta = dot(t01, t12);
-  if (cosTheta < -0.9999999) return 0.0;
-  float sinTheta = t01.x * t12.y - t01.y * t12.x;
-  return sinTheta / (1.0 + cosTheta);
-}
-
-#define CAP_START ${ORIENTATION.CAP_START}.0
-#define CAP_END ${ORIENTATION.CAP_END}.0
+${glslPrelude}
 
 void main() {
   ${debug ? 'barycentric = indexBarycentric;' : ''}
