@@ -49,7 +49,7 @@ Limitations:
   <a href="https://observablehq.com/d/ab6cd8bb0137889c"><img src="./docs/lorenz.gif" alt="GPGPU Lorenz Attractor"></a>
 </p>
 
-A minimal example looks like the following. There are no specified properties, in this case only a `vec2` attribute `xy` which we connect to the position via a GLSL `#pragma`.
+A minimal example looks like the following, where a `vec2` attribute `xy` is connected to line position via a GLSL `#pragma`.
 
 ```js
 const drawLines = reglLines(regl, {
@@ -69,7 +69,7 @@ const drawLines = reglLines(regl, {
       gl_FragColor = vec4(1);
     }`,
   uniforms: {
-    width: regl.prop('customWidth')
+    width: (ctx, props) => props.customWidth * ctx.pixelRatio
   }
 });
 
