@@ -60,7 +60,7 @@ const lineData = {
   cap: 'round',
   vertexCount: n,
   vertexAttributes: {
-    // Buffers are compatible with regl specification
+    // Attributes are compatible with regl specification
     xy: {
       buffer: verticesBuffer,
       offset: Float32Array.BYTES_PER_ELEMENT * 0,
