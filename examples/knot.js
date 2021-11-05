@@ -8,10 +8,9 @@ const drawLines = reglLines(regl, {
     uniform float width, time, phase;
     uniform vec2 aspect;
 
-    #pragma lines: attribute float x;
-    #pragma lines: position = torusKnow(x);
-    vec4 torusKnow(float x) {
-      float theta = ${Math.PI} * x * 2.0;
+    #pragma lines: attribute float theta;
+    #pragma lines: position = torusKnot(theta);
+    vec4 torusKnot(float theta) {
       const float p = 3.0;
       const float q = 5.0;
       float r = cos(q * theta) + 2.0;
@@ -68,7 +67,7 @@ const lineData = {
   cap: 'round',
   vertexCount: n + 3,
   vertexAttributes: {
-    x: regl.buffer([...Array(n + 3).keys()].map(i => i / n))
+    theta: regl.buffer([...Array(n + 3).keys()].map(i => i / n * Math.PI * 2))
   },
   borderWidth: 5
 };
