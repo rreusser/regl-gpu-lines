@@ -365,7 +365,28 @@ void main() {
     });
   }
 
-  var drawRoundedSegment = createDrawRoundedSegmentCommand;
+  var drawRoundedSegment = createDrawRoundedSegmentCommand; // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
+  // at the mitered end of the line and render vertices:
+  //
+  // - 0, 1, 2: mitered vertices, using beveled line logic
+  // - 3, 5, 7, 9: vertices around the circular arc join
+  // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
+  // - 10: a final vertex to close it off
+  //
+  // Is it worthwhile? I don't know. Consider that as independent triangles, this would
+  // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
+  //
+  //   1 ------------------------ 3 -5
+  //   | ...                     /|    7
+  //   |     ...                / |     \
+  //   |         ...           /  + ---- 9
+  //   |            ...       /  / \ _ -
+  //   |                ...  / / _ -\
+  //   0 ------------------ x -      \
+  //                         \        + 4, 6, 8 (= pC)
+  //                          \
+  //                           +- 2, 10
+  //
 
   function createDrawRoundedSegmentCommand({
     regl,
@@ -461,28 +482,6 @@ void main() {
   vec2 xy = vec2(0);
   mat2 xyBasis = mat2(0);
 
-  // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
-  // at the mitered end of the line and render vertices:
-  //
-  // - 0, 1, 2: mitered vertices, using beveled line logic
-  // - 3, 5, 7, 9: vertices around the circular arc join
-  // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
-  // - 10: a final vertex to close it off
-  //
-  // Is it worthwhile? I don't know. Consider that as independent triangles, this would
-  // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
-  //
-  //   1 ------------------------ 3 -5
-  //   | ...                     /|    7
-  //   |     ...                / |     \
-  //   |         ...           /  + ---- 9
-  //   |            ...       /  / \ _ -
-  //   |                ...  / / _ -\
-  //   0 ------------------ x -      \
-  //                         \        + 4, 6, 8 (= pC)
-  //                          \
-  //                           +- 2, 10
-
   gl_Position = pC;
   gl_Position.z = i < 2.0 ? pB.z : pC.z;
 
@@ -562,7 +561,28 @@ void main() {
     });
   }
 
-  var drawRoundedCap = createDrawRoundedCapCommand;
+  var drawRoundedCap = createDrawRoundedCapCommand; // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
+  // at the mitered end of the line and render vertices:
+  //
+  // - 0, 1, 2: mitered vertices, using beveled line logic
+  // - 3, 5, 7, 9: vertices around the circular arc join
+  // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
+  // - 10: a final vertex to close it off
+  //
+  // Is it worthwhile? I don't know. Consider that as independent triangles, this would
+  // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
+  //
+  //         ...1 ------------------------ 3 -5
+  //      ..    | ...                     /|    7
+  //     .      |     ...                / |     \
+  //     .      |         ...           /  + ---- 9
+  //     .      |            ...       /  / \ _ -
+  //      ..    |                ...  / / _ -\
+  //         ...0 ------------------ x -      \
+  //                                  \        + 4, 6, 8 (= pC)
+  //                                   \
+  //                                    +- 2, 10
+  //
 
   function createDrawRoundedCapCommand({
     regl,
@@ -677,28 +697,6 @@ void main() {
   } else {
     i -= capResolution2;
     iLast = joinResolution * 2.0 + 4.0;
-
-    // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
-    // at the mitered end of the line and render vertices:
-    //
-    // - 0, 1, 2: mitered vertices, using beveled line logic
-    // - 3, 5, 7, 9: vertices around the circular arc join
-    // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
-    // - 10: a final vertex to close it off
-    //
-    // Is it worthwhile? I don't know. Consider that as independent triangles, this would
-    // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
-    //
-    //         ...1 ------------------------ 3 -5
-    //      ..    | ...                     /|    7
-    //     .      |     ...                / |     \
-    //     .      |         ...           /  + ---- 9
-    //     .      |            ...       /  / \ _ -
-    //      ..    |                ...  / / _ -\
-    //         ...0 ------------------ x -      \
-    //                                  \        + 4, 6, 8 (= pC)
-    //                                   \
-    //                                    +- 2, 10
 
     gl_Position = pC;
 
