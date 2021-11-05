@@ -10,12 +10,12 @@ const debug = true;
 
 const state = wrapGUI(State({
     capResolution: State.Slider(21, {min: 1, max: 30, step: 1}),
-    joinResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
+    joinResolution: State.Slider(2, {min: 1, max: 30, step: 1}),
     cap: State.Select('square', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
-    lineWidth: State.Slider(60, {min: 1, max: 100, step: 0.1}),
+    lineWidth: State.Slider(80, {min: 1, max: 100, step: 0.1}),
     //borderWidth: State.Slider(10, {min: 0, max: 5, step: 0.1}),
-    opacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
     stretch: State.Slider(0.9, {min: 0.01, max: 2, step: 0.01}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.01}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
@@ -27,7 +27,7 @@ const state = wrapGUI(State({
 state.$onChange(() => draw())
 window.addEventListener('resize', () => draw());
 
-const points = [[-0.75, 0.75], [-0.5, 0.5], [-0.25, 0.75], [0.0, -0.7], [0.25, 0.75], [0.5, 0.0], [0.75, 0.75]];
+const points = [[-0.75, 0.75], [-0.5, 0.5], [-0.25, 0.75], [0.0, -0.7], [0.25, 0.75], [0.5, 0.7], [0.75, 0.0]];
 const widths = [1, 2, 1, 2, 1, 2, 1];
 const lineData = window.linedata = {
   vertexCount: points.length,
@@ -99,8 +99,8 @@ const drawLines = reglLines(regl, {
       ` : ''}
 
       // Invert the border
-      bool showBorder = sdf > 0.75 && length(lineColor.rgb - borderColor.rgb) > 0.1;
-      if (showBorder) gl_FragColor.rgb = mix(gl_FragColor.rgb, borderColor.rgb, 0.75);
+      //bool showBorder = sdf > 0.75 && length(lineColor.rgb - borderColor.rgb) > 0.1;
+      //if (showBorder) gl_FragColor.rgb = mix(gl_FragColor.rgb, borderColor.rgb, 0.75);
 
       // Draw a grid
       ${debug ? `

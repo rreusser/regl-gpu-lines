@@ -48,17 +48,16 @@ uniform vec2 resolution;
 varying vec2 lineCoord;
 varying float computedWidth;
 
-//${debug ? 'attribute vec2 indexBarycentric;' : ''}
-//${debug ? 'attribute float debugInstanceID;' : ''}
+${debug ? 'attribute vec2 indexBarycentric;' : ''}
+${debug ? 'attribute float debugInstanceID;' : ''}
 ${debug ? 'varying vec2 barycentric;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  gl_PointSize = 10.0;
-  //${debug ? 'barycentric = indexBarycentric;' : ''}
-  //${debug ? 'instanceID = debugInstanceID;' : ''}
+  ${debug ? 'barycentric = indexBarycentric;' : ''}
+  ${debug ? 'instanceID = debugInstanceID;' : ''}
   lineCoord = vec2(0);
 
   // Project all four points
@@ -71,22 +70,6 @@ void main() {
     isnan(pA.x) || isnan(pB.x) || isnan(pC.x) || isnan(pD.x)) {
     gl_Position = vec4(0);
     return;
-  }
-
-  float i = index;
-  float iLast = joinResolution * 2.0 + 4.0;
-  float iRound = joinResolution * 2.0;
-  bool isRound = true;
-  if (i <= iRound) {
-    vec4 tmp;
-    tmp = pC; pC = pB; pB = tmp;
-    tmp = pD; pD = pA; pA = tmp;
-  } else if (i < iRound + 4.0) {
-    isRound = false;
-    i -= iRound;
-  } else {
-    i -= iRound + 4.0;
-    i = 2.0 * joinResolution - i;
   }
 
   bool useC = true;
@@ -128,9 +111,12 @@ void main() {
   float dirB = dot(tAB, nBC) < 0.0 ? -1.0 : 1.0;
   float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
 
+  float i = index;
+  float iLast = joinResolution * 2.0 + 4.0;
+
   // Flip indexing if we turn the opposite direction, so that we draw backwards
   // and get the windind order correct
-  //if (dirC > 0.0) i = iLast - i;
+  if (dirC > 0.0) i = iLast - i;
 
   vec2 xy = vec2(0);
   mat2 xyBasis = mat2(0);
@@ -138,24 +124,7 @@ void main() {
   gl_Position = pC;
   gl_Position.z = i < 2.0 ? pB.z : pC.z;
 
-  if (isRound) {
-    gl_Position.z = pC.z;
-    vec2 xBasis = normalize(tCD + tBC);
-    vec2 yBasis = vec2(-xBasis.y, xBasis.x);
-    xyBasis = mat2(xBasis, yBasis);
-
-    if (mod(i, 2.0) == 0.0) {
-      // Odd-numbered point in this range are around the arc. Every other index is just the center point pC,
-      // repeated since has the geometry of a triangle fan
-      lineCoord.y = dirC;
-
-      //i = (i - 3.0) * 0.5;
-      if (dirC > 0.0) i = joinResolution - i;
-
-      float theta = -0.25 * acos(clamp(dot(nBC, nCD), -1.0, 1.0)) * (0.5 * (1.0 + dirC) - i / joinResolution);
-      xy = dirC * vec2(sin(theta), cos(theta));
-    }
-  } else {
+  if (i <= 2.0 || i == iLast) {
     // We're in the miter/segment portion
 
     // Use the turning direction to put the positive line coord on a consistent side
@@ -190,6 +159,25 @@ void main() {
       ) / computedWidth,
       lineCoord.y
     );
+  } else {
+    gl_Position.z = pC.z;
+    vec2 xBasis = normalize(tCD + tBC);
+    vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+    xyBasis = mat2(xBasis, yBasis);
+
+    if (mod(i, 2.0) != 0.0) {
+      // Odd-numbered point in this range are around the arc. (Even numbered points in this
+      // range are a no-op and fall through to just point C)
+      lineCoord.y = dirC;
+
+      // Our indexing is offset by three, and every other index is just the center point
+      // pC (which we repeat a bunch since we're drawing a triangle strip)
+      i = (i - 3.0) * 0.5;
+      if (dirC > 0.0) i = joinResolution - i;
+
+      float theta = acos(clamp(dot(nBC, nCD), -1.0, 1.0)) * (0.5 - i / joinResolution);
+      xy = dirC * vec2(sin(theta), cos(theta));
+    }
   }
 
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'C', 'B')).join('\n')}
@@ -201,20 +189,16 @@ void main() {
 }`,
     frag,
     attributes: {
-      index: {
-        buffer: [...Array(400).keys()],
-        divisor: 0
-      },
-      //...indexAttributes,
+      ...indexAttributes,
       ...segmentSpec.attrs
     },
     uniforms: {
       joinResolution: JOINRES
     },
-    primitive: 'points',//indexPrimitive,
+    primitive: indexPrimitive,
     instances: (ctx, props) => props.count - 3,
     count: debug
-      ? (ctx, props) => props.joinResolution//3 * props.joinResolution * 4 + 9
-      : (ctx, props) => props.joinResolution//props.joinResolution * 4 + 5
+      ? (ctx, props) => 3 * JOINRES * 2 + 9
+      : (ctx, props) => JOINRES * 2 + 5
   });
 }

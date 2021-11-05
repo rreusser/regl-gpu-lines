@@ -3,6 +3,7 @@
 const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
 const createDrawMiterCapCommand = require('./draw-miter-cap.js');
 const createDrawRoundedSegmentCommand = require('./draw-rounded-segment.js');
+const createDrawRoundedSegmentCommand2 = require('./draw-rounded-segment-2.js');
 const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
 const sanitizeBufferInputs = require('./sanitize-buffer.js');
@@ -99,6 +100,7 @@ function reglLines(
   const drawMiterSegment = createDrawMiterSegmentCommand(config);
   const drawMiterCap = createDrawMiterCapCommand(config);
   const drawRoundedSegment = createDrawRoundedSegmentCommand(config);
+  const drawRoundedSegment2 = createDrawRoundedSegmentCommand2(config);
   const drawRoundedCap = createDrawRoundedCapCommand(config);
 
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
@@ -118,7 +120,8 @@ function reglLines(
     const allMiterCaps = [];
     function flush (props) {
       userConfig(props, () => {
-        //if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
+        if (allRoundedSegments.length) drawRoundedSegment2(allRoundedSegments);
+        if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
         //if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
         if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
         //if (allMiterCaps.length) drawMiterCap(allMiterCaps);
