@@ -1,3 +1,13 @@
+## 0.0.11
+
+### Features
+
+- Rename `isstart` to `capOrientation` and change from a boolean to a float. `isstart` seemed unpleasantly asymmetric.  `CAP_START` and `CAP_END` are now exported as constants on the `reglLines` function. In the future this may be used as a bit mask to additionally allow signaling two-vertex lines.
+ 
+### Bugfixes
+
+- Throw errors when attempting to forward `count`, `elements`, `attributes` or `instances` to regl.
+
 ## 0.0.10
 
 ### Bugfixes
