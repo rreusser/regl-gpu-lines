@@ -45,7 +45,7 @@ function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
         output.type = output.buffer._buffer.dtype
       }
       if (input.hasOwnProperty('divisor')) {
-        output.divisor = divisor;
+        output.divisor = input.divisor;
       }
       if (input.hasOwnProperty('stride')) output.stride = input.stride;
     } else {

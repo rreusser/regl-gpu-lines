@@ -102,7 +102,7 @@ function analyzePragmas (pragmas) {
     if (!pragma.inputs) continue;
     for (const input of pragma.inputs) {
       const inputAttr = attrs.get(input);
-      if (pragma.type === 'property') {
+      if (pragma.type === 'property' || pragma.type === 'varying') {
         if (pragma.property === 'position') {
           inputAttr.vertexUsage |= ATTR_USAGE.EXTENDED;
           inputAttr.endpointUsage |= ATTR_USAGE.EXTENDED;
