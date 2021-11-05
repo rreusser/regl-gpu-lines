@@ -1,23 +1,22 @@
+<p align="center">
+  <img src="./docs/debug.png" alt="Lines with round joins and caps" width="600">
+</p>
+
 # regl-gpu-lines
 
 > Pure GPU instanced, screen-projected lines for [regl](https://github.com/regl-project/regl)
 
 [API documentation &rarr;](./API.md)
 
-[Examples &rarr;](#examples)
+[Live example &rarr;](https://rreusser.github.io/regl-gpu-lines/docs/debug.html)
+
+[All examples &rarr;](#examples)
 
 This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library.
 
 Apart from drawing nice lines, architecturally it has two goals:
 - **Data may live on the GPU.** Since the CPU is not required to touch the data, you can draw thousands of separate lines very efficiently with just two WebGL draw calls.
 - **Minimize unnecessary constraints.** The module facilitates setup but is agnostic toward projection, colors, blending, etc. Attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
-
-<p align="center">
-  <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">
-    <img src="./docs/debug.png" alt="Lines with round joins and caps" width="600">
-  </a></div>
-  <div><a href="https://rreusser.github.io/regl-gpu-lines/docs/debug.html">Live demo &rarr;</a></div>
-</p>
 
 Features:
 
@@ -124,4 +123,4 @@ See [API documentation](./API.md).
 
 ## License
 
-&copy; 2021 Ricky Reusser. MIT License
+&copy; 2021 Ricky Reusser. MIT License.
