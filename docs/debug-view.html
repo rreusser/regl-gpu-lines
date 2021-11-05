@@ -27,7 +27,7 @@ const x = [...Array(n).keys()].map(t => (t / (n - 1) * 2 - 1) * 0.8);
 const xy = x.map(x => [x, 0.5 * Math.cos(x * 8)])
 
 const lineData = window.linedata = {
-  join: 'round',
+  join: 'miter',
   joinResolution: 4,
   cap: 'round',
   capResolution: 8,
@@ -82,7 +82,7 @@ const drawLines = reglLines(regl, {
       float wire = wireframe(barycentric, 0.5 * pixelRatio, 1.0);
       gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
 
-      gl_FragColor.a = 0.5;
+      gl_FragColor.a = 0.6;
     }`,
   uniforms: {
     pixelRatio: regl.context('pixelRatio'),
@@ -146,7 +146,7 @@ const x = [...Array(n).keys()].map(t => (t / (n - 1) * 2 - 1) * 0.8);
 const xy = x.map(x => [x, 0.5 * Math.cos(x * 8)])
 
 const lineData = window.linedata = {
-  join: 'round',
+  join: 'miter',
   joinResolution: 4,
   cap: 'round',
   capResolution: 8,
@@ -201,7 +201,7 @@ const drawLines = reglLines(regl, {
       float wire = wireframe(barycentric, 0.5 * pixelRatio, 1.0);
       gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
 
-      gl_FragColor.a = 0.5;
+      gl_FragColor.a = 0.6;
     }`,
   uniforms: {
     pixelRatio: regl.context('pixelRatio'),
