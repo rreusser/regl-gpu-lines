@@ -30,7 +30,7 @@ Limitations:
 
 - Lines with two vertices are rendered as overlapping end caps
 - Width is best varied slowly as line joins to not take into account varying width
-- Using the `lineCoord` varying to construct a SDF border requires `round` joins to produce consistent-width borders
+- SDF borders Using the `lineCoord` are only constant-width with `round` joins
 - Line dashes are possible by passing a varying attribute, but will be skewed due to the geometry and resulting varying interpolation
 
 ## Examples
