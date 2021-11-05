@@ -33,6 +33,20 @@ Limitations:
 - SDF borders Using the `lineCoord` are only constant-width with `round` joins
 - Line dashes are possible by passing a varying attribute, but will be skewed due to the triangulation used
 
+## Install
+
+The `dist/` directory contains UMD bundles, or you may use from a CDN, e.g. [https://unpkg.com/regl-gpu-lines@0.0.12](https://unpkg.com/regl-gpu-lines@0.0.12). Both expose the module as `reglLines`.
+
+Otherwise install from npm:
+
+```bash
+npm install regl-gpu-lines
+```
+
+## API
+
+See [API documentation](./API.md).
+
 ## Examples
 
 - [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A minimal example. Just a line.
@@ -90,20 +104,6 @@ const lineData = {
 
 drawLines(lineData);
 ```
-
-## Install
-
-The `dist/` directory contains UMD bundles, or you may use from a CDN, e.g. [https://unpkg.com/regl-gpu-lines@0.0.12](https://unpkg.com/regl-gpu-lines@0.0.12). Both expose the module as `reglLines`.
-
-Otherwise install from npm:
-
-```bash
-npm install regl-gpu-lines
-```
-
-## API
-
-See [API documentation](./API.md).
 
 ## See also
 
