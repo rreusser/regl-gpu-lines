@@ -99,9 +99,11 @@ npm install regl-gpu-lines
 
 Or you may use from a CDN in environments like Observable or Codepen:
 
-```
-https://unpkg.com/regl-gpu-lines@latest
-```
+[https://unpkg.com/regl-gpu-lines@latest](https://unpkg.com/regl-gpu-lines@latest)
+
+Though the module is changing quickly, so you should really pin the version, e.g.
+
+[https://unpkg.com/regl-gpu-lines@0.0.11](https://unpkg.com/regl-gpu-lines@0.0.11)
 
 ## API
 
