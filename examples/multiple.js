@@ -21,7 +21,6 @@ const drawLines = reglLines(regl, {
     void main () {
       gl_FragColor = vec4(0.5 + cos(8.0 * (x - vec3(0, 1, 2) * 3.141 / 3.0)), 1.0);
     }`,
-  count: 5
 });
 
 const n = 51;

@@ -12,8 +12,8 @@ const ORIENTATION = require('./orientation.json');
 
 module.exports = reglLines;
 
-module.exports.CAP_START = ORIENTATION.CAP_START
-module.exports.CAP_END = ORIENTATION.CAP_END
+reglLines.CAP_START = ORIENTATION.CAP_START
+reglLines.CAP_END = ORIENTATION.CAP_END
 
 const FORBIDDEN_PROPS = new Set(['count', 'instances', 'attributes', 'elements']);
 
