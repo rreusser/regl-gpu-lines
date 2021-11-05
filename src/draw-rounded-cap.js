@@ -90,7 +90,7 @@ void main() {
 
   // Flip indexing if we turn the opposite direction, so that we draw backwards
   // and get the winding order correct
-  if (dirC > 0.0) i = iLast - i;
+  //if (dirC > 0.0) i = iLast - i;
 
   vec2 xy = vec2(0);
   mat2 xyBasis = mat2(0);
@@ -112,7 +112,6 @@ void main() {
       xy = vec2(sin(theta), -cos(theta) * dirC);
       if (abs(xy.x) > 0.1) xy *= capScale;
       lineCoord = xy;
-      if (orientation == CAP_END) lineCoord.y = -lineCoord.y;
       gl_Position.xy += computedWidth * (xyBasis * xy);
     }
   } else {
@@ -144,7 +143,6 @@ void main() {
     gl_Position = pC;
 
     bool isSegment = i <= 2.0 || i == iLast;
-    if (!isSegment && orientation == CAP_END) i = 3.0;
     if (i <= 2.0 || i == iLast) {
       // We're in the miter/segment portion
 
@@ -194,16 +192,16 @@ void main() {
         i = (i - 3.0) * 0.5;
         if (dirC > 0.0) i = joinResolution - i;
 
-        float theta = acos(clamp(dot(nBC, nCD), -1.0, 1.0)) * (0.5 - i / joinResolution);
+        float theta = 0.5 * acos(clamp(dot(nBC, nCD), -1.0, 1.0)) * (0.5 - 0.5 * dirC - i / joinResolution);
         xy = dirC * vec2(sin(theta), cos(theta));
       }
     }
 
-    if (orientation == CAP_END) lineCoord.y = -lineCoord.y;
-
     // Compute the final position
     gl_Position.xy += computedWidth * (xyBasis * xy);
   }
+
+  if (orientation == CAP_END) lineCoord.y = -lineCoord.y;
 
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'C', 'B')).join('\n')}
 
