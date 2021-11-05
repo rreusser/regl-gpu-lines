@@ -1,5 +1,18 @@
 # API
 
+- [Draw command constructor](#vertex-shader-data-flow)
+- [Vertex shader data flow](#)
+  - [attribute](#vertex-attributes-required)
+  - [position](#vertex-position-required)
+  - [width](#line-width-required)
+  - [capOrientation](#end-cap-orientation-optional)
+  - [varying](#varyings-optional)
+- [Fragment shader](#fragment-shader)
+  - [lineCoord](#fragment-shader)
+- [Drawing lines](#drawing-lines)
+
+## Draw command constructor
+
 ```js
 import reglLines from 'regl-gpu-lines';
 ```
