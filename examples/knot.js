@@ -47,8 +47,8 @@ const drawLines = reglLines(regl, {
     aspect: ctx => ctx.viewportWidth > ctx.viewportHeight
       ? [ctx.viewportHeight / ctx.viewportWidth, 1]
       : [1, ctx.viewportWidth / ctx.viewportHeight],
-    width: (ctx, props) => ctx.pixelRatio * props.width,
-    borderWidth: (ctx, props) => ctx.pixelRatio * props.borderWidth,
+    width: (ctx, props) => ctx.pixelRatio * Math.min(ctx.viewportWidth, ctx.viewportHeight) / 40,
+    borderWidth: (ctx, props) => ctx.pixelRatio * Math.min(ctx.viewportWidth, ctx.viewportHeight) / (40 * 6),
     phase: regl.prop('phase'),
     color: regl.prop('color')
   },
@@ -60,10 +60,7 @@ const n = 501;
 
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
-const width = Math.min(window.innerWidth, window.innerHeight) / 20;
 const lineData = {
-  width,
-  borderWidth: width / 6,
   join: 'bevel',
   vertexCount: n + 3,
   vertexAttributes: {
@@ -72,6 +69,7 @@ const lineData = {
 };
 
 function draw() {
+  regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1]});
   drawLines([
     {...lineData, phase: 0, color: [1, 0, 0.5]},

@@ -56,7 +56,7 @@ See [API documentation](./API.md).
 - [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Create a closed loop by omitting end caps and repeating the first three vertices at the end.
 - [Line border](https://rreusser.github.io/regl-gpu-lines/docs/border.html): Use `lineCoord` to draw a SDF line border
 - [Interleaved attributes](https://rreusser.github.io/regl-gpu-lines/docs/strided.html): Instead of a [regl buffer](https://github.com/regl-project/regl/blob/master/API.md#buffers), you can pass a [regl-style attribute description](https://github.com/regl-project/regl/blob/master/API.md#attributes) with `buffer`, `stride`, `offset`, and `divisor` properties in order to used interleaved, packed attribute data.
-- [Torus knot](https://rreusser.github.io/regl-gpu-lines/docs/knot.html): A [torus knot](https://en.wikipedia.org/wiki/Torus_knot) which can be difficult to draw with SVG.
+- [Torus knot](https://rreusser.github.io/regl-gpu-lines/docs/knot.html): A [torus knot](https://en.wikipedia.org/wiki/Torus_knot) with layering which can be difficult to draw with SVG.
 - [Debug](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): Visually debug line geometry
 - [GPGPU Strange Attractors](https://observablehq.com/d/ab6cd8bb0137889c): Feed a GPU particle simulation from texture data directly into line rendering
 
