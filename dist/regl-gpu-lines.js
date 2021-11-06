@@ -68,16 +68,16 @@ uniform vec2 resolution;
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
+${debug ? 'attribute float index;' : ''}
 ${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = debugInstanceID;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord.x = 0.0;
   lineCoord.y = linePosition.y;
 
@@ -171,28 +171,19 @@ void main() {
   gl_Position *= computedW;
 }`,
       frag,
-      attributes: Object.assign({
+      attributes: { ...indexAttributes,
+        ...segmentSpec.attrs,
         linePosition: {
-          // prettier-ignore
-          buffer: debug // Expand triangles for debug
-          ? [[0, -1], [1, -1], [0, 1], [0, 1], [1, -1], [1, 1], [1, 1], [1, -1], [2, 1]] // Render as a triangle strip to minimize vertex evaluations
-          : [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1]],
+          buffer: [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1]],
           divisor: 0
-        },
-        ...segmentSpec.attrs
-      }, debug ? {
-        indexBarycentric: {
-          buffer: [0, 1, 2].map(() => [[0, 0], [1, 0], [0, 1]]).flat(),
-          divisor: 0
-        },
-        debugInstanceID: indexAttributes.debugInstanceID
-      } : {}),
+        }
+      },
       uniforms: {
         miterLimit: (ctx, props) => Math.sqrt(props.miterLimit * props.miterLimit - 1)
       },
-      primitive: debug ? 'triangles' : 'triangle strip',
+      primitive: 'triangle strip',
       instances: (ctx, props) => props.count - 3,
-      count: debug ? 9 : 5
+      count: 5
     });
   }
 
@@ -220,15 +211,14 @@ ${meta.orientation ? '' : 'uniform float uOrientation;'}
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = -1.0;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
 
   float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
@@ -361,7 +351,7 @@ void main() {
       },
       primitive: indexPrimitive,
       instances: (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count,
-      count: debug ? (ctx, props) => 3 * props.capResolution * 2 + 9 : (ctx, props) => props.capResolution * 2 + 5
+      count: (ctx, props) => props.capResolution * 2 + 5
     });
   }
 
@@ -409,17 +399,17 @@ uniform vec2 resolution;
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
 ${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = debugInstanceID;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
+
 
   // Project all four points
   vec4 pA = ${meta.position.generate('A')};
@@ -555,9 +545,9 @@ void main() {
       uniforms: {
         joinResolution: regl.prop('joinResolution')
       },
-      primitive: indexPrimitive,
+      primitive: 'triangle strip',
       instances: (ctx, props) => props.count - 3,
-      count: debug ? (ctx, props) => 3 * props.joinResolution * 2 + 9 : (ctx, props) => props.joinResolution * 2 + 5
+      count: (ctx, props) => props.joinResolution * 2 + 5
     });
   }
 
@@ -606,16 +596,14 @@ ${meta.orientation ? '' : 'uniform float uOrientation;'}
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
-${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = -1.0;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
 
   float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
@@ -777,9 +765,9 @@ void main() {
         uOrientation: regl.prop('orientation'),
         capScale: regl.prop('capScale')
       },
-      primitive: indexPrimitive,
+      primitive: 'triangle strip',
       instances: (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count,
-      count: debug ? (ctx, props) => (props.joinResolution + props.capResolution) * 2 * 3 + 9 : (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
+      count: (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
     });
   }
 
@@ -1170,7 +1158,7 @@ void main() {
     // and divide by the resolution in the shader so that we can allocate a
     // single, fixed buffer and the resolution is entirely a render-time decision.
     //
-    // This value is chosen for aesthetic reasons, but also because there seems to be
+    // The max value is chosen for aesthetic reasons, but also because there seems to be
     // a loss of precision or something above 30 at which it starts to get the indices
     // wrong.
 
@@ -1179,21 +1167,16 @@ void main() {
     const indexAttributes = {};
 
     if (debug) {
-      indexPrimitive = 'triangles';
-      indexBuffer = regl.buffer([...Array(MAX_ROUND_JOIN_RESOLUTION * 4).keys()].map(i => [[2 * i, 2 * i + 1, 2 * i + 2], [2 * i + 2, 2 * i + 1, 2 * i + 3]].flat()));
-      indexAttributes.indexBarycentric = {
-        divisor: 0,
-        buffer: regl.buffer([...new Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 3).keys()].map(() => [[0, 0], [1, 0], [0, 1]]).flat())
-      };
+      // TODO: Allocate/grow lazily to avoid an arbitrary limit
+      const MAX_DEBUG_VERTICES = 16384;
       indexAttributes.debugInstanceID = {
-        divisor: 1,
-        buffer: regl.buffer(new Uint16Array([...Array(10000).keys()]))
+        buffer: regl.buffer(new Uint16Array([...Array(MAX_DEBUG_VERTICES).keys()])),
+        divisor: 1
       };
-    } else {
-      indexPrimitive = 'triangle strip';
-      indexBuffer = regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 5).keys()]));
     }
 
+    indexPrimitive = 'triangle strip';
+    indexBuffer = regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 5).keys()]));
     indexAttributes.index = {
       buffer: indexBuffer,
       divisor: 0
