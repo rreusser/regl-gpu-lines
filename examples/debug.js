@@ -72,14 +72,15 @@ const drawLines = reglLines(regl, {
     varying vec2 lineCoord;
     ${debug ? `
     varying float instanceID;
-    varying vec2 barycentric;
+    varying vec2 triStripGridCoord;
     ` : ''}
 
-    float gridFactor (vec2 vBC, float width, float feather) {
+    // Unit grid lines
+    float grid (vec3 parameter, float width, float feather) {
       float w1 = width - feather * 0.5;
-      vec3 bary = vec3(vBC.x, vBC.y, 1.0 - vBC.x - vBC.y);
-      vec3 d = fwidth(bary);
-      vec3 a3 = smoothstep(d * w1, d * (w1 + feather), bary);
+      vec3 d = fwidth(parameter);
+      vec3 looped = 0.5 - abs(mod(parameter, 1.0) - 0.5);
+      vec3 a3 = smoothstep(d * w1, d * (w1 + feather), looped);
       return min(min(a3.x, a3.y), a3.z);
     }
 
@@ -104,7 +105,17 @@ const drawLines = reglLines(regl, {
 
       // Draw a grid
       ${debug ? `
-      gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, gridFactor(barycentric, 0.5 * pixelRatio, 1.0));
+      // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.
+      //
+      //   0     2     4     6     8
+      //   + --- + --- + --- + --- +
+      //   |   / |   / |   / |   / |
+      //   | /   | /   | /   | /   |
+      //   + --- + --- + --- + --- +
+      //   1     3     5     7     9
+      //
+      float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
+      gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
       ` : ''}
     }`
 });

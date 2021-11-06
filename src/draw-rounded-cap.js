@@ -5,6 +5,28 @@ const glslPrelude = require('./glsl-prelude.js');
 
 module.exports = createDrawRoundedCapCommand;
 
+// The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
+// at the mitered end of the line and render vertices:
+//
+// - 0, 1, 2: mitered vertices, using beveled line logic
+// - 3, 5, 7, 9: vertices around the circular arc join
+// - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
+// - 10: a final vertex to close it off
+//
+// Is it worthwhile? I don't know. Consider that as independent triangles, this would
+// contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
+//
+//         ...1 ------------------------ 3 -5
+//      ..    | ...                     /|    7
+//     .      |     ...                / |     \
+//     .      |         ...           /  + ---- 9
+//     .      |            ...       /  / \ _ -
+//      ..    |                ...  / / _ -\
+//         ...0 ------------------ x -      \
+//                                  \        + 4, 6, 8 (= pC)
+//                                   \
+//                                    +- 2, 10
+//
 function createDrawRoundedCapCommand({
   regl,
   meta,
@@ -27,16 +49,14 @@ ${meta.orientation ? '' : 'uniform float uOrientation;'}
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
-${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = -1.0;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
 
   float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
@@ -118,28 +138,6 @@ void main() {
     i -= capResolution2;
     iLast = joinResolution * 2.0 + 4.0;
 
-    // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
-    // at the mitered end of the line and render vertices:
-    //
-    // - 0, 1, 2: mitered vertices, using beveled line logic
-    // - 3, 5, 7, 9: vertices around the circular arc join
-    // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
-    // - 10: a final vertex to close it off
-    //
-    // Is it worthwhile? I don't know. Consider that as independent triangles, this would
-    // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
-    //
-    //         ...1 ------------------------ 3 -5
-    //      ..    | ...                     /|    7
-    //     .      |     ...                / |     \
-    //     .      |         ...           /  + ---- 9
-    //     .      |            ...       /  / \ _ -
-    //      ..    |                ...  / / _ -\
-    //         ...0 ------------------ x -      \
-    //                                  \        + 4, 6, 8 (= pC)
-    //                                   \
-    //                                    +- 2, 10
-
     gl_Position = pC;
 
     bool isSegment = i <= 2.0 || i == iLast;
@@ -219,10 +217,8 @@ void main() {
       uOrientation: regl.prop('orientation'),
       capScale: regl.prop('capScale')
     },
-    primitive: indexPrimitive,
+    primitive: 'triangle strip',
     instances: (ctx, props) => props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count,
-    count: debug
-      ? (ctx, props) => (props.joinResolution + props.capResolution) * 2 * 3 + 9
-      : (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
+    count: (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
   });
 }

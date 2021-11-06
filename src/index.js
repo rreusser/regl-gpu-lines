@@ -59,40 +59,24 @@ function reglLines(
   // and divide by the resolution in the shader so that we can allocate a
   // single, fixed buffer and the resolution is entirely a render-time decision.
   //
-  // This value is chosen for aesthetic reasons, but also because there seems to be
+  // The max value is chosen for aesthetic reasons, but also because there seems to be
   // a loss of precision or something above 30 at which it starts to get the indices
   // wrong.
   const MAX_ROUND_JOIN_RESOLUTION = 30;
-  let indexBuffer, indexPrimitive, indexElements, indexBarycentric;
+  let indexBuffer, indexPrimitive, indexElements;
   const indexAttributes = {};
   if (debug) {
-    indexPrimitive = 'triangles';
-    indexBuffer = regl.buffer(
-      [...Array(MAX_ROUND_JOIN_RESOLUTION * 4).keys()].map(i =>
-        [
-          [2 * i, 2 * i + 1, 2 * i + 2],
-          [2 * i + 2, 2 * i + 1, 2 * i + 3]
-        ].flat()
-      )
-    );
-    indexAttributes.indexBarycentric = {
-      divisor: 0,
-      buffer: regl.buffer(
-        [...new Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 3).keys()]
-          .map(() => [[0, 0], [1, 0], [0, 1]])
-          .flat()
-      )
-    };
+    // TODO: Allocate/grow lazily to avoid an arbitrary limit
+    const MAX_DEBUG_VERTICES = 16384;
     indexAttributes.debugInstanceID = {
-      divisor: 1,
-      buffer: regl.buffer(new Uint16Array([...Array(10000).keys()]))
+      buffer: regl.buffer(new Uint16Array([...Array(MAX_DEBUG_VERTICES).keys()])),
+      divisor: 1
     };
-  } else {
-    indexPrimitive = 'triangle strip';
-    indexBuffer = regl.buffer(
-      new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 5).keys()])
-    );
   }
+  indexPrimitive = 'triangle strip';
+  indexBuffer = regl.buffer(
+    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 5).keys()])
+  );
   indexAttributes.index = { buffer: indexBuffer, divisor: 0 };
 
   // Instantiate commands

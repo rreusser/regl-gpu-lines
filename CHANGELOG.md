@@ -1,3 +1,13 @@
+## 0.0.14
+
+### Features
+
+- Convert the index attribute into a unit-grid-aligned coordinate for wireframes. This is equivalent but much easier than exploding the triangle strip geometry into individual triangles.
+
+### Bugfixes 
+
+- Republish after botched 0.0.13 publish
+
 ## 0.0.12
 
 ### Bufixes

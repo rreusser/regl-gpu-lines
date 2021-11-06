@@ -24,16 +24,16 @@ uniform vec2 resolution;
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
+${debug ? 'attribute float index;' : ''}
 ${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = debugInstanceID;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord.x = 0.0;
   lineCoord.y = linePosition.y;
 
@@ -127,39 +127,20 @@ void main() {
   gl_Position *= computedW;
 }`,
     frag,
-    attributes: Object.assign(
-      {
-        linePosition: {
-          // prettier-ignore
-          buffer: debug
-            // Expand triangles for debug
-            ? [
-                [0, -1],[1, -1],[0, 1],
-                [0,  1],[1, -1],[1, 1],
-                [1,  1],[1, -1],[2, 1]
-              ]
-            // Render as a triangle strip to minimize vertex evaluations
-            : [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1]],
-          divisor: 0
-        },
-        ...segmentSpec.attrs
+    attributes: {
+      ...indexAttributes,
+      ...segmentSpec.attrs,
+      linePosition: {
+        buffer: [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1]],
+        divisor: 0
       },
-      debug
-        ? {
-            indexBarycentric: {
-              buffer: [0, 1, 2].map(() => [[0, 0], [1, 0], [0, 1]]).flat(),
-              divisor: 0
-            },
-            debugInstanceID: indexAttributes.debugInstanceID
-          }
-        : {}
-    ),
+    },
     uniforms: {
       miterLimit: (ctx, props) =>
         Math.sqrt(props.miterLimit * props.miterLimit - 1)
     },
-    primitive: debug ? 'triangles' : 'triangle strip',
+    primitive: 'triangle strip',
     instances: (ctx, props) => props.count - 3,
-    count: debug ? 9 : 5
+    count: 5
   });
 }
