@@ -47,17 +47,17 @@ uniform vec2 resolution;
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
 ${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = debugInstanceID;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
+
 
   // Project all four points
   vec4 pA = ${meta.position.generate('A')};
@@ -194,10 +194,8 @@ void main() {
     uniforms: {
       joinResolution: regl.prop('joinResolution'),
     },
-    primitive: indexPrimitive,
+    primitive: 'triangle strip',
     instances: (ctx, props) => props.count - 3,
-    count: debug
-      ? (ctx, props) => 3 * props.joinResolution * 2 + 9
-      : (ctx, props) => props.joinResolution * 2 + 5
+    count: (ctx, props) => props.joinResolution * 2 + 5
   });
 }

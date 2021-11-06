@@ -49,16 +49,14 @@ ${meta.orientation ? '' : 'uniform float uOrientation;'}
 varying vec2 lineCoord;
 varying float computedWidth;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
-${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
+${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
   ${debug ? 'instanceID = -1.0;' : ''}
+  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
 
   float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
@@ -221,10 +219,8 @@ void main() {
       uOrientation: regl.prop('orientation'),
       capScale: regl.prop('capScale')
     },
-    primitive: indexPrimitive,
+    primitive: 'triangle strip',
     instances: (ctx, props) => props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count,
-    count: debug
-      ? (ctx, props) => (props.joinResolution + props.capResolution) * 2 * 3 + 9
-      : (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
+    count: (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
   });
 }
