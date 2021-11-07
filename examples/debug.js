@@ -47,10 +47,7 @@ function computeCumulativeDistance (points, project) {
       pproj[i][1] - pproj[i - 1][1]
     ))
   }
-  let dashLen = state.dashLength * state.lineWidth * pixelRatio;
-  const dashCount = Math.round((dist[dist.length - 1] - dist[0]) / dashLen);
-  const scaleFactor = dashCount % 2 === 1 ? (dashCount + 1) / dashCount : 1;
-  return dist.map(d => dashLen * (Math.round(d * scaleFactor / dashLen) + 0.5));
+  return dist;
 }
 
 const points = [[-0.75, -0.25], [-0.5, -0.6], [-0.25, 0.5], [0.0, -0.5], [0.25, 0.45], [0.5, 0.5], [0.75, 0.0]];
