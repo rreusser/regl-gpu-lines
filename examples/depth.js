@@ -13,7 +13,7 @@ const drawLines = reglLines(regl, {
     #pragma lines: attribute float x;
     #pragma lines: position = getPosition(x);
     vec4 getPosition(float x) {
-      float theta = 3.141 * (6.0 * x + time) - phase;
+      float theta = 3.141 * (6.0 * x + time * 0.0) - phase;
       return vec4(
         0.5 * vec3(
           cos(theta),
@@ -63,7 +63,7 @@ const x = [...Array(n).keys()].map(i => i / (n - 1));
 // them on every draw call.
 const lineData = {
   width: 30,
-  join: 'bevel',
+  join: 'round',
   cap: 'round',
   vertexCount: x.length,
   vertexAttributes: { x: regl.buffer(x) },
@@ -72,11 +72,12 @@ const lineData = {
   borderWidth: 5
 };
 
-regl.frame(() => {
+//regl.frame(() => {
+  regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1]});
   drawLines([
     {...lineData, phase: 0, color: [0.5, 1, 0]},
     {...lineData, phase: Math.PI / 2, color: [0, 0.5, 1]},
     {...lineData, phase: Math.PI, color: [1, 0, 0.5]}
   ]);
-});
+//});

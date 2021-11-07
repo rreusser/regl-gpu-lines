@@ -1,8 +1,8 @@
 'use strict';
 
 const glslPrelude = require('./glsl-prelude.js');
-const JOINRES = 4;
 
+const JOINRES = 4;
 module.exports = createDrawRoundedSegmentCommand;
 
 // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
@@ -47,18 +47,20 @@ uniform vec2 resolution;
 
 varying vec2 lineCoord;
 varying float computedWidth;
+varying float isone;
 
-${debug ? 'attribute vec2 indexBarycentric;' : ''}
-${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 barycentric;' : ''}
-${debug ? 'varying float instanceID;' : ''}
+${true ? 'attribute float debugInstanceID;' : ''}
+${true ? 'varying vec2 triStripGridCoord;' : ''}
+${true ? 'varying float instanceID;' : ''}
 
 ${glslPrelude}
 
 void main() {
-  ${debug ? 'barycentric = indexBarycentric;' : ''}
-  ${debug ? 'instanceID = debugInstanceID;' : ''}
+  isone = 0.0;
+  ${true ? 'instanceID = debugInstanceID;' : ''}
+  ${true ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
   lineCoord = vec2(0);
+
 
   // Project all four points
   vec4 pA = ${meta.position.generate('A')};
@@ -193,12 +195,10 @@ void main() {
       ...segmentSpec.attrs
     },
     uniforms: {
-      joinResolution: JOINRES
+      joinResolution: JOINRES,
     },
-    primitive: indexPrimitive,
+    primitive: 'triangle strip',
     instances: (ctx, props) => props.count - 3,
-    count: debug
-      ? (ctx, props) => 3 * JOINRES * 2 + 9
-      : (ctx, props) => JOINRES * 2 + 5
+    count: (ctx, props) => JOINRES * 2 + 5
   });
 }

@@ -17,4 +17,8 @@ float miterExtension(vec2 t01, vec2 t12) {
 
 bool isnan(float val) {
   return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
+}
+
+bool invalid(vec4 p) {
+  return p.w==0.0||isnan(p.x);
 }`;

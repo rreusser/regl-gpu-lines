@@ -75,16 +75,16 @@ function reglLines(
   }
   indexPrimitive = 'triangle strip';
   indexBuffer = regl.buffer(
-    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 5).keys()])
+    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()])
   );
   indexAttributes.index = { buffer: indexBuffer, divisor: 0 };
 
   // Instantiate commands
   const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
-  const drawMiterSegment = createDrawMiterSegmentCommand(config);
-  const drawMiterCap = createDrawMiterCapCommand(config);
+  //const drawMiterSegment = createDrawMiterSegmentCommand(config);
+  //const drawMiterCap = createDrawMiterCapCommand(config);
   const drawRoundedSegment = createDrawRoundedSegmentCommand(config);
-  const drawRoundedSegment2 = createDrawRoundedSegmentCommand2(config);
+  //const drawRoundedSegment2 = createDrawRoundedSegmentCommand2({...config, debug: false});
   const drawRoundedCap = createDrawRoundedCapCommand(config);
 
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
@@ -104,7 +104,7 @@ function reglLines(
     const allMiterCaps = [];
     function flush (props) {
       userConfig(props, () => {
-        if (allRoundedSegments.length) drawRoundedSegment2(allRoundedSegments);
+        //if (allRoundedSegments.length) drawRoundedSegment2(allRoundedSegments);
         if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
         //if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
         if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
@@ -125,7 +125,7 @@ function reglLines(
         const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
 
         const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
-        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;;
+        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution * 2;
         if (capType === 'square') {
           capResolution = 3;
         } else if (capType === 'none') {

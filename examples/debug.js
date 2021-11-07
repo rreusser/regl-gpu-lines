@@ -9,13 +9,13 @@ const regl = createREGL({
 const debug = true;
 
 const state = wrapGUI(State({
-    capResolution: State.Slider(21, {min: 1, max: 30, step: 1}),
-    joinResolution: State.Slider(2, {min: 1, max: 30, step: 1}),
-    cap: State.Select('square', {options: ['round', 'square', 'none']}),
+    capResolution: State.Slider(4, {min: 1, max: 30, step: 1}),
+    joinResolution: State.Slider(3, {min: 1, max: 30, step: 1}),
+    cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     lineWidth: State.Slider(80, {min: 1, max: 100, step: 0.1}),
     //borderWidth: State.Slider(10, {min: 0, max: 5, step: 0.1}),
-    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
     stretch: State.Slider(0.9, {min: 0.01, max: 2, step: 0.01}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.01}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
@@ -80,8 +80,8 @@ const drawLines = reglLines(regl, {
       float w1 = width - feather * 0.5;
       vec3 d = fwidth(parameter);
       vec3 looped = 0.5 - abs(mod(parameter, 1.0) - 0.5);
-      vec3 a3 = smoothstep(d * w1, d * (w1 + feather), looped);
-      return min(min(a3.x, a3.y), a3.z);
+      vec3 a3 = smoothstep(d * (w1 + feather), d * w1, looped);
+      return max(max(a3.x, a3.y), a3.z);
     }
 
     void main () {
@@ -98,10 +98,11 @@ const drawLines = reglLines(regl, {
         gl_FragColor.rgb = mod(instanceID, 2.0) == 0.0 ? vec3(0.4, 0.7, 1.0) : vec3(0.2, 0.3, 0.7);
       }
       ` : ''}
+      //gl_FragColor.rg = 0.5 * lineCoord.xy + 0.5;
 
-      // Invert the border
-      //bool showBorder = sdf > 0.75 && length(lineColor.rgb - borderColor.rgb) > 0.1;
-      //if (showBorder) gl_FragColor.rgb = mix(gl_FragColor.rgb, borderColor.rgb, 0.75);
+      // Add a border
+      bool showBorder = sdf > 0.75 && length(lineColor.rgb - borderColor.rgb) > 0.1;
+      if (showBorder) gl_FragColor.rgb = mix(gl_FragColor.rgb, borderColor.rgb, 0.75);
 
       // Draw a grid
       ${debug ? `
@@ -115,7 +116,8 @@ const drawLines = reglLines(regl, {
       //   1     3     5     7     9
       //
       float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
-      gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
+      //wire = mix(wire, grid(vec3(lineCoord.y * 6.0), 0.5 * pixelRatio, 1.0), 0.6);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1), wire);
       ` : ''}
     }`
 });
@@ -155,7 +157,7 @@ const applyCustomConfig = regl({
 
 function draw () {
   regl.poll();
-  regl.clear({color: [0.2, 0.2, 0.2, 1]});
+  regl.clear({color: [0.2, 0.2, 0.2, 1], depth: 1});
 
   applyCustomConfig({
     lineColor: [0, 0, 0, state.opacity],

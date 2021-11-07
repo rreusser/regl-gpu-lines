@@ -108,10 +108,6 @@ void main() {
   float i = index;
   float iLast = joinResolution * 2.0 + capResolution2 + 4.0;
 
-  // Flip indexing if we turn the opposite direction, so that we draw backwards
-  // and get the winding order correct
-  //if (dirC > 0.0) i = iLast - i;
-
   vec2 xy = vec2(0);
   mat2 xyBasis = mat2(0);
 
@@ -199,7 +195,7 @@ void main() {
     gl_Position.xy += computedWidth * (xyBasis * xy);
   }
 
-  if (orientation == CAP_END) lineCoord.y = -lineCoord.y;
+  if (orientation == CAP_END) lineCoord = -lineCoord;
 
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'C', 'B')).join('\n')}
 
