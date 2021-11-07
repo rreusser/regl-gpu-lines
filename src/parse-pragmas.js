@@ -51,8 +51,8 @@ function parsePragma (pragma) {
     const name = match[2];
     const getter = match[3];
     const inputs = match[4].split(',').map(str => str.trim()).filter(x => !!x);
-    const generate = (cond, a, b) => {
-      return `${name} = ${getter}(${inputs.map(input => `(${cond}) ? (${input + a}) : (${input + b})`).join(', ')});`
+    const generate = (interp, a, b) => {
+      return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${interp})`).join(', ')});`
     };
     return {type: 'varying', returnType, name, getter, inputs, generate};
   } else {

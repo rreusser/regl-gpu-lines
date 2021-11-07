@@ -1,5 +1,6 @@
+const pixelRatio = window.devicePixelRatio;
 const regl = createREGL({
-  pixelRatio: 2,
+  pixelRatio,
   extensions: [
     'ANGLE_instanced_arrays',
     'OES_standard_derivatives',
@@ -13,33 +14,71 @@ const state = wrapGUI(State({
     joinResolution: State.Slider(3, {min: 1, max: 30, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
-    lineWidth: State.Slider(80, {min: 1, max: 100, step: 0.1}),
+    lineWidth: State.Slider(20, {min: 1, max: 100, step: 0.1}),
     //borderWidth: State.Slider(10, {min: 0, max: 5, step: 0.1}),
     opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
-    stretch: State.Slider(0.9, {min: 0.01, max: 2, step: 0.01}),
-    flip: State.Slider(1, {min: -1, max: 1, step: 0.01}),
+    stretch: State.Slider(0.97, {min: 0.01, max: 2, step: 0.001}),
+    flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
+    dashLength: State.Slider(1, {min: 0.5, max: 8, step: 0.1}),
+    //dashLength: State.Slider(1, {min: 0.1, max: 2, step: 0.1}),
     //n: State.Slider(11, {min: 3, max: 101, step: 1}),
     depth: false,
     cull: false,
   })
 );
-state.$onChange(() => draw())
+state.$onChange(() => {
+  const progress = computeCumulativeDistance(points, p => [
+    (p[0] * Math.pow(state.stretch, 4.0) - 0.2) * window.innerWidth,
+    (p[1] * state.flip) * window.innerHeight,
+  ]);
+  progressBuffer.subdata(progress.flat());
+  endpointProgressBuffer.subdata([progress.slice(0, 3), progress.slice(-3).reverse()].flat());
+  draw();
+})
 window.addEventListener('resize', () => draw());
 
-const points = [[-0.75, 0.75], [-0.5, 0.5], [-0.25, 0.75], [0.0, -0.7], [0.25, 0.75], [0.5, 0.7], [0.75, 0.0]];
-const widths = [1, 2, 1, 2, 1, 2, 1];
-const lineData = window.linedata = {
+function computeCumulativeDistance (points, project) {
+  const pproj = points.map(project);
+  const dist = [0];
+  for (let i = 1; i < pproj.length; i++) {
+    dist.push(dist[i - 1] + Math.hypot(
+      pproj[i][0] - pproj[i - 1][0],
+      pproj[i][1] - pproj[i - 1][1]
+    ))
+  }
+  let dashLen = state.dashLength * state.lineWidth * pixelRatio;
+  const dashCount = Math.round((dist[dist.length - 1] - dist[0]) / dashLen);
+  const scaleFactor = dashCount % 2 === 1 ? (dashCount + 1) / dashCount : 1;
+  return dist.map(d => dashLen * (Math.round(d * scaleFactor / dashLen) + 0.5));
+}
+
+const points = [[-0.75, -0.25], [-0.5, -0.6], [-0.25, 0.5], [0.0, -0.5], [0.25, 0.45], [0.5, 0.5], [0.75, 0.0]];
+const widths = [1, 2, 0.7, 1.2, 1.5, 2, 1];
+const index = [...new Array(500).keys()];
+const progress = computeCumulativeDistance(points, p => [
+  (p[0] * Math.pow(state.stretch, 4.0) - 0.2) * window.innerWidth,
+  (p[1] * state.flip) * window.innerHeight,
+]);
+
+const progressBuffer = regl.buffer(progress);
+const endpointProgressBuffer = regl.buffer([progress.slice(0, 3), progress.slice(-3).reverse()]);
+
+const lineData = {
   vertexCount: points.length,
   vertexAttributes: {
     point: regl.buffer(points),
     width: regl.buffer(widths),
+    progress: progressBuffer,
+    pointIndex: regl.buffer(index),
   },
   endpointCount: 2,
   endpointAttributes: {
     point: regl.buffer([points.slice(0, 3), points.slice(-3).reverse()]),
     width: regl.buffer([widths.slice(0, 3), widths.slice(-3).reverse()]),
-  }
+    progress: endpointProgressBuffer,
+    pointIndex: regl.buffer([index.slice(0, 3), index.slice(-3).reverse()]),
+  },
 };
 
 const drawLines = reglLines(regl, {
@@ -49,10 +88,17 @@ const drawLines = reglLines(regl, {
 
     #pragma lines: attribute vec2 point;
     #pragma lines: attribute float width;
+    #pragma lines: attribute float progress;
+    #pragma lines: attribute float pointIndex;
     #pragma lines: position = project(point);
     #pragma lines: width = getWidth(width);
+    #pragma lines: varying float progress = getProgress(progress);
+    #pragma lines: varying float pointIndex = getPointIndex(pointIndex);
 
     uniform float stretch, flip, lineWidth;
+
+    float getProgress(float p) { return p; }
+    float getPointIndex(float p) { return p; }
 
     vec4 project (vec2 p) {
       return vec4(p * vec2(pow(stretch, 4.0), flip), 0, 1) - vec4(0.2,0,0,0);
@@ -66,10 +112,12 @@ const drawLines = reglLines(regl, {
     precision mediump float;
 
     uniform bool squareCap;
-    uniform float pixelRatio;
+    uniform float pixelRatio, dashLength;
     uniform vec4 borderColor, lineColor;
 
+    varying float useC;
     varying vec2 lineCoord;
+    varying float progress, pointIndex;
     ${debug ? `
     varying float instanceID;
     varying vec2 triStripGridCoord;
@@ -100,12 +148,17 @@ const drawLines = reglLines(regl, {
       ` : ''}
       //gl_FragColor.rg = 0.5 * lineCoord.xy + 0.5;
 
+      //gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1), fract(pointIndex * 4.0) > 0.5 ? 1.0 : 0.0);
+      float dash = fract(progress / (pixelRatio * dashLength)) > 0.5 ? 0.0 : 1.0;
+      if (dash == 0.0) gl_FragColor.a *= 0.2;
+      //gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1), dash);
+
       // Add a border
       bool showBorder = sdf > 0.75 && length(lineColor.rgb - borderColor.rgb) > 0.1;
-      if (showBorder) gl_FragColor.rgb = mix(gl_FragColor.rgb, borderColor.rgb, 0.75);
+      if (showBorder) gl_FragColor = mix(gl_FragColor, borderColor, 0.75);
 
-      // Draw a grid
-      ${debug ? `
+      //gl_FragColor.rgb *= 0.2 + 0.8 * useC;
+
       // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.
       //
       //   0     2     4     6     8
@@ -117,9 +170,11 @@ const drawLines = reglLines(regl, {
       //
       float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
       //wire = mix(wire, grid(vec3(lineCoord.y * 6.0), 0.5 * pixelRatio, 1.0), 0.6);
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1), wire);
-      ` : ''}
-    }`
+      gl_FragColor = mix(gl_FragColor, vec4(1), wire * 0.2);
+    }`,
+  uniforms: {
+    dashLength: ctx => ctx.pixelRatio * state.lineWidth * state.dashLength
+  }
 });
 
 const applyCustomConfig = regl({
@@ -161,7 +216,7 @@ function draw () {
 
   applyCustomConfig({
     lineColor: [0, 0, 0, state.opacity],
-    borderColor: [1, 1, 1, state.opacity],
+    borderColor: [0.5, 0.5, 0.5, 1],
     ...state
   }, () => {
     drawLines({...lineData, ...state});

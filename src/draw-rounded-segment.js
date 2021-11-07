@@ -46,7 +46,7 @@ uniform float jres2;
 uniform vec2 resolution;
 
 varying vec2 lineCoord;
-varying float computedWidth;
+varying float useC;
 
 ${debug ? 'attribute float debugInstanceID;' : ''}
 ${debug ? 'varying vec2 triStripGridCoord;' : ''}
@@ -80,10 +80,9 @@ void main() {
     tmp = pD; pD = pA; pA = tmp;
   }
 
-  bool useC = true;
-  float _computedWidthB = ${meta.width.generate('B')};
-  float _computedWidthC = ${meta.width.generate('C')};
-  computedWidth = _computedWidthC;
+  useC = isStart ? 0.0 : 1.0;
+  float _computedWidthB = isStart ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
+  float _computedWidthC = isStart ? ${meta.width.generate('B')} : ${meta.width.generate('C')};
 
   float pBw = pB.w;
   float computedW = pC.w;
@@ -172,24 +171,25 @@ void main() {
     xyBasis = mat2(tBC, nBC);
     bool isStart = iindex.x < 2.0;
 
-    //if (isStart) {
-      //useC = false;
-      //computedWidth = _computedWidthB;
-      //computedW = pBw;
-    //}
+    xy = vec2(
+      (isStart ?
+        ${''/* If start, then use the miter at B */}
+        (y > 0.0 ? mB1 : mB0) - lBC :
+        ${''/* Else, the miter at C */}
+        -(y > 0.0 ? mC1 : mC0)
+      ),
+      y);
 
-    xy = vec2((isStart ?
-      ${''/* If start, then use the miter at B */}
-      (y > 0.0 ? mB1 : mB0) - lBC :
-      ${''/* Else, the miter at C */}
-      -(y > 0.0 ? mC1 : mC0)
-    ) / computedWidth, y);
+    useC -= dirC * xy.x / lBC * lineCoord.y;
+
+    xy.x /= _computedWidthC;
+
   }
 
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'C', 'B')).join('\n')}
+  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
   // Compute the final position
-  gl_Position.xy += computedWidth * (xyBasis * xy);
+  gl_Position.xy += _computedWidthC * (xyBasis * xy);
   gl_Position.xy /= resolution;
   gl_Position *= computedW;
 }`,
@@ -199,7 +199,8 @@ void main() {
         buffer: [...Array(400).keys()],
         divisor: 0
       },
-      ...indexAttributes,
+
+    ...indexAttributes,
       ...segmentSpec.attrs
     },
     uniforms: {

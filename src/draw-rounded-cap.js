@@ -46,6 +46,7 @@ uniform float joinResolution, capResolution2;
 uniform vec2 resolution, capScale;
 ${meta.orientation ? '' : 'uniform float uOrientation;'}
 
+varying float useC;
 varying vec2 lineCoord;
 varying float computedWidth;
 
@@ -75,7 +76,6 @@ void main() {
   float widthC = ${meta.width.generate('C')};
   computedWidth = widthC;
 
-  bool useC = true;
   float pBw = pB.w;
   float computedW = pC.w;
 
@@ -116,7 +116,7 @@ void main() {
     i -= capResolution2;
     gl_Position = pB;
     computedWidth = widthB;
-    useC = false;
+    useC = 0.0;
     computedW = pBw;
 
     if (mod(i, 2.0) == 1.0) {
@@ -131,6 +131,7 @@ void main() {
       gl_Position.xy += computedWidth * (xyBasis * xy);
     }
   } else {
+    useC = 1.0;
     i -= capResolution2;
     iLast = joinResolution * 2.0 + 4.0;
 
@@ -153,12 +154,12 @@ void main() {
 
       xyBasis = mat2(tBC, nBC);
       bool isStart = i < 2.0;
-      if (isStart) {
-        useC = false;
-        computedWidth = widthB;
-        computedW = pBw;
-      }
-      gl_Position.z = isStart ? pB.z : pC.z;
+      useC = isStart ? 0.0 : 1.0;
+      //if (!isStart) {
+        //computedWidth = widthB;
+        //computedW = pBw;
+      //}
+      //gl_Position.z = isStart ? pB.z : pC.z;*/
       xy = vec2(
         (isStart ?
           // If so, then use the miter at B
@@ -166,10 +167,15 @@ void main() {
 
           // Else, the miter at C
           -(lineCoord.y > 0.0 ? mC1 : mC0)
-        ) / computedWidth,
+        ),
         lineCoord.y
       );
+
+      if (!isStart) useC -= dirC * xy.x / lBC * lineCoord.y;
+
+      xy.x /= computedWidth;
     } else {
+      useC = 1.0;
       gl_Position.z = pC.z;
 
       vec2 xBasis = normalize(tCD + tBC);
@@ -197,7 +203,7 @@ void main() {
 
   if (orientation == CAP_END) lineCoord = -lineCoord;
 
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'C', 'B')).join('\n')}
+  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
   gl_Position.xy /= resolution;
   gl_Position *= computedW;
