@@ -57,9 +57,9 @@ for (let i = 0; i < n; i++) {
   let y = 0.8 * Math.sin(x * 2.0 * Math.PI);
   let width = 50.0 * (0.5 - 0.4 * Math.cos(Math.PI * 4 * x));
 
-  // x, y (float32): bytes 0-8
-  // width (float32): bytes 9-12
-  // color (float32): bytes 13-24
+  // x, y (float32): bytes 0-7
+  // width (float32): bytes 8-11
+  // color (float32): bytes 12-23
   vertices.push([
     x, y,
     width,
@@ -186,9 +186,9 @@ for (let i = 0; i < n; i++) {
   let y = 0.8 * Math.sin(x * 2.0 * Math.PI);
   let width = 50.0 * (0.5 - 0.4 * Math.cos(Math.PI * 4 * x));
 
-  // x, y (float32): bytes 0-8
-  // width (float32): bytes 9-12
-  // color (float32): bytes 13-24
+  // x, y (float32): bytes 0-7
+  // width (float32): bytes 8-11
+  // color (float32): bytes 12-23
   vertices.push([
     x, y,
     width,
