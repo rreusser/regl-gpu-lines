@@ -157,8 +157,6 @@ const drawLines = reglLines(regl, {
       bool showBorder = sdf > 0.75 && length(lineColor.rgb - borderColor.rgb) > 0.1;
       if (showBorder) gl_FragColor = mix(gl_FragColor, borderColor, 0.75);
 
-      //gl_FragColor.rgb *= 0.2 + 0.8 * useC;
-
       // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.
       //
       //   0     2     4     6     8
@@ -170,7 +168,7 @@ const drawLines = reglLines(regl, {
       //
       float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
       //wire = mix(wire, grid(vec3(lineCoord.y * 6.0), 0.5 * pixelRatio, 1.0), 0.6);
-      gl_FragColor = mix(gl_FragColor, vec4(1), wire * 0.2);
+      gl_FragColor = mix(gl_FragColor, vec4(1), wire * 0.5);
     }`,
   uniforms: {
     dashLength: ctx => ctx.pixelRatio * state.lineWidth * state.dashLength
