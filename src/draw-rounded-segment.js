@@ -46,7 +46,6 @@ uniform float jres2;
 uniform vec2 resolution;
 
 varying vec2 lineCoord;
-varying float useC;
 
 ${debug ? 'attribute float debugInstanceID;' : ''}
 ${debug ? 'varying vec2 triStripGridCoord;' : ''}
@@ -80,7 +79,7 @@ void main() {
     tmp = pD; pD = pA; pA = tmp;
   }
 
-  useC = isStart ? 0.0 : 1.0;
+  float useC = isStart ? 0.0 : 1.0;
   float _computedWidthB = isStart ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
   float _computedWidthC = isStart ? ${meta.width.generate('B')} : ${meta.width.generate('C')};
 
@@ -132,11 +131,11 @@ void main() {
   mat2 xyBasis = mat2(0);
 
   gl_Position = pC;
-  gl_Position.z = isStart ? pC.z : pB.z;
+  gl_Position.z = flip > 0.0 ? pC.z : pB.z;
 
   if (iindex.y < jres2 + 1.0 || iindex.y >= jres2 + 5.0) {
-    gl_Position.z = pC.z;
-    vec2 xBasis = normalize(tCD + tBC);
+    vec2 mt = 0.5 * (tCD + tBC);
+    vec2 xBasis = mt / length(mt);
     vec2 yBasis = vec2(-xBasis.y, xBasis.x);
     xyBasis = mat2(xBasis, yBasis);
 
@@ -146,8 +145,13 @@ void main() {
     ${''/* Odd-numbered point in this range are around the arc. Every other index is just the center point pC, repeated since has the geometry of a triangle fan */}
     if (mod(iindex.x, 2.0) == 0.0) {
       lineCoord.y = isStart ? -dirC : dirC;
-      float theta = -0.5 * dirC * acos(clamp(dot(nBC, nCD), -1.0, 1.0)) * (iindex.x / jres2);
+      float cosTheta = clamp(dot(nBC, nCD), -1.0, 1.0);
+      float theta = -0.5 * dirC * acos(cosTheta) * (iindex.x / jres2);
       xy = dirC * vec2(sin(theta), cos(theta));
+
+      ${''/* Correct for smooth transition of z around the join */}
+      float ext = sqrt(0.5 * (1.0 + cosTheta));
+      gl_Position.z -= (pB.z - pC.z) * xy.x * _computedWidthC / (ext * lBC);
     }
   } else {
     ${''/* We're in the miter/segment portion */}
@@ -183,7 +187,6 @@ void main() {
     useC -= dirC * xy.x / lBC * lineCoord.y;
 
     xy.x /= _computedWidthC;
-
   }
 
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}

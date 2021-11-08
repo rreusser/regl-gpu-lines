@@ -1,0 +1,140 @@
+const regl = createREGL({extensions: [
+  'ANGLE_instanced_arrays',
+  'OES_standard_derivatives',
+]});
+const createCamera = require('regl-camera');
+
+const createREGLProxy = function (regl, argWrapper) {
+  const proxy = args => regl({...args, ...argWrapper(args)});
+  Object.assign(proxy, regl);
+  return proxy;
+}
+
+const reglProxy = createREGLProxy(regl, function (args) {
+  if (!args.vert) return {};
+  return {
+    vert: args.vert.slice(0, args.vert.length - 1) + `
+      gl_Position = projection * view * gl_Position;
+    }`
+  }
+});
+
+const drawLines = reglLines(reglProxy, {
+  debug: true,
+  vert: `
+    precision highp float;
+    uniform float pixelRatio, width;
+    uniform vec2 aspect;
+    uniform mat4 projection, view;
+
+    #pragma lines: attribute vec3 xyz;
+    #pragma lines: attribute float t;
+    #pragma lines: varying float t = getT(t);
+    #pragma lines: position = getPosition(xyz);
+    #pragma lines: width = getWidth();
+
+    float getT(float t) { return t; }
+    vec4 getPosition(vec3 xyz) { return vec4(xyz.xy * aspect, xyz.z, 1); }
+    float getWidth() { return width * pixelRatio; }
+    `,
+  frag: `
+    #extension GL_OES_standard_derivatives : enable
+    precision highp float;
+    uniform float pixelRatio;
+    varying float instanceID, t;
+    varying vec2 triStripGridCoord;
+
+    // Unit grid lines
+    float grid (vec3 parameter, float width, float feather) {
+      float w1 = width - feather * 0.5;
+      vec3 d = fwidth(parameter);
+      vec3 looped = 0.5 - abs(mod(parameter, 1.0) - 0.5);
+      vec3 a3 = smoothstep(d * w1, d * (w1 + feather), looped);
+      return min(min(a3.x, a3.y), a3.z);
+    }
+
+    void main () {
+      if (instanceID < 0.0) {
+        // End caps are red
+        gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
+      } else {
+        // Remaining segments alternate blues
+        gl_FragColor.rgb = mod(instanceID, 2.0) == 0.0 ? vec3(0.4, 0.7, 1.0) : vec3(0.2, 0.3, 0.7);
+      }
+
+      gl_FragColor.rgb *= fract(t * 32.0) > 0.5 ? 1.0 : 0.7;
+
+      // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.
+      //
+      //   0     2     4     6     8
+      //   + --- + --- + --- + --- +
+      //   |   / |   / |   / |   / |
+      //   | /   | /   | /   | /   |
+      //   + --- + --- + --- + --- +
+      //   1     3     5     7     9
+      //
+      float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
+      gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
+
+      gl_FragColor.rgb *= 0.8;
+      gl_FragColor.a = 1.0;
+    }`,
+  uniforms: {
+    pixelRatio: regl.context('pixelRatio'),
+    aspect: ctx => [1, ctx.framebufferWidth / ctx.framebufferHeight],
+    width: regl.prop('width')
+  },
+  blend: {
+    enable: false,
+    func: {
+      srcRGB: 'src alpha',
+      srcAlpha: 1,
+      dstRGB: 'one minus src alpha',
+      dstAlpha: 1
+    }
+  },
+  depth: {
+    enable: true
+  }
+});
+
+// Construct an array of xy pairs
+const n = 6;
+const t = [...Array(n).keys()]
+  .map(i => (i / (n - 1) * 2.0 - 1.0))
+const xyz = t.map(t => [0.8 * Math.cos(t * 3.14), 0.8 * Math.sin(t * 3.14), t]);
+
+// Set up the data to be drawn. Note that we preallocate buffers and don't create
+// them on every draw call.
+const lineData = {
+  width: 80,
+  join: 'round',
+  cap: 'round',
+  joinResolution: 2,
+  vertexCount: xyz.length,
+  vertexAttributes: {
+    xyz: regl.buffer(xyz),
+    t: regl.buffer(t),
+  },
+  endpointCount: 2,
+  endpointAttributes: {
+    xyz: regl.buffer([xyz.slice(0, 3), xyz.slice(-3).reverse()]),
+    t: regl.buffer([t.slice(0, 3), t.slice(-3).reverse()]),
+  }
+};
+
+const camera = createCamera(regl, {
+  noScroll: true,
+  theta: Math.PI / 2 + 0.025,
+  distance: 40,
+  fovy: 0.07,
+  damping: 0,
+});
+
+regl.frame(({tick}) => {
+  camera(/*{dtheta: Math.PI / 100 * Math.sin(tick / 100)},*/ state => {
+    if (!state.dirty) return;
+    regl.clear({color: [0.2, 0.2, 0.2, 1]});
+    drawLines(lineData);
+  });
+});

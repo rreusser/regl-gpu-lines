@@ -46,7 +46,6 @@ uniform float joinResolution, capResolution2;
 uniform vec2 resolution, capScale;
 ${meta.orientation ? '' : 'uniform float uOrientation;'}
 
-varying float useC;
 varying vec2 lineCoord;
 varying float computedWidth;
 
@@ -78,6 +77,7 @@ void main() {
 
   float pBw = pB.w;
   float computedW = pC.w;
+  float useC = 1.0;
 
   // Convert to screen-pixel coordinates
   pB = vec4(pB.xy * resolution, pB.zw) / pBw;
@@ -131,7 +131,6 @@ void main() {
       gl_Position.xy += computedWidth * (xyBasis * xy);
     }
   } else {
-    useC = 1.0;
     i -= capResolution2;
     iLast = joinResolution * 2.0 + 4.0;
 
@@ -154,12 +153,11 @@ void main() {
 
       xyBasis = mat2(tBC, nBC);
       bool isStart = i < 2.0;
-      useC = isStart ? 0.0 : 1.0;
-      //if (!isStart) {
-        //computedWidth = widthB;
-        //computedW = pBw;
-      //}
-      //gl_Position.z = isStart ? pB.z : pC.z;*/
+
+      if (isStart) useC = 0.0;
+
+      gl_Position.z = isStart ? pB.z : pC.z;
+
       xy = vec2(
         (isStart ?
           // If so, then use the miter at B
@@ -175,7 +173,6 @@ void main() {
 
       xy.x /= computedWidth;
     } else {
-      useC = 1.0;
       gl_Position.z = pC.z;
 
       vec2 xBasis = normalize(tCD + tBC);
@@ -192,8 +189,13 @@ void main() {
         i = (i - 3.0) * 0.5;
         if (dirC > 0.0) i = joinResolution - i;
 
-        float theta = 0.5 * acos(clamp(dot(nBC, nCD), -1.0, 1.0)) * (0.5 - 0.5 * dirC - i / joinResolution);
+        float cosTheta = clamp(dot(nBC, nCD), -1.0, 1.0);
+        float theta = 0.5 * acos(cosTheta) * (0.5 - 0.5 * dirC - i / joinResolution);
         xy = dirC * vec2(sin(theta), cos(theta));
+
+        ${''/* Correct for smooth transition of z around the join */}
+        float ext = sqrt(0.5 * (1.0 + cosTheta));
+        gl_Position.z -= (pB.z - pC.z) * xy.x * computedWidth / (ext * lBC);
       }
     }
 

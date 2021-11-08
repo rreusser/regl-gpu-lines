@@ -37,6 +37,7 @@
     "controls-state": "^2.0.0",
     "hyperstream": "^1.2.2",
     "regl": "^2.1.0",
+    "regl-camera": "^2.1.1",
     "rollup": "^2.58.3",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
