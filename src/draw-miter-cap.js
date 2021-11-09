@@ -48,7 +48,7 @@ void main() {
   float widthC = ${meta.width.generate('C')};
   computedWidth = widthC;
 
-  bool useC = true;
+  float useC = 1.0;
   float pBw = pB.w;
   float computedW = pC.w;
 
@@ -102,7 +102,7 @@ void main() {
 
     computedWidth = widthB;
     computedW = pBw;
-    useC = false;
+    useC = 0.0;
 
     if (mod(i, 2.0) == 0.0) {
       xyBasis = mat2(-tBC, nBC * dirC);
@@ -132,7 +132,7 @@ void main() {
       if (isSegmentStart) {
         computedWidth = widthB;
         computedW = pBw;
-        useC = false;
+        useC = 0.0;
         gl_Position = pB;
       }
 

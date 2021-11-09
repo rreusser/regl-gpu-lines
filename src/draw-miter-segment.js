@@ -53,7 +53,7 @@ void main() {
   float _computedWidthC = ${meta.width.generate('C')};
   computedWidth = _computedWidthC;
 
-  bool useC = true;
+  float useC = 1.0;
   float pBw = pB.w;
   float computedW = pC.w;
 
@@ -94,7 +94,7 @@ void main() {
     bool isStart = linePosition.x < 0.5;
 
     if (isStart) {
-      useC = false;
+      useC = 0.0;
       computedWidth = _computedWidthB;
       computedW = pBw;
     }

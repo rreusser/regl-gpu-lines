@@ -1,7 +1,7 @@
 'use strict';
 
-//const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
-//const createDrawMiterCapCommand = require('./draw-miter-cap.js');
+const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
+const createDrawMiterCapCommand = require('./draw-miter-cap.js');
 const createDrawRoundedSegmentCommand = require('./draw-rounded-segment.js');
 const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
@@ -80,8 +80,8 @@ function reglLines(
 
   // Instantiate commands
   const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
-  //const drawMiterSegment = createDrawMiterSegmentCommand(config);
-  //const drawMiterCap = createDrawMiterCapCommand(config);
+  const drawMiterSegment = createDrawMiterSegmentCommand(config);
+  const drawMiterCap = createDrawMiterCapCommand(config);
   const drawRoundedSegment = createDrawRoundedSegmentCommand(config);
   const drawRoundedCap = createDrawRoundedCapCommand(config);
 
@@ -102,11 +102,10 @@ function reglLines(
     const allMiterCaps = [];
     function flush (props) {
       userConfig(props, () => {
-        //if (allRoundedSegments.length) drawRoundedSegment2(allRoundedSegments);
         if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
-        //if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
+        if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
         if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
-        //if (allMiterCaps.length) drawMiterCap(allMiterCaps);
+        if (allMiterCaps.length) drawMiterCap(allMiterCaps);
         allRoundedSegments.length = 0;
         allMiterSegments.length = 0;
         allRoundedCaps.length = 0;
