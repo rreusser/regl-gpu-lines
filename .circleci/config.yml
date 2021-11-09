@@ -20,10 +20,14 @@ jobs:
   test:
     <<: *defaults
     steps:
+      - attach_workspace:
+          at: ~/
       - run: npm run test
   lint:
     <<: *defaults
     steps:
+      - attach_workspace:
+          at: ~/
       - run: npm run lint
 
 workflows:
