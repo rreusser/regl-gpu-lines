@@ -1,13 +1,32 @@
 version: 2.1
 
+defaults: &defaults
+  docker:
+    - image: cimg/python:2.7-node
+
 jobs:
-  build:
+  prepare:
+    <<: *defaults
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:2.7.6-node
+    steps:
+      - checkout
+      - run: python --version
+      - run: npm install
+  test:
+    <<: *defaults
+    steps:
+      - run: npm run test
+  lint:
+    <<: *defaults
+    steps:
+      - run: npm run lint
 
 workflows:
-  sample:
+  version: 2
+  default:
     jobs:
-      - node/test:
-          version: '16.10'
-          pkg-manager: npm
+      - prepare
+      - lint:
+          requires:
+            - prepare
