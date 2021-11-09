@@ -16,7 +16,7 @@ function createAttrSpecs (meta, regl, isEndpoints) {
 
     const attrList = [];
     function emitAttr (index, suffix) {
-      const attrOutName = attrName + suffix
+      const attrOutName = attrName + suffix;
       attrList.push(attrOutName);
 
       if (isEndpoints) {

@@ -4,6 +4,10 @@ const regl = createREGL({extensions: [
 ]});
 const createCamera = require('regl-camera');
 
+const state = window.fuckit = wrapGUI(State({
+  count: State.Slider(8, {min: 1, max: 50, step: 1}),
+}));
+
 const createREGLProxy = function (regl, argWrapper) {
   const proxy = args => regl({...args, ...argWrapper(args)});
   Object.assign(proxy, regl);
@@ -14,7 +18,7 @@ const reglProxy = createREGLProxy(regl, function (args) {
   if (!args.vert) return {};
   return {
     vert: args.vert.slice(0, args.vert.length - 1) + `
-      gl_Position = projection * view * gl_Position;
+      gl_Position = projection * view * gl_Position.zyxw;
     }`
   }
 });
@@ -76,7 +80,7 @@ const drawLines = reglLines(reglProxy, {
       float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
       gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
 
-      gl_FragColor.rgb *= 0.8;
+      //gl_FragColor.rgb *= 0.8;
       gl_FragColor.a = 1.0;
     }`,
   uniforms: {
@@ -99,15 +103,38 @@ const drawLines = reglLines(reglProxy, {
 });
 
 // Construct an array of xy pairs
-const n = 6;
+const path = [
+  [-1, 0.001],
+  [-1, 0.0],
+  //[-0.5, -0.5],
+  //[-0.25, 0.5],
+  //[0.0, 0.0],
+  //[0.01, 0.0],
+  //[0.02, 0.0],
+  //[0.03, 0.0],
+  //[0.04, 0.0],
+  //[0.05, 0.0],
+  [0.0, 0.0],
+  [0.0, 0.5],
+  [0.0, 0.],
+  //[0.07, 0.0],
+  //[0.25, 0.0],
+  //[0.5, -0.5],
+  [0.75, 0.],
+  [1, 0.0]
+];
+const n = 9;//path.length;
 const t = [...Array(n).keys()]
   .map(i => (i / (n - 1) * 2.0 - 1.0))
-const xyz = t.map(t => [0.8 * Math.cos(t * 3.14), 0.8 * Math.sin(t * 3.14), t]);
+const xyz = t.map((t, i) =>
+  //path[i].concat([t])
+  [0.8 * Math.cos(2 * t * 3.14 - 0.5), 0.8 * Math.sin(t * 3.14), t]
+);
 
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
 const lineData = {
-  width: 80,
+  width: 100,
   join: 'round',
   cap: 'round',
   joinResolution: 2,
@@ -125,16 +152,22 @@ const lineData = {
 
 const camera = createCamera(regl, {
   noScroll: true,
-  theta: Math.PI / 2 + 0.025,
+  theta: 2 * Math.PI / 2 - 0.5,
+  phi: 0.5,
   distance: 40,
+  near: 0.1,
+  far: 100.0,
   fovy: 0.07,
   damping: 0,
 });
 
+let dirty = true;
 regl.frame(({tick}) => {
   camera(/*{dtheta: Math.PI / 100 * Math.sin(tick / 100)},*/ state => {
-    if (!state.dirty) return;
+    if (!state.dirty && !dirty) return;
     regl.clear({color: [0.2, 0.2, 0.2, 1]});
     drawLines(lineData);
+    dirty = false;
   });
 });
+state.$onChange(() => dirty = true);

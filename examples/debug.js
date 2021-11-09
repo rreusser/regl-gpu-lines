@@ -18,11 +18,11 @@ const state = wrapGUI(State({
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
-  }, {label: 'line config'}),
+  }, {label: 'line config', expanded: false}),
   geometry: State.Section({
     stretch: State.Slider(0.97, {min: 0.01, max: 2, step: 0.001}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
-  }, {expanded: false}),
+  }, {expanded: true}),
   line: State.Section({
     width: State.Slider(50, {min: 1, max: 100, step: 0.1}),
     opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
@@ -58,7 +58,27 @@ function project(p) {
   ];
 }
 
-const path = [[-0.75, -0.25], [-0.5, -0.6], [-0.25, 0.5], [0.0, -0.5], [0.25, 0.45], [0.5, 0.5], [0.75, 0.0]];
+const path = [
+  [-0.75, -0.5],
+  [-0.5, -0.5],
+  [-0.4, 0.5],
+  [-0.35, 0.0],
+  [-0.1, 0.5],
+  [0.0, 0.0],
+  [0.01, 0.0],
+  //[0.02, 0.0],
+  //[0.03, 0.0],
+  //[0.04, 0.0],
+  //[0.05, 0.0],
+  //[0.06, 0.0],
+  //[0.07, 0.0],
+  //[0.07, 0.5],
+  //[0.07, 0.0],
+  [0.25, 0.0],
+  [0.5, -0.5],
+  [0.75, -0.25],
+  [1, -0.25]
+];
 const dist = Array(path.length).fill(0);
 
 function computeCumulativeDistance (dist, path, project) {

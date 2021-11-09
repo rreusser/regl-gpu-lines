@@ -33,7 +33,6 @@ function createDrawRoundedCapCommand({
   frag,
   endpointSpec,
   indexAttributes,
-  indexPrimitive,
   debug
 }) {
   return regl({
@@ -101,6 +100,8 @@ void main() {
   vec2 tCD = rCD / lCD;
   vec2 nCD = vec2(-tCD.y, tCD.x);
 
+  float lBCD = min(lBC, lCD);
+
   // Left/right turning at each vertex
   // Note: don't use sign for this! It's zero when the line is straight.
   float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
@@ -110,6 +111,9 @@ void main() {
 
   vec2 xy = vec2(0);
   mat2 xyBasis = mat2(0);
+  float dz = 0.0;
+
+  bool selfIntersects = isSelfIntersection(tBC, tCD, computedWidth, lBCD);
 
   if (i < capResolution2 + 1.0) {
     // The first few vertices are on the cap.
@@ -147,9 +151,9 @@ void main() {
       float mC = miterExtension(tBC, tCD) * widthC;
 
       // Place the corners, with clipping against the opposite end
-      float lBCD = min(lBC, lCD);
-      float mC0 = dirC > 0.0 ? min(lBCD, -mC) : 0.0;
-      float mC1 = dirC > 0.0 ? 0.0 : min(lBCD, mC);
+      float bcdClip = selfIntersects ? lBCD : lBC;
+      float mC0 = dirC > 0.0 ? min(bcdClip, -mC) : 0.0;
+      float mC1 = dirC > 0.0 ? 0.0 : min(bcdClip, mC);
 
       xyBasis = mat2(tBC, nBC);
       bool isStart = i < 2.0;
@@ -173,9 +177,11 @@ void main() {
 
       xy.x /= computedWidth;
     } else {
-      gl_Position.z = pC.z;
+      vec2 miterNormal = 0.5 * (tCD + tBC);
+      float miterNormalLen = length(miterNormal);
+      bool isDegenerate = miterNormalLen == 0.0;
 
-      vec2 xBasis = normalize(tCD + tBC);
+      vec2 xBasis = isDegenerate ? nCD : miterNormal / miterNormalLen;
       vec2 yBasis = vec2(-xBasis.y, xBasis.x);
       xyBasis = mat2(xBasis, yBasis);
 
@@ -193,9 +199,8 @@ void main() {
         float theta = 0.5 * acos(cosTheta) * (0.5 - 0.5 * dirC - i / joinResolution);
         xy = dirC * vec2(sin(theta), cos(theta));
 
-        ${''/* Correct for smooth transition of z around the join */}
-        float ext = sqrt(0.5 * (1.0 + cosTheta));
-        gl_Position.z -= (pB.z - pC.z) * xy.x * computedWidth / (ext * lBC);
+      ${''/* Correct for smooth transition of z around the join, but limit to half the z difference to the next point*/}
+        if (!isDegenerate) dz = -(pB.z - pC.z) * clamp(xy.x * computedWidth / lBC, -0.5, 0.5);
       }
     }
 
@@ -205,8 +210,13 @@ void main() {
 
   if (orientation == CAP_END) lineCoord = -lineCoord;
 
+  ${''/* Compute all varyings with shortening to account for interior miters */}
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
+  ${''/* Only make z discontinuous when sharp angle self-intersect. Then treat them like varyings. This *might* prevent z-fighting. */}
+  if (selfIntersects) gl_Position.z = mix(pB.z, pC.z, useC);
+
+  gl_Position.z += dz;
   gl_Position.xy /= resolution;
   gl_Position *= computedW;
 }`,
@@ -223,6 +233,6 @@ void main() {
     },
     primitive: 'triangle strip',
     instances: (ctx, props) => props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count,
-    count: (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 5
+    count: (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 4
   });
 }

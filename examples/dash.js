@@ -60,7 +60,7 @@ const drawLines = reglLines(regl, {
 });
 
 // Construct an array of xy pairs
-const n = 101;
+const n = 11;
 const path = [...Array(n).keys()]
   .map(i => (i / (n - 1) * 2.0 - 1.0) * 0.8)
   .map(t => [t, 0.5 * Math.sin(8.0 * t)]);
@@ -92,7 +92,7 @@ const endpointBuffer = regl.buffer(new Float32Array(6));
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
 const lineData = {
-  width: 8,
+  width: 40,
   dashLength: 4,
   join: 'round',
   cap: 'round',

@@ -1,7 +1,6 @@
 'use strict';
 
 const glslPrelude = require('./glsl-prelude.js');
-const JOINRES = 3;
 
 module.exports = createDrawRoundedSegmentCommand;
 
@@ -32,7 +31,6 @@ function createDrawRoundedSegmentCommand({
   meta,
   frag,
   segmentSpec,
-  indexPrimitive,
   indexAttributes,
   debug
 }) {
@@ -113,6 +111,8 @@ void main() {
   vec2 tCD = rCD / lCD;
   vec2 nCD = vec2(-tCD.y, tCD.x);
 
+  float lBCD = min(lBC, lCD);
+
   ${''/* Left/right turning at each vertex. Use < vs. <= to break tie when collinear. */}
   float dirB = dot(tAB, nBC) < 0.0 ? -1.0 : 1.0;
   float dirC = dot(tBC, nCD) <= 0.0 ? -1.0 : 1.0;
@@ -131,12 +131,18 @@ void main() {
   mat2 xyBasis = mat2(0);
 
   gl_Position = pC;
-  gl_Position.z = flip > 0.0 ? pC.z : pB.z;
+  float dz = 0.0;
+
+  bool selfIntersects = isSelfIntersection(nBC, nCD, _computedWidthC, lBCD);
 
   if (iindex.y < jres2 + 1.0 || iindex.y >= jres2 + 5.0) {
-    vec2 mt = 0.5 * (tCD + tBC);
-    vec2 xBasis = mt / length(mt);
+    vec2 miterNormal = 0.5 * (tCD + tBC);
+    float miterNormalLen = length(miterNormal);
+    bool isDegenerate = miterNormalLen == 0.0;
+
+    vec2 xBasis = isDegenerate ? nBC : miterNormal / miterNormalLen;
     vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+    if (isDegenerate && !isStart) xBasis = -xBasis;
     xyBasis = mat2(xBasis, yBasis);
 
     ${''/*Adjust indices to get the fan anle correct */}
@@ -149,9 +155,9 @@ void main() {
       float theta = -0.5 * dirC * acos(cosTheta) * (iindex.x / jres2);
       xy = dirC * vec2(sin(theta), cos(theta));
 
-      ${''/* Correct for smooth transition of z around the join */}
-      float ext = sqrt(0.5 * (1.0 + cosTheta));
-      gl_Position.z -= (pB.z - pC.z) * xy.x * _computedWidthC / (ext * lBC);
+      ${''/* Correct for smooth transition of z around the join, but limit to half the z difference to the next point*/}
+      //if (!isDegenerate)
+        dz = -(pB.z - pC.z) * clamp(xy.x * _computedWidthC / lBC, -0.5, 0.5);
     }
   } else {
     ${''/* We're in the miter/segment portion */}
@@ -166,11 +172,12 @@ void main() {
 
     ${''/*// Place the corners, with clipping against the opposite end*/}
     float lABC = min(lAB, lBC);
-    float lBCD = min(lBC, lCD);
-    float mB0 = dirB > 0.0 ? min(lABC, -mB) : 0.0;
-    float mC0 = dirC > 0.0 ? min(lBCD, -mC) : 0.0;
-    float mB1 = dirB > 0.0 ? 0.0 : min(lABC, mB);
-    float mC1 = dirC > 0.0 ? 0.0 : min(lBCD, mC);
+    float abcClip = selfIntersects ? lABC : lBC;
+    float bcdClip = selfIntersects ? lBCD : lBC;
+    float mB0 = dirB > 0.0 ? min(abcClip, -mB) : 0.0;
+    float mC0 = dirC > 0.0 ? min(bcdClip, -mC) : 0.0;
+    float mB1 = dirB > 0.0 ? 0.0 : min(abcClip, mB);
+    float mC1 = dirC > 0.0 ? 0.0 : min(bcdClip, mC);
 
     xyBasis = mat2(tBC, nBC);
     bool isStart = iindex.x < 2.0;
@@ -184,14 +191,19 @@ void main() {
       ),
       y);
 
-    useC -= dirC * xy.x / lBC * lineCoord.y;
+    if (lBC > 0.0) useC = clamp(useC - dirC * xy.x / lBC * lineCoord.y, 0.0, 1.0);
 
     xy.x /= _computedWidthC;
   }
 
+  ${''/* Compute all varyings with shortening to account for interior miters */}
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
+  ${''/* Only make z discontinuous when sharp angle self-intersect. Then treat them like varyings. This *might* prevent z-fighting. */}
+  if (selfIntersects) gl_Position.z = mix(pB.z, pC.z, isStart ? 1.0 - useC : useC);
+
   // Compute the final position
+  gl_Position.z += dz;
   gl_Position.xy += _computedWidthC * (xyBasis * xy);
   gl_Position.xy /= resolution;
   gl_Position *= computedW;

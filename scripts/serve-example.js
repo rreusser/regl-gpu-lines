@@ -4,7 +4,7 @@ const defaultIndex = require('simple-html-index');
 const hyperstream = require('hyperstream');
 const toStream = require('string-to-stream');
 
-const entry = process.argv[2];
+const entry = 'examples/' + process.argv[2] + '.js';
 
 if (!entry) {
   console.error('Usage: npm start <path/to/example.js>');

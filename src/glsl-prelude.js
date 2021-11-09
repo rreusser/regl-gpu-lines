@@ -21,4 +21,9 @@ bool isnan(float val) {
 
 bool invalid(vec4 p) {
   return p.w==0.0||isnan(p.x);
+}
+
+bool isSelfIntersection(vec2 tBC, vec2 tCD, float widthC, float lBCD) {
+  if (dot(tBC, tCD) > 0.0) return false;
+  return length(tBC + tCD) * lBCD < 2.0 * widthC;
 }`;
