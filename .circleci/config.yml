@@ -3,6 +3,8 @@ version: 2.1
 defaults: &defaults
   docker:
     - image: cimg/python:2.7-node
+  working_directory: ~/regl-gpu-lines
+
 
 jobs:
   prepare:
@@ -11,6 +13,10 @@ jobs:
       - checkout
       - run: python --version
       - run: npm install
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - regl-gpu-lines
   test:
     <<: *defaults
     steps:
