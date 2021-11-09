@@ -44,3 +44,6 @@ workflows:
       - lint:
           requires:
             - prepare
+      - test-render:
+          requires:
+            - prepare
