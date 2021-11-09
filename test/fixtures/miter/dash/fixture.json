@@ -1,0 +1,54 @@
+{
+  "shape": [256, 128],
+  "command": {
+    "vert": [
+      "precision highp float;",
+      "#pragma lines: attribute vec2 xy",
+      "#pragma lines: attribute float t",
+      "#pragma lines: position = getPosition(xy)",
+      "#pragma lines: width = getWidth()",
+      "#pragma lines: varying float t = getT(t)",
+      "uniform float width;",
+      "float getWidth() { return width; }",
+      "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }",
+      "float getT(float t) { return t; }"
+    ],
+    "frag": [
+      "precision highp float;",
+      "varying float t;",
+      "uniform float width;",
+      "void main () {",
+      "  gl_FragColor = vec4(vec3(fract(t) > 0.5 ? 1.0 : 0.0), 1.0);",
+      "}"
+    ],
+    "uniforms": {
+      "width": 15
+    },
+    "blend": {
+      "enable": true,
+      "func": {
+        "srcRGB": "src alpha",
+        "srcAlpha": 1,
+        "dstRGB": "one minus src alpha",
+        "dstAlpha": 1
+      }
+    }
+  },
+  "vertexAttributes": {
+    "xy": [
+      [-0.8, 0.0],
+      [-0.5, 0.0],
+      [0.3, 0.7],
+      [0.8, 0.7],
+      [-0.8, -0.7],
+      [-0.3, -0.7],
+      [0.5, 0.0],
+      [0.8, 0.0]
+    ],
+    "t": [0, 2, 8, 11, 23, 26, 32, 34]
+  },
+  "data": {
+    "join": "miter",
+    "cap": "round"
+  }
+}

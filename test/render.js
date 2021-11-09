@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('tape');
 const createContext = require('./util/create-context.js');
-const createREGL = require('regl');
+const createREGL = require('regl/dist/regl.js');
 const createDrawLines = require('../src/index.js');
 const savePixels = require('save-pixels');
 const getPixels = require('get-pixels');
@@ -13,6 +13,7 @@ const pixelmatch = require('pixelmatch');
 const pool = require('ndarray-scratch');
 
 const UPDATE = process.env['UPDATE'] === '1';
+const filter = process.env['FILTER'] ? new RegExp(process.env['FILTER']) : null;
 
 function renderFixture(regl, fixture) {
   const drawLines = createDrawLines(regl, {
@@ -42,7 +43,9 @@ const gl = createContext(256, 256);
 
 test('run image tests', function (t) {
   for (const fixturePath of fixturePaths) {
-    t.test(path.dirname(path.relative(fixtureDir, fixturePath)), function (t) {
+    const relPath = path.relative(fixtureDir, fixturePath)
+    if (filter && !filter.test(relPath)) continue;
+    t.test(path.dirname(relPath), function (t) {
       const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 
       const shape = fixture.shape || [256, 256];
@@ -83,7 +86,7 @@ test('run image tests', function (t) {
             .pipe(fs.createWriteStream(diffPath));
 
 
-          t.ok(!badPixelCount, `zero unmatched pixels${badPixelCount ? ` (got ${badPixelCount})` : ''}`);
+          t.ok(!badPixelCount, `zero unmatched pixels${badPixelCount ? ` (got ${badPixelCount} unmatched)` : ''}`);
 
           t.end();
         })
