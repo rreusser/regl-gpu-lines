@@ -1,7 +1,7 @@
 'use strict';
 
-const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
-const createDrawMiterCapCommand = require('./draw-miter-cap.js');
+//const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
+//const createDrawMiterCapCommand = require('./draw-miter-cap.js');
 const createDrawRoundedSegmentCommand = require('./draw-rounded-segment.js');
 const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
@@ -12,8 +12,8 @@ const ORIENTATION = require('./orientation.json');
 
 module.exports = reglLines;
 
-reglLines.CAP_START = ORIENTATION.CAP_START
-reglLines.CAP_END = ORIENTATION.CAP_END
+reglLines.CAP_START = ORIENTATION.CAP_START;
+reglLines.CAP_END = ORIENTATION.CAP_END;
 
 const FORBIDDEN_PROPS = new Set(['count', 'instances', 'attributes', 'elements']);
 
@@ -31,7 +31,7 @@ function reglLines(
   // extract uniform separately so that we can merge them with the resolution uniform
   const forwardedOpts = {...opts};
   for (const prop of ['vert', 'frag', 'debug']) delete forwardedOpts[prop];
-  const forwarded = Object.keys(forwardedOpts)
+  const forwarded = Object.keys(forwardedOpts);
   const canReorder = forwarded.length === 0;
   forwarded.forEach(fwd => {
     if (FORBIDDEN_PROPS.has(fwd)) {
@@ -62,7 +62,7 @@ function reglLines(
   // a loss of precision or something above 30 at which it starts to get the indices
   // wrong.
   const MAX_ROUND_JOIN_RESOLUTION = 30;
-  let indexBuffer, indexPrimitive, indexElements;
+  let indexBuffer, indexPrimitive;
   const indexAttributes = {};
   if (debug) {
     // TODO: Allocate/grow lazily to avoid an arbitrary limit
@@ -74,14 +74,14 @@ function reglLines(
   }
   indexPrimitive = 'triangle strip';
   indexBuffer = regl.buffer(
-    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 5).keys()])
+    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()])
   );
   indexAttributes.index = { buffer: indexBuffer, divisor: 0 };
 
   // Instantiate commands
   const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
-  const drawMiterSegment = createDrawMiterSegmentCommand(config);
-  const drawMiterCap = createDrawMiterCapCommand(config);
+  //const drawMiterSegment = createDrawMiterSegmentCommand(config);
+  //const drawMiterCap = createDrawMiterCapCommand(config);
   const drawRoundedSegment = createDrawRoundedSegmentCommand(config);
   const drawRoundedCap = createDrawRoundedCapCommand(config);
 
@@ -102,10 +102,11 @@ function reglLines(
     const allMiterCaps = [];
     function flush (props) {
       userConfig(props, () => {
+        //if (allRoundedSegments.length) drawRoundedSegment2(allRoundedSegments);
         if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
-        if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
+        //if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
         if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
-        if (allMiterCaps.length) drawMiterCap(allMiterCaps);
+        //if (allMiterCaps.length) drawMiterCap(allMiterCaps);
         allRoundedSegments.length = 0;
         allMiterSegments.length = 0;
         allRoundedCaps.length = 0;
@@ -122,7 +123,7 @@ function reglLines(
         const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
 
         const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
-        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;;
+        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution * 2;
         if (capType === 'square') {
           capResolution = 3;
         } else if (capType === 'none') {
@@ -133,7 +134,6 @@ function reglLines(
         const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
 
         let endpointProps, segmentProps;
-        let splitEndpoints = true;
 
         if (lineProps.endpointAttributes) {
           endpointProps = {
@@ -144,7 +144,6 @@ function reglLines(
             capScale,
             miterLimit,
           };
-          splitEndpoints = !!meta.orientation;
         }
 
         if (lineProps.vertexAttributes) {
@@ -154,7 +153,7 @@ function reglLines(
             joinResolution,
             capResolution,
             miterLimit
-          }
+          };
         }
 
         if (segmentProps) {

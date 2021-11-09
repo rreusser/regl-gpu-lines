@@ -1,0 +1,33 @@
+{
+  "shape": [256, 256],
+  "threshold": 0.1,
+  "command": {
+    "vert": [
+      "precision highp float;",
+      "#pragma lines: attribute vec2 xy",
+      "#pragma lines: position = getPosition(xy)",
+      "#pragma lines: width = getWidth()",
+      "float getWidth() { return 20.0; }",
+      "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+    ],
+    "frag": [
+      "precision lowp float;",
+      "void main () {",
+      "  gl_FragColor = vec4(0,0,0,1);",
+      "}"
+    ]
+  },
+  "vertexAttributes": {
+    "xy": [
+      [-0.8, -0.8],
+      [-0.4, 0.8],
+      [0.0, -0.8],
+      [0.4, 0.0],
+      [0.8, -0.8]
+    ]
+  },
+  "data": {
+    "join": "miter",
+    "cap": "square"
+  }
+}

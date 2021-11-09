@@ -8,4 +8,4 @@ module.exports = function sanitizeInclusionInList(value, dflt, list, label) {
     );
   }
   return value;
-}
+};

@@ -1,1 +1,3 @@
 node_modules
+test/fixtures/**/actual.png
+test/fixtures/**/diff.png

@@ -18,7 +18,6 @@ const DIMENSION_GLSL_TYPES = {
 
 function parseShaderPragmas (glsl) {
   const pragmas = [];
-  let match;
   const lines = glsl.split('\n');
   for (let i = 0; i < lines.length; i++) {
     lines[i] = lines[i].replace(PRAGMA_REGEX, function (match, pragma) {
@@ -51,8 +50,8 @@ function parsePragma (pragma) {
     const name = match[2];
     const getter = match[3];
     const inputs = match[4].split(',').map(str => str.trim()).filter(x => !!x);
-    const generate = (cond, a, b) => {
-      return `${name} = ${getter}(${inputs.map(input => `(${cond}) ? (${input + a}) : (${input + b})`).join(', ')});`
+    const generate = (interp, a, b) => {
+      return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${interp})`).join(', ')});`;
     };
     return {type: 'varying', returnType, name, getter, inputs, generate};
   } else {
@@ -73,7 +72,6 @@ function analyzePragmas (pragmas) {
     }
   }
 
-  const lineAttrs = new Set();
   let width, position, orientation;
   for (const pragma of pragmas) {
     if (pragma.type !== 'property') continue;

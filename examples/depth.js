@@ -63,8 +63,9 @@ const x = [...Array(n).keys()].map(i => i / (n - 1));
 // them on every draw call.
 const lineData = {
   width: 30,
-  join: 'bevel',
+  join: 'round',
   cap: 'round',
+  joinResolution: 1,
   vertexCount: x.length,
   vertexAttributes: { x: regl.buffer(x) },
   endpointCount: 2,
@@ -73,6 +74,7 @@ const lineData = {
 };
 
 regl.frame(() => {
+  regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1]});
   drawLines([
     {...lineData, phase: 0, color: [0.5, 1, 0]},

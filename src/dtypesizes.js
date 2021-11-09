@@ -1,10 +1,10 @@
-const DTYPES_SIZES = []
-DTYPES_SIZES[5120] = 1 // int8
-DTYPES_SIZES[5122] = 2 // int16
-DTYPES_SIZES[5124] = 4 // int32
-DTYPES_SIZES[5121] = 1 // uint8
-DTYPES_SIZES[5123] = 2 // uint16
-DTYPES_SIZES[5125] = 4 // uint32
-DTYPES_SIZES[5126] = 4 // float32
+const DTYPES_SIZES = [];
+DTYPES_SIZES[5120] = 1; // int8
+DTYPES_SIZES[5122] = 2; // int16
+DTYPES_SIZES[5124] = 4; // int32
+DTYPES_SIZES[5121] = 1; // uint8
+DTYPES_SIZES[5123] = 2; // uint16
+DTYPES_SIZES[5125] = 4; // uint32
+DTYPES_SIZES[5126] = 4; // float32
 
 module.exports = DTYPES_SIZES;

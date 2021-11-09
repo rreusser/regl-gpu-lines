@@ -4,7 +4,10 @@ module.exports = sanitizeBufferInput;
 
 const DTYPE_SIZES = require('./dtypesizes.js');
 const DTYPES = require('./dtypes.json');
-const ATTR_USAGE = require('./attr-usage.js');
+
+function has(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
 
 function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
   const outputs = {};
@@ -31,23 +34,23 @@ function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
       throw new Error(`Missing buffer for ${isEndpoints ? 'endpoint' : 'vertex'} attribute '${attrName}'`);
     } else if (input._reglType === 'buffer') {
       output.buffer = input;
-      output.type = output.buffer._buffer.dtype
+      output.type = output.buffer._buffer.dtype;
     } else if (input.buffer._reglType === 'buffer') {
       output.buffer = input.buffer;
 
-      if (input.hasOwnProperty('dimension') && input.dimension !== output.dimension) {
+      if (has(input, 'dimension') && input.dimension !== output.dimension) {
         throw new Error(`Size of attribute (${input.dimension}) does not match dimension specified in shader pragma (${attrMeta.dimension})`);
       }
-      if (input.hasOwnProperty('offset')) output.offset = input.offset;
-      if (input.hasOwnProperty('type')) {
+      if (has(input, 'offset')) output.offset = input.offset;
+      if (has(input, 'type')) {
         output.type = DTYPES[input.type];
       } else {
-        output.type = output.buffer._buffer.dtype
+        output.type = output.buffer._buffer.dtype;
       }
-      if (input.hasOwnProperty('divisor')) {
+      if (has(input, 'divisor')) {
         output.divisor = input.divisor;
       }
-      if (input.hasOwnProperty('stride')) output.stride = input.stride;
+      if (has(input, 'stride')) output.stride = input.stride;
     } else {
       throw new Error(`Invalid buffer for attribute '${attrName}'`);
     }
