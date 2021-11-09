@@ -78,7 +78,7 @@ const n = 501;
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
 const lineData = {
-  join: 'bevel',
+  join: 'round',
   vertexCount: n + 3,
   vertexAttributes: {
     theta: regl.buffer([...Array(n + 3).keys()].map(i => i / n * Math.PI * 2))
@@ -180,7 +180,7 @@ const n = 501;
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
 const lineData = {
-  join: 'bevel',
+  join: 'round',
   vertexCount: n + 3,
   vertexAttributes: {
     theta: regl.buffer([...Array(n + 3).keys()].map(i => i / n * Math.PI * 2))
