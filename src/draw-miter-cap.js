@@ -150,7 +150,7 @@ void main() {
     }
   }
 
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'C', 'B')).join('\n')}
+  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
   gl_Position.xy /= resolution;
   gl_Position *= computedW;
