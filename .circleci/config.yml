@@ -7,8 +7,6 @@ defaults: &defaults
 jobs:
   prepare:
     <<: *defaults
-    docker:
-      - image: cimg/python:2.7.6-node
     steps:
       - checkout
       - run: python --version
