@@ -29,6 +29,12 @@ jobs:
       - attach_workspace:
           at: ~/
       - run: npm run lint
+  test-render:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run: npm run test-render
 
 workflows:
   version: 2
