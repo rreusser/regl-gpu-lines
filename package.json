@@ -1,6 +1,6 @@
 {
   "name": "regl-gpu-lines",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Pure GPU instanced, screen-projected lines for regl",
   "main": "dist/regl-gpu-lines.min.js",
   "repository": {
@@ -17,7 +17,7 @@
     "lint": "eslint src/*.js",
     "lint-fix": "eslint src/*.js --fix",
     "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js",
-    "prepublishOnly": "npm run build:examples && npm run bundle:rollup && npm run minify:rollup",
+    "prepublishOnly": "npm run test && npm run build:examples && npm run bundle:rollup && npm run minify:rollup",
     "test": "npm run lint && npm run test-render",
     "test-render": "node test/render.js",
     "start": "node scripts/serve-example.js"

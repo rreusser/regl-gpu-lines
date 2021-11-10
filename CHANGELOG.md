@@ -1,3 +1,12 @@
+## 0.0.15
+
+### Features
+
+- Completely reworked rounded join geometry to split joins down the middle. This makes dashes usable, currently only with rounded joins.
+- Improved handling of z-coordinate
+- Improved handling of some corner cases, including self-intersecting lines and short segments
+- Added tests
+
 ## 0.0.14
 
 ### Features
