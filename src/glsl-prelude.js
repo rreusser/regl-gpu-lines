@@ -2,7 +2,7 @@ const ORIENTATION = require('./orientation.json');
 
 module.exports = `
 #ifndef PI
-#define PI ${Math.PI}
+#define PI 3.141592653589793
 #endif
 
 #define CAP_START ${ORIENTATION.CAP_START}.0

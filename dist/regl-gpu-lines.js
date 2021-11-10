@@ -16,7 +16,7 @@
   const ORIENTATION$4 = require$$8;
   var glslPrelude$4 = `
 #ifndef PI
-#define PI ${Math.PI}
+#define PI 3.141592653589793
 #endif
 
 #define CAP_START ${ORIENTATION$4.CAP_START}.0
