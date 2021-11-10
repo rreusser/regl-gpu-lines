@@ -61,7 +61,7 @@ function reglLines(
   // The max value is chosen for aesthetic reasons, but also because there seems to be
   // a loss of precision or something above 30 at which it starts to get the indices
   // wrong.
-  const MAX_ROUND_JOIN_RESOLUTION = 30;
+  const MAX_ROUND_JOIN_RESOLUTION = 20;
   let indexBuffer, indexPrimitive;
   const indexAttributes = {};
   if (debug) {
@@ -74,7 +74,7 @@ function reglLines(
   }
   indexPrimitive = 'triangle strip';
   indexBuffer = regl.buffer(
-    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()])
+    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])
   );
   indexAttributes.index = { buffer: indexBuffer, divisor: 0 };
 

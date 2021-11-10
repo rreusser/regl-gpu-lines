@@ -82,8 +82,8 @@ Drawing is invoked by passing an object with the following optional properties t
 | -------- | ---- | ------- | ----------- |
 | `join` | `'miter'` `'bevel'` `'round'` | `'miter'` | Type of joins |
 | `cap` | `'square'` `'round'` `'none'` | `'square'` | Type of end caps | 
-| `joinResolution` | `number` | 8 | Number of triangles used to construct round joins | 
-| `capResolution` | `number` | 12 | Number of triangles used to construct round end caps | 
+| `joinResolution` | `number` (1-20) | 8 | Number of triangles used to construct round joins | 
+| `capResolution` | `number` (1-20) | 12 | Number of triangles used to construct round end caps | 
 | `miterLimit` | `number` | 4 | Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins. |
 | `vertexCount` | `number` | 0 | Total number of line vertices |
 | `endpointCount` | `number` | 0 | Number end caps drawn (number of endpoint vertices divided by three) |
