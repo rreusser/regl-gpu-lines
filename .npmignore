@@ -1,2 +1,3 @@
 docs/debug.png
 docs/lorenz.gif
+test/fixtures/**/*.png
