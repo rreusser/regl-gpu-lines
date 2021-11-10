@@ -436,7 +436,9 @@ void main() {
 
   lineCoord = vec2(0);
 
-  // Project all four points
+  ${''
+    /* Project all four points */
+    }
   vec4 pA = ${meta.position.generate('A')};
   vec4 pB = ${meta.position.generate('B')};
   vec4 pC = ${meta.position.generate('C')};
@@ -1312,7 +1314,7 @@ void main() {
     // a loss of precision or something above 30 at which it starts to get the indices
     // wrong.
 
-    const MAX_ROUND_JOIN_RESOLUTION = 30;
+    const MAX_ROUND_JOIN_RESOLUTION = 20;
     let indexBuffer, indexPrimitive;
     const indexAttributes = {};
 
@@ -1326,7 +1328,7 @@ void main() {
     }
 
     indexPrimitive = 'triangle strip';
-    indexBuffer = regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()]));
+    indexBuffer = regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()]));
     indexAttributes.index = {
       buffer: indexBuffer,
       divisor: 0

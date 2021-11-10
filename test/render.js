@@ -3,7 +3,8 @@ const path = require('path');
 const test = require('tape');
 const createContext = require('./util/create-context.js');
 const createREGL = require('regl/dist/regl.js');
-const createDrawLines = require('../src/index.js');
+const createDrawLinesDev = require('../src/index.js');
+const createDrawLinesProd = require('../dist/regl-gpu-lines.min.js');
 const savePixels = require('save-pixels');
 const getPixels = require('get-pixels');
 const ndarray = require('ndarray');
@@ -14,7 +15,18 @@ const pool = require('ndarray-scratch');
 
 const UPDATE = process.env['UPDATE'] === '1';
 const CI = process.env['CI'] === '1';
+const ENV = (process.env['ENV'] || '').toUpperCase() === 'PRODUCTION' ? 'production' : 'development'
 const filter = process.env['FILTER'] ? new RegExp(process.env['FILTER']) : null;
+
+let createDrawLines;
+console.log('ENV:', ENV);
+if (ENV === 'production') {
+  createDrawLines = createDrawLinesProd;
+  console.error('Testing against production bundle dist/regl-gpu-lines.min.js');
+} else {
+  createDrawLines = createDrawLinesDev;
+  console.error('Testing against source dir, src/');
+}
 
 function replaceNullWithNaN (data) {
   for (let i = 0; i < data.length; i++) {

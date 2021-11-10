@@ -58,7 +58,7 @@ void main() {
 
   lineCoord = vec2(0);
 
-  // Project all four points
+  ${'' /* Project all four points */}
   vec4 pA = ${meta.position.generate('A')};
   vec4 pB = ${meta.position.generate('B')};
   vec4 pC = ${meta.position.generate('C')};

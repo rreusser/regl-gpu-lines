@@ -16,10 +16,11 @@
     "bundle:rollup": "mkdir -p dist && rollup -c",
     "lint": "eslint src/*.js",
     "lint-fix": "eslint src/*.js --fix",
-    "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js",
+    "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js && node scripts/compress.js < dist/regl-gpu-lines.min.js > dist/tmp.js && mv dist/tmp.js dist/regl-gpu-lines.min.js",
     "prepublishOnly": "npm run test && npm run build:examples && npm run bundle:rollup && npm run minify:rollup",
-    "test": "npm run lint && npm run test-render",
-    "test-render": "node test/render.js",
+    "test": "npm run lint && npm run test-render-dev && npm run test-render-prod",
+    "test-render-dev": "ENV=development node test/render.js",
+    "test-render-prod": "ENV=production node test/render.js",
     "start": "node scripts/serve-example.js"
   },
   "keywords": [
@@ -57,6 +58,7 @@
     "rollup": "^2.58.3",
     "save-pixels": "^2.3.6",
     "simple-html-index": "^1.5.0",
+    "stream-to-string": "^1.2.0",
     "string-to-stream": "^3.0.1",
     "tape": "^5.3.1",
     "terser": "^5.9.0"
