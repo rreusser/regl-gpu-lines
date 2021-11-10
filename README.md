@@ -35,7 +35,7 @@ Limitations:
 
 ## Install
 
-The `dist/` directory contains UMD bundles, or you may use from a CDN, e.g. [https://unpkg.com/regl-gpu-lines@0.0.12](https://unpkg.com/regl-gpu-lines@0.0.12). Both expose the module as `reglLines`.
+The `dist/` directory contains UMD bundles, or you may use from a CDN, e.g. [https://unpkg.com/regl-gpu-lines@latest](https://unpkg.com/regl-gpu-lines@latest). Both expose the module as `reglLines`.
 
 Otherwise install from npm:
 
