@@ -39,7 +39,7 @@ void main() {
 
   float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
 
-  // Project points
+  ${''/* Project points */}
   vec4 pB = ${meta.position.generate('B')};
   vec4 pC = ${meta.position.generate('C')};
   vec4 pD = ${meta.position.generate('D')};
@@ -52,7 +52,7 @@ void main() {
   float pBw = pB.w;
   float computedW = pC.w;
 
-  // Convert to screen-pixel coordinates
+  ${''/* Convert to screen-pixel coordinates */}
   pB = vec4(pB.xy * resolution, pB.zw) / pBw;
   pC = vec4(pC.xy * resolution, pC.zw) / computedW;
   pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
@@ -62,13 +62,13 @@ void main() {
     return;
   }
 
-  // Invalidate triangles too far in front of or behind the camera plane
+  ${''/* Invalidate triangles too far in front of or behind the camera plane */}
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
     gl_Position = vec4(0);
     return;
   }
 
-  // Tangent and normal vectors
+  ${''/* Tangent and normal vectors */}
   vec2 rBC = pC.xy - pB.xy;
   float lBC = length(rBC);
   vec2 tBC = rBC / lBC;
@@ -81,23 +81,23 @@ void main() {
 
   gl_Position = pC;
 
-  // Left/right turning at each vertex
-  // Note: don't use sign for this! It's zero when the line is straight.
+  ${''/* Left/right turning at each vertex */}
+  ${''/* Note: don't use sign for this! It's zero when the line is straight. */}
   float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
   float endSign = orientation == CAP_START ? 1.0 : -1.0;
 
   float i = index;
   float iLast = capResolution2 + 4.0;
 
-  // Flip indexing if we turn the opposite direction, so that we draw backwards
-  // and get the winding order correct
+  ${''/* Flip indexing if we turn the opposite direction, so that we draw backwards */}
+  ${''/* and get the winding order correct */}
   if (dirC > 0.0) i = iLast - i;
 
   vec2 xy = vec2(0);
   mat2 xyBasis = mat2(0);
 
   if (i <= capResolution2) {
-    // The first few vertices are on the cap.
+    ${''/* The first few vertices are on the cap. */}
     gl_Position = pB;
 
     computedWidth = widthB;

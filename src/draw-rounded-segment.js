@@ -166,7 +166,7 @@ void main() {
 
     lineCoord.y = isStart ? dirC : -dirC;
 
-    // Extension of miter tangent to the segment
+    ${''/* Extension of miter tangent to the segment */}
     float mB = miterExtension(tAB, tBC) * _computedWidthB;
     float mC = miterExtension(tBC, tCD) * _computedWidthC;
 
@@ -202,7 +202,7 @@ void main() {
   ${''/* Only make z discontinuous when sharp angle self-intersect. Then treat them like varyings. This *might* prevent z-fighting. */}
   if (selfIntersects) gl_Position.z = mix(pB.z, pC.z, isStart ? 1.0 - useC : useC);
 
-  // Compute the final position
+  ${''/* Compute the final position */}
   gl_Position.z += dz;
   gl_Position.xy += _computedWidthC * (xyBasis * xy);
   gl_Position.xy /= resolution;

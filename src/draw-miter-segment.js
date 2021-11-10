@@ -37,7 +37,7 @@ void main() {
   lineCoord.x = 0.0;
   lineCoord.y = linePosition.y;
 
-  // Project all four points
+  ${''/* Project all four points */}
   vec4 pA = ${meta.position.generate('A')};
   vec4 pB = ${meta.position.generate('B')};
   vec4 pC = ${meta.position.generate('C')};
@@ -57,19 +57,19 @@ void main() {
   float pBw = pB.w;
   float computedW = pC.w;
 
-  // Convert to screen-pixel coordinates
+  ${''/* Convert to screen-pixel coordinates */}
   pA = vec4(pA.xy * resolution, pA.zw) / pA.w;
   pB = vec4(pB.xy * resolution, pB.zw) / pBw;
   pC = vec4(pC.xy * resolution, pC.zw) / computedW;
   pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
 
-  // Invalidate triangles too far in front of or behind the camera plane
+  ${''/* Invalidate triangles too far in front of or behind the camera plane */}
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
     gl_Position = vec4(0);
     return;
   }
 
-  // Tangent and normal vectors
+  ${''/* Tangent and normal vectors */}
   vec2 rAB = pB.xy - pA.xy;
   vec2 rBC = pC.xy - pB.xy;
   vec2 rCD = pD.xy - pC.xy;

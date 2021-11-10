@@ -60,7 +60,7 @@ void main() {
 
   float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
 
-  // Project points
+  ${''/* Project points */}
   vec4 pB = ${meta.position.generate('B')};
   vec4 pC = ${meta.position.generate('C')};
   vec4 pD = ${meta.position.generate('D')};
@@ -78,18 +78,18 @@ void main() {
   float computedW = pC.w;
   float useC = 1.0;
 
-  // Convert to screen-pixel coordinates
+  ${''/* Convert to screen-pixel coordinates */}
   pB = vec4(pB.xy * resolution, pB.zw) / pBw;
   pC = vec4(pC.xy * resolution, pC.zw) / computedW;
   pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
 
-  // Invalidate triangles too far in front of or behind the camera plane
+  ${''/* Invalidate triangles too far in front of or behind the camera plane */}
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
     gl_Position = vec4(0);
     return;
   }
 
-  // Tangent and normal vectors
+  ${''/* Tangent and normal vectors */}
   vec2 rBC = pC.xy - pB.xy;
   float lBC = length(rBC);
   vec2 tBC = rBC / lBC;
@@ -102,8 +102,8 @@ void main() {
 
   float lBCD = min(lBC, lCD);
 
-  // Left/right turning at each vertex
-  // Note: don't use sign for this! It's zero when the line is straight.
+  ${''/* Left/right turning at each vertex */}
+  ${''/* Note: don't use sign for this! It's zero when the line is straight. */}
   float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
 
   float i = index;
@@ -116,7 +116,7 @@ void main() {
   bool selfIntersects = isSelfIntersection(tBC, tCD, computedWidth, lBCD);
 
   if (i < capResolution2 + 1.0) {
-    // The first few vertices are on the cap.
+    ${''/* The first few vertices are on the cap. */}
     i -= capResolution2;
     gl_Position = pB;
     computedWidth = widthB;
@@ -142,15 +142,15 @@ void main() {
 
     bool isSegment = i <= 2.0 || i == iLast;
     if (i <= 2.0 || i == iLast) {
-      // We're in the miter/segment portion
+      ${''/* We're in the miter/segment portion */}
 
-      // Use the turning direction to put the positive line coord on a consistent side
+      ${''/* Use the turning direction to put the positive line coord on a consistent side */}
       lineCoord.y = i == 1.0 ? dirC : -dirC;
 
-      // Extension of miter tangent to the segment
+      ${''/* Extension of miter tangent to the segment */}
       float mC = miterExtension(tBC, tCD) * widthC;
 
-      // Place the corners, with clipping against the opposite end
+      ${''/* Place the corners, with clipping against the opposite end */}
       float bcdClip = selfIntersects ? lBCD : lBC;
       float mC0 = dirC > 0.0 ? min(bcdClip, -mC) : 0.0;
       float mC1 = dirC > 0.0 ? 0.0 : min(bcdClip, mC);
@@ -164,10 +164,10 @@ void main() {
 
       xy = vec2(
         (isStart ?
-          // If so, then use the miter at B
+          ${''/* If so, then use the miter at B */}
           -lBC :
 
-          // Else, the miter at C
+          ${''/* Else, the miter at C */}
           -(lineCoord.y > 0.0 ? mC1 : mC0)
         ),
         lineCoord.y
@@ -186,12 +186,12 @@ void main() {
       xyBasis = mat2(xBasis, yBasis);
 
       if (mod(i, 2.0) != 0.0) {
-        // Odd-numbered point in this range are around the arc. (Even numbered points in this
-        // range are a no-op and fall through to just point C)
+        ${''/* Odd-numbered point in this range are around the arc. (Even numbered points in this */}
+        ${''/* range are a no-op and fall through to just point C) */}
         lineCoord.y = dirC;
 
-        // Our indexing is offset by three, and every other index is just the center point
-        // pC (which we repeat a bunch since we're drawing a triangle strip)
+        ${''/* Our indexing is offset by three, and every other index is just the center point */}
+        ${''/* pC (which we repeat a bunch since we're drawing a triangle strip) */}
         i = (i - 3.0) * 0.5;
         if (dirC > 0.0) i = joinResolution - i;
 
@@ -199,12 +199,12 @@ void main() {
         float theta = 0.5 * acos(cosTheta) * (0.5 - 0.5 * dirC - i / joinResolution);
         xy = dirC * vec2(sin(theta), cos(theta));
 
-      ${''/* Correct for smooth transition of z around the join, but limit to half the z difference to the next point*/}
+      ${''/* Correct for smooth transition of z around the join, but limit to half the z difference to the next point */}
         if (!isDegenerate) dz = -(pB.z - pC.z) * clamp(xy.x * computedWidth / lBC, -0.5, 0.5);
       }
     }
 
-    // Compute the final position
+    ${''/* Compute the final position */}
     gl_Position.xy += computedWidth * (xyBasis * xy);
   }
 
