@@ -1,4 +1,6 @@
-const regl = createREGL({ extensions: ['ANGLE_instanced_arrays'] });
+const regl = createREGL({
+  extensions: ['ANGLE_instanced_arrays']
+});
 
 // Instantiate a command for drawing lines
 const drawLines = reglLines(regl, {
@@ -24,12 +26,12 @@ const drawLines = reglLines(regl, {
       );
     }
 
-    // Return the line width from a uniorm
+    // Return the line width from a uniform
     #pragma lines: width = getWidth();
     float getWidth() { return width; }`,
   frag: `
     precision highp float;
-    uniform float width, borderWidth;
+    uniform float width, borderWidth, pixelRatio;
     uniform vec3 color;
     varying vec2 lineCoord;
     void main () {
@@ -38,17 +40,23 @@ const drawLines = reglLines(regl, {
 
       // Apply a border with 1px transition
       gl_FragColor = vec4(
-        mix(color, vec3(1), smoothstep(width - borderWidth - 0.5, width - borderWidth + 0.5, sdf)),
-        1);
+        mix(color, vec3(1),
+          smoothstep(
+            width - borderWidth - 0.5 / pixelRatio,
+            width - borderWidth + 0.5 / pixelRatio,
+            sdf
+          )
+        ), 1);
     }`,
 
   // Multiply the width by the pixel ratio for consistent width
   uniforms: {
+    pixelRatio: regl.context('pixelRatio'),
     aspect: ctx => ctx.viewportWidth > ctx.viewportHeight
       ? [ctx.viewportHeight / ctx.viewportWidth, 1]
       : [1, ctx.viewportWidth / ctx.viewportHeight],
-    width: (ctx, props) => ctx.pixelRatio * Math.min(ctx.viewportWidth, ctx.viewportHeight) / 40,
-    borderWidth: (ctx, props) => ctx.pixelRatio * Math.min(ctx.viewportWidth, ctx.viewportHeight) / (40 * 6),
+    width: (ctx, props) => Math.min(ctx.viewportWidth, ctx.viewportHeight) / 30,
+    borderWidth: (ctx, props) => Math.min(ctx.viewportWidth, ctx.viewportHeight) / (30 * 4),
     phase: regl.prop('phase'),
     color: regl.prop('color')
   },
