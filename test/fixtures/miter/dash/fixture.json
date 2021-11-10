@@ -49,6 +49,6 @@
   },
   "data": {
     "join": "miter",
-    "cap": "round"
+    "cap": "square"
   }
 }

@@ -16,6 +16,30 @@ const UPDATE = process.env['UPDATE'] === '1';
 const CI = process.env['CI'] === '1';
 const filter = process.env['FILTER'] ? new RegExp(process.env['FILTER']) : null;
 
+function replaceNullWithNaN (data) {
+  for (let i = 0; i < data.length; i++) {
+    if (Array.isArray(data[i])) {
+      replaceNullWithNaN(data[i]);
+    } else if (data[i] === null) {
+      data[i] = NaN;
+    }
+  }
+  return data;
+}
+
+function constructEndpointsFromNaNGaps (data) {
+  const endpoints = [];
+  endpoints.push(data.slice(0, 3));
+  for (let i = 3; i < data.length; i++) {
+    if ((!Array.isArray(data[i]) && isNaN(data[i])) || (data[i].length && isNaN(data[i][0]))) {
+      endpoints.push(data.slice(i - 3, i).reverse());
+      endpoints.push(data.slice(i + 1, i + 4));
+    }
+  }
+  endpoints.push(data.slice(-3).reverse());
+  return endpoints;
+}
+
 function renderFixture(regl, fixture) {
   const drawLines = createDrawLines(regl, {
     ...fixture.command,
@@ -28,11 +52,31 @@ function renderFixture(regl, fixture) {
   lineData.vertexAttributes = {};
   lineData.endpointAttributes = {};
 
-  for (const [name, attribute] of Object.entries(fixture.vertexAttributes)) {
-    lineData.vertexAttributes[name] = regl.buffer(attribute);
-    lineData.vertexCount = attribute.length;
-    lineData.endpointAttributes[name] = regl.buffer([attribute.slice(0, 3), attribute.slice(-3).reverse()])
-    lineData.endpointCount = 2;
+
+  if (fixture.vertexAttributes) {
+    for (const [name, attribute] of Object.entries(fixture.vertexAttributes)) {
+      const sanitizedAttr = replaceNullWithNaN(attribute);
+
+      lineData.vertexAttributes[name] = regl.buffer(sanitizedAttr);
+      lineData.vertexCount = sanitizedAttr.length;
+
+      if (!fixture.endpointAttributes) {
+        // Otherwise, as a testing convenience, fill in NaN gaps with endpoints
+        const endpointAttr = constructEndpointsFromNaNGaps(sanitizedAttr)
+        lineData.endpointAttributes[name] = regl.buffer(endpointAttr);
+        lineData.endpointCount = endpointAttr.length;
+      }
+    }
+  }
+
+  if (fixture.endpointAttributes) {
+    for (const [name, attribute] of Object.entries(fixture.endpointAttributes)) {
+      const sanitizedAttr = replaceNullWithNaN(attribute);
+
+      // If endpoint data is provided, use it
+      lineData.endpointAttributes[name] = regl.buffer(sanitizedAttr);
+      lineData.endpointCount = sanitizedAttr.length;
+    }
   }
 
   drawLines(lineData);

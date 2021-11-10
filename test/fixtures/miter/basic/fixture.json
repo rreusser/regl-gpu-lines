@@ -13,9 +13,18 @@
     "frag": [
       "precision lowp float;",
       "void main () {",
-      "  gl_FragColor = vec4(0,0,0,1);",
+      "  gl_FragColor = vec4(0,0,0,0.5);",
       "}"
-    ]
+    ],
+    "blend": {
+      "enable": true,
+      "func": {
+        "srcRGB": "src alpha",
+        "srcAlpha": 1,
+        "dstRGB": "one minus src alpha",
+        "dstAlpha": 1
+      }
+    }
   },
   "vertexAttributes": {
     "xy": [
