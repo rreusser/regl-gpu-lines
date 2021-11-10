@@ -1,0 +1,55 @@
+{
+  "shape": [256, 128],
+  "command": {
+    "vert": [
+      "precision highp float;",
+      "#pragma lines: attribute vec2 xy",
+      "#pragma lines: position = getPosition(xy)",
+      "#pragma lines: width = getWidth()",
+      "uniform float width;",
+      "float getWidth() { return width; }",
+      "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+    ],
+    "frag": [
+      "precision highp float;",
+      "varying vec2 lineCoord;",
+      "uniform float width;",
+      "float linearstep(float a, float b, float x) { return clamp((x - a) / (b - a), 0.0, 1.0); }",
+      "void main () {",
+      "  float sdf = 0.5 * width * max(abs(lineCoord.x), abs(lineCoord.y));",
+      "  float aa = linearstep(width * 0.5, width * 0.5 - 1.0, sdf);",
+      "  float border = linearstep(width * 0.5 - 4.5, width * 0.5 - 3.5, sdf);",
+      "  vec3 color = mix(vec3(0.8), vec3(0), border);",
+      "  gl_FragColor = vec4(color, aa);",
+      "}"
+    ],
+    "uniforms": {
+      "width": 20
+    },
+    "blend": {
+      "enable": true,
+      "func": {
+        "srcRGB": "src alpha",
+        "srcAlpha": 1,
+        "dstRGB": "one minus src alpha",
+        "dstAlpha": 1
+      }
+    }
+  },
+  "vertexAttributes": {
+    "xy": [
+      [-0.8, 0.0],
+      [-0.5, 0.0],
+      [0.3, 0.7],
+      [0.8, 0.7],
+      [-0.8, -0.7],
+      [-0.3, -0.7],
+      [0.5, 0.0],
+      [0.8, 0.0]
+    ]
+  },
+  "data": {
+    "join": "miter",
+    "cap": "square"
+  }
+}

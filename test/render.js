@@ -13,6 +13,7 @@ const pixelmatch = require('pixelmatch');
 const pool = require('ndarray-scratch');
 
 const UPDATE = process.env['UPDATE'] === '1';
+const CI = process.env['CI'] === '1';
 const filter = process.env['FILTER'] ? new RegExp(process.env['FILTER']) : null;
 
 function renderFixture(regl, fixture) {
@@ -51,20 +52,20 @@ test('run image tests', function (t) {
       const shape = fixture.shape || [256, 256];
       gl.resize(shape[0], shape[1]);
 
-      const regl = createREGL({
-        gl,
-        extensions: ['ANGLE_instanced_arrays']
-      });
+      const regl = createREGL({gl, extensions: ['ANGLE_instanced_arrays']});
 
       renderFixture(regl, fixture);
 
       const outputName = UPDATE ? 'expected.png' : 'actual.png';
       const outputPath = path.join(path.dirname(fixturePath), outputName);
       const actualPixels = ndarray(regl.read(), [shape[1], shape[0], 4]).transpose(1, 0);
+
       regl.destroy();
 
-      savePixels(actualPixels.step(1, -1), 'png')
-        .pipe(fs.createWriteStream(outputPath));
+      if (!CI) {
+        savePixels(actualPixels.step(1, -1), 'png')
+          .pipe(fs.createWriteStream(outputPath));
+      }
 
       if (!UPDATE) {
         const expectedName = path.join(path.dirname(fixturePath), 'expected.png');
@@ -80,11 +81,12 @@ test('run image tests', function (t) {
             includeAA: true
           });
 
-          const diffPath = path.join(path.dirname(fixturePath), 'diff.png');
-          const diffPixels = ndarray(diffData, [shape[1], shape[0], 4]);
-          savePixels(diffPixels.transpose(1, 0).step(1, -1), 'png')
-            .pipe(fs.createWriteStream(diffPath));
-
+          if (!CI || badPixelCount) {
+            const diffPath = path.join(path.dirname(fixturePath), 'diff.png');
+            const diffPixels = ndarray(diffData, [shape[1], shape[0], 4]);
+            savePixels(diffPixels.transpose(1, 0).step(1, -1), 'png')
+              .pipe(fs.createWriteStream(diffPath));
+          }
 
           t.ok(!badPixelCount, `zero unmatched pixels${badPixelCount ? ` (got ${badPixelCount} unmatched)` : ''}`);
 

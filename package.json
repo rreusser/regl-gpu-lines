@@ -51,6 +51,7 @@
     "ndarray-ops": "^1.2.2",
     "ndarray-scratch": "^1.2.0",
     "pixelmatch": "^5.2.1",
+    "raf": "^3.4.1",
     "regl": "^2.1.0",
     "regl-camera": "^2.1.1",
     "rollup": "^2.58.3",
