@@ -70,12 +70,13 @@ const drawLines = reglLines(regl, {
     }
 
     void main () {
-      if (instanceID < 0.0) {
+      float iInstanceID = floor(instanceID + 0.5);
+      if (iInstanceID < 0.0) {
         // End caps are red
         gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
       } else {
         // Remaining segments alternate blues
-        gl_FragColor.rgb = mod(instanceID, 2.0) == 0.0 ? vec3(0.4, 0.7, 1.0) : vec3(0.2, 0.3, 0.7);
+        gl_FragColor.rgb = mod(iInstanceID, 2.0) == 0.0 ? vec3(0.4, 0.7, 1.0) : vec3(0.2, 0.3, 0.7);
       }
 
       // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.
@@ -197,12 +198,13 @@ const drawLines = reglLines(regl, {
     }
 
     void main () {
-      if (instanceID < 0.0) {
+      float iInstanceID = floor(instanceID + 0.5);
+      if (iInstanceID < 0.0) {
         // End caps are red
         gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
       } else {
         // Remaining segments alternate blues
-        gl_FragColor.rgb = mod(instanceID, 2.0) == 0.0 ? vec3(0.4, 0.7, 1.0) : vec3(0.2, 0.3, 0.7);
+        gl_FragColor.rgb = mod(iInstanceID, 2.0) == 0.0 ? vec3(0.4, 0.7, 1.0) : vec3(0.2, 0.3, 0.7);
       }
 
       // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.

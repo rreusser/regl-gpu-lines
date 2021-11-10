@@ -181,7 +181,7 @@ const drawLines = reglLines(regl, {
       if (colorInstances) {
         if (instanceID < 0.0) {
           gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
-        } else if (mod(instanceID, 2.0) == 1.0) {
+        } else if (floor(mod(instanceID, 2.0) + 0.5) == 1.0) {
           gl_FragColor.rgb = vec3(0.2, 0.3, 0.7);
         }
       }
@@ -465,7 +465,7 @@ const drawLines = reglLines(regl, {
       if (colorInstances) {
         if (instanceID < 0.0) {
           gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
-        } else if (mod(instanceID, 2.0) == 1.0) {
+        } else if (floor(mod(instanceID, 2.0) + 0.5) == 1.0) {
           gl_FragColor.rgb = vec3(0.2, 0.3, 0.7);
         }
       }
