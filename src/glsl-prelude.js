@@ -10,7 +10,9 @@ module.exports = `
 
 float miterExtension(vec2 t01, vec2 t12) {
   float cosTheta = dot(t01, t12);
-  if (cosTheta - 1e-7 < -1.0) return 0.0;
+
+  ${''/* This corresponds to an angle of 2.2915 degrees, or a miter extension of fifty line widths, at which point the extension is so ridiculously big that numerical stability trumps accuracy and we just pretend it folds back on itself. */}
+  if (cosTheta <= -0.96) return 0.0;
   float sinTheta = t01.x * t12.y - t01.y * t12.x;
   return sinTheta / (1.0 + cosTheta);
 }
