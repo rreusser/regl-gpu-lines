@@ -30,6 +30,7 @@ uniform vec2 joinRes;
 uniform vec2 resolution;
 uniform float miterLimit2;
 ${meta.orientation || !isCap ? '' : 'uniform float uOrientation;'}
+${isCap ? 'uniform vec2 capScale;' : ''}
 
 varying vec2 lineCoord;
 
@@ -168,6 +169,7 @@ void main() {
         const float pi = 3.141592653589793;
         float theta = -0.5 * (0.5 * acos(cosB) * (i / res.x) - pi) * (isCap ? 2.0 : 1.0);
         xy = vec2(cos(theta), sin(theta));
+        ${isCap ? `if (isCap && xy.y > 0.0) xy *= capScale;` : ''}
         ${isCap ? `if (isCap) lineCoord = xy.yx * lineCoord.y;` : ''}
       } else {
         yBasis = miter;
@@ -216,6 +218,7 @@ void main() {
       joinRes: (ctx, props) => [isCap ? props.capResolution : props.joinResolution, props.joinResolution],
       miterLimit2: (ctx, props) => props.miterLimit * props.miterLimit,
       uOrientation: regl.prop('orientation'),
+      capScale: regl.prop('capScale'),
     },
     primitive: 'triangle strip',
     instances: isCap

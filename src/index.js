@@ -87,7 +87,7 @@ function reglLines(
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
   const VALID_CAP_TYPES = ['round', 'square', 'none'];
   const ROUND_CAP_SCALE = [1, 1];
-  const SQUARE_CAP_SCALE = [2 / Math.sqrt(3), 2];
+  const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
 
   return function drawLines(props) {
     if (!props) return;
