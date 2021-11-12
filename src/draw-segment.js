@@ -133,7 +133,8 @@ void main() {
 
   // Override the miter for segments which perfectly fold back on themselves
   vec2 miter = 0.5 * (nAB + nBC) * dirB;
-  if (bCollinear && cosB < 0.0) {
+  bool isHairpin = bCollinear && cosB < 0.0;
+  if (isHairpin) {
     miter = -tBC;
     cosB = -1.0;
   }
@@ -156,6 +157,7 @@ void main() {
 
   lineCoord.y = dirB * mirrorSign;
 
+  float dC = 0.0;
   if (iSeg < 0.0) {
     float m2 = dot(miter, miter);
     float lm = length(miter);
@@ -171,16 +173,21 @@ void main() {
         xy = vec2(cos(theta), sin(theta));
         ${isCap ? `if (isCap && xy.y > 0.0) xy *= capScale;` : ''}
         ${isCap ? `if (isCap) lineCoord = xy.yx * lineCoord.y;` : ''}
+
+        // TOOD: this is not correct
+        if (isHairpin) xy.x *= mirrorSign;
       } else {
-        yBasis = miter;
+        yBasis = isHairpin ? vec2(0) : miter;
         if (!isBevel) xy.y /= m2;
+        dC += dot(tBC * mirrorSign, miter);
       }
     } else {
       // vertex B
       lineCoord.y = 0.0;
       xy = vec2(0);
       if (!useRound && isBevel && !isCap) {
-        xy.y = sqrt((1.0 + cosB) * 0.5) - 1.0;
+        xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);
+        dC += dot(tBC * mirrorSign, miter / lm) * xy.y;
       }
     }
   //} else if (iSeg == 0.0) { // vertex B + line B-C normal
@@ -195,13 +202,13 @@ void main() {
     }
     float m = abs(miterExt) * width;
     m = min(m, min(lBC, lAB));
-    xy = vec2(m, -1);
-    useC = useC + xy.x / lBC * mirrorSign;
-    xy.x /= width;
+    xy = vec2(m / width, -1);
+    dC += xy.x * mirrorSign;
   }
 
   ${isCap ? `if (orientation == CAP_END) lineCoord = -lineCoord;` : ''}
 
+  useC += dC * (width / lBC);
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
   gl_Position = pB;
