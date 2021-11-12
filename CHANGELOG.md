@@ -1,3 +1,16 @@
+## 0.0.16
+
+### Features
+
+- Almost a complete rewrite. Consolidated everything into a single shader with two switches (round vs. miter, cap vs. interior).
+- Line dashes work with both round and miter
+- SDF borders now work with round and miter
+- Bundle size down to 11kB minified, 4.5kB gzipped
+
+### Limitations
+
+- Degenerate lines which turn 180 degrees are a regression. They sometimes but not always work. A tiny floating point offset will fix things.
+
 ## 0.0.15
 
 ### Features
