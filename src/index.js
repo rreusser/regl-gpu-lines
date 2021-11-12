@@ -1,6 +1,6 @@
 'use strict';
 
-const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
+const createDrawSegment = require('./draw-segment.js');
 const createDrawMiterCapCommand = require('./draw-miter-cap.js');
 const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
@@ -79,9 +79,9 @@ function reglLines(
 
   // Instantiate commands
   const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
-  const drawMiterSegment = createDrawMiterSegmentCommand(false, config);
+  const drawMiterSegment = createDrawSegment(false, config);
   const drawMiterCap = createDrawMiterCapCommand(config);
-  const drawRoundedSegment = createDrawMiterSegmentCommand(true, config);
+  const drawRoundedSegment = createDrawSegment(true, config);
   const drawRoundedCap = createDrawRoundedCapCommand(config);
 
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
