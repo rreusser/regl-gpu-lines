@@ -62,7 +62,7 @@ void main() {
   float useC = 0.0;
   lineCoord = vec2(0);
 
-  ${debug ? 'instanceID = debugInstanceID;' : ''}
+  ${debug ? `instanceID = ${isCap ? '-1.0' : 'debugInstanceID'};` : ''}
   ${debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
 
   ${isCap ? `float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};` : ''};
