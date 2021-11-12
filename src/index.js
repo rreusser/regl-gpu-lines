@@ -1,8 +1,8 @@
 'use strict';
 
 const createDrawSegment = require('./draw-segment.js');
-const createDrawMiterCapCommand = require('./draw-miter-cap.js');
-const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
+//const createDrawMiterCapCommand = require('./draw-miter-cap.js');
+//const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
 const sanitizeBufferInputs = require('./sanitize-buffer.js');
 const createAttrSpec = require('./create-attr-spec.js');
@@ -79,10 +79,10 @@ function reglLines(
 
   // Instantiate commands
   const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
-  const drawMiterSegment = createDrawSegment(false, config);
-  const drawMiterCap = createDrawMiterCapCommand(config);
-  const drawRoundedSegment = createDrawSegment(true, config);
-  const drawRoundedCap = createDrawRoundedCapCommand(config);
+  const drawMiterSegment = createDrawSegment(false, false, config);
+  const drawRoundedSegment = createDrawSegment(true, false, config);
+  const drawMiterCap = createDrawSegment(false, true, config);
+  const drawRoundedCap = createDrawSegment(true, true, config);
 
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
   const VALID_CAP_TYPES = ['round', 'square', 'none'];
@@ -120,13 +120,14 @@ function reglLines(
         const joinType = sanitizeInclusionInList(lineProps.join, 'miter', VALID_JOIN_TYPES, 'join');
         const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
 
-        const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
         let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;// * 2;
         if (capType === 'square') {
           capResolution = 3;
         } else if (capType === 'none') {
           capResolution = 1;
         }
+        let joinResolution = 1;
+        if (joinType === 'round') joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
 
         const miterLimit = joinType === 'bevel' ? 1 : (lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit);
         const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;

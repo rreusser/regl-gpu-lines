@@ -16,16 +16,16 @@ const state = wrapGUI(State({
     capResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     joinResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
-    join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
-    miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
+    join: State.Select('miter', {options: ['round', 'miter', 'bevel']}),
+    miterLimit: State.Slider(4, {min: 1, max: 8, step: 0.01}),
   }, {label: 'line config', expanded: true}),
   geometry: State.Section({
-    stretch: State.Slider(1.146, {min: 0.01, max: 2, step: 0.001}),
+    stretch: State.Slider(1.0, {min: 0.01, max: 2, step: 0.001}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
   }, {expanded: true}),
   line: State.Section({
     width: State.Slider(50, {min: 1, max: 100, step: 0.1}),
-    opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
   }, {label: 'line', expanded: false}),
   border: State.Section({
     width: State.Slider(5, {min: 0, max: 10, step: 0.1}),
@@ -38,7 +38,7 @@ const state = wrapGUI(State({
   rendering: State.Section({
     wireframeOpacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
-    depth: true,
+    depth: false,
     colorInstances: true,
   }, {
     expanded: false
@@ -59,7 +59,16 @@ function project(p) {
 }
 
 const path = [
+[-0.4, -0.1],
+[-0.3, -0.8],
+[-0.1, -0.5],
+[-0.0, 0],
+[ 0.1, -0.5],
+[ 0.3, -0.8],
+[ 0.4, -0.1]
 
+/*
+// Collinearity test
 [-0.9, -0.9],
 [-0.8, -0.8],
 [-0.7, -0.7],
@@ -74,17 +83,21 @@ const path = [
 [0.1, 0.15],
 [0.2, 0.22],
 [0.3, 0.35],
-/*[-0.8, -0.8],
+*/
+
+/*
 [-0.7, -0.8],
-[-0.6, 0.2],
-[-0.4, 0.3],
-[-0.2, -0.2],
+[-0.6, -0.8],
+[-0.5, 0.2],
+[-0.3, 0.3],
+[-0.1, -0.2],
 [0, 0],
 [0.2, -0.2],
 [0.4, -0.6],
 [0.6, -0.8],
 [0.8, -0.8],
 */
+
 /*
   [-0.75, -0.5],
   [-0.5, -0.5],
@@ -168,7 +181,7 @@ const drawLines = reglLines(regl, {
     varying vec2 lineCoord;
     varying float dist;
     varying float instanceID;
-    varying vec2 triStripGridCoord;
+    varying vec2 triStripCoord;
 
     float grid (vec3 parameter, float width, float feather) {
       float w1 = width - feather * 0.5;
@@ -228,7 +241,7 @@ const drawLines = reglLines(regl, {
       //   1     3     5     7     9
       //
       if (wireframeOpacity > 0.0) {
-        float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 2.0 / pixelRatio);
+        float wire = grid(vec3(triStripCoord, triStripCoord.x + triStripCoord.y), 0.5 * pixelRatio, 2.0 / pixelRatio);
         gl_FragColor = mix(gl_FragColor, vec4(1), wire * wireframeOpacity);
       }
     }`,
