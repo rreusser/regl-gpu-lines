@@ -27,6 +27,8 @@ function mat2rotate(out, a, rad) {
   return out;
 }
 
+const extent = 2;
+
 const regl = createREGL({
   extensions: ['ANGLE_instanced_arrays'],
   attributes: {antialias: false},
@@ -42,8 +44,9 @@ const drawLines = reglLines(regl, {
     #pragma lines: varying vec2 position = getXY(xy);
     uniform mat2 transform;
     uniform vec2 aspect;
+    uniform float scale;
     vec4 getPosition(vec3 xy) {
-      return vec4((transform * (xy.xy * 0.03)) * aspect, 0, 1);
+      return vec4((transform * (xy.xy * scale)) * aspect, 0, 1);
     }
     vec2 getXY(vec3 xy) { return xy.xy; }
 
@@ -62,25 +65,28 @@ const drawLines = reglLines(regl, {
     varying vec2 lineCoord;
     varying vec2 position;
     uniform vec3 color;
+    uniform vec2 range;
     uniform lowp float width;
     uniform float pixelRatio;
     float linearstep(float a, float b, float x) { return clamp((x - a) / (b - a), 0.0, 1.0); }
     void main () {
       float sdf = width * abs(lineCoord.y);
-      float alpha = linearstep(width, width - 1.0, sdf);
+      float alpha = linearstep(width, width - 1.5, sdf);
       float c = fract(t);
       if (c > 1.0 / 3.0 || alpha < 0.2) discard;
-      alpha *= smoothstep(34.0, 29.0, length(position)) * 0.7;
+      alpha *= smoothstep(range.x, range.y, length(position)) * 0.8;
       gl_FragColor = vec4(color, alpha);
     }`,
 
   // Multiply the width by the pixel ratio for consistent width
   uniforms: {
+    range: [34 * extent, 29 * extent],
+    scale: 0.03 / extent,
     color: regl.prop('color'),
     transform: regl.prop('transform'),
     pixelRatio: regl.context('pixelRatio'),
     width: (ctx, props) => {
-      return Math.min(ctx.viewportWidth, ctx.viewportHeight) / 300;
+      return Math.min(ctx.viewportWidth, ctx.viewportHeight) / 600;
     },
     aspect: ctx => ctx.viewportWidth > ctx.viewportHeight
       ? [ctx.viewportHeight / ctx.viewportWidth, 1]
@@ -106,8 +112,8 @@ const yShift = Math.sin(Math.PI / 3);
 const unit = [[0, 0], [1 - Math.cos(Math.PI / 3), Math.sin(Math.PI / 3)]]
 let c = 0;
 const t = [];
-const rows = 20;
-const cols = 11;
+const rows = 20 * extent;
+const cols = 11 * extent;
 
 for (let k = -cols; k <=cols; k++) {
   for (let j of [-1, 1]) {
@@ -119,7 +125,7 @@ for (let k = -cols; k <=cols; k++) {
         -1,
       ]);
 
-      if (Math.hypot(pt[0][0], pt[0][1]) > 36.0) continue;
+      if (Math.hypot(pt[0][0], pt[0][1]) > 36.0 * extent) continue;
       xy.push(pt);
     }
   }
@@ -131,12 +137,12 @@ for (let j = rows; j >= -rows; j--) {
   const shift = 1.5;
   const dx = -0.25;
   const dy = -yShift * 0.25;
-  const extent = 2 * cols + 1;
+  const ext = 2 * cols + 1;
   xy.push([
-    [x1 + dx, j + dy, extent],
+    [x1 + dx, j + dy, ext],
     [-x1 - e + dx, j + dy, 0],
     [-x1 - e + dx + shift, j - 0.5 + dy, 0],
-    [x1 + dx + shift, j - 0.5 + dy, extent]
+    [x1 + dx + shift, j - 0.5 + dy, ext]
   ].map(([x, y, z]) => [
     x,
     (y + 0.25) * yShift * 2,
@@ -163,19 +169,20 @@ const lineData = {
 
 
 const colors = [
-  [1, 0, 0.5],
+  [1, 0.5, 0],
+  [0, 0.5, 1],
   [0.5, 1, 0],
-  [0, 0.5, 1]
 ];
 regl.frame(({time}) => {
+  //const time = 1.0 * Math.PI / 180 / 0.1;
   regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1]});
-  [0, 0.1, 0.2].forEach((rate, i) => {
+  [0, 0.1].forEach((rate, i) => {
     regl.clear({depth: 1});
     drawLines({
       ...lineData,
       transform: mat2rotate([], mat2create(), time * rate),
-      color: colors[i]
+      color: colors[i % colors.length]
     })
   });
 });
@@ -212,6 +219,8 @@ function mat2rotate(out, a, rad) {
   return out;
 }
 
+const extent = 2;
+
 const regl = createREGL({
   extensions: ['ANGLE_instanced_arrays'],
   attributes: {antialias: false},
@@ -227,8 +236,9 @@ const drawLines = reglLines(regl, {
     #pragma lines: varying vec2 position = getXY(xy);
     uniform mat2 transform;
     uniform vec2 aspect;
+    uniform float scale;
     vec4 getPosition(vec3 xy) {
-      return vec4((transform * (xy.xy * 0.03)) * aspect, 0, 1);
+      return vec4((transform * (xy.xy * scale)) * aspect, 0, 1);
     }
     vec2 getXY(vec3 xy) { return xy.xy; }
 
@@ -247,25 +257,28 @@ const drawLines = reglLines(regl, {
     varying vec2 lineCoord;
     varying vec2 position;
     uniform vec3 color;
+    uniform vec2 range;
     uniform lowp float width;
     uniform float pixelRatio;
     float linearstep(float a, float b, float x) { return clamp((x - a) / (b - a), 0.0, 1.0); }
     void main () {
       float sdf = width * abs(lineCoord.y);
-      float alpha = linearstep(width, width - 1.0, sdf);
+      float alpha = linearstep(width, width - 1.5, sdf);
       float c = fract(t);
       if (c > 1.0 / 3.0 || alpha < 0.2) discard;
-      alpha *= smoothstep(34.0, 29.0, length(position)) * 0.7;
+      alpha *= smoothstep(range.x, range.y, length(position)) * 0.8;
       gl_FragColor = vec4(color, alpha);
     }`,
 
   // Multiply the width by the pixel ratio for consistent width
   uniforms: {
+    range: [34 * extent, 29 * extent],
+    scale: 0.03 / extent,
     color: regl.prop('color'),
     transform: regl.prop('transform'),
     pixelRatio: regl.context('pixelRatio'),
     width: (ctx, props) => {
-      return Math.min(ctx.viewportWidth, ctx.viewportHeight) / 300;
+      return Math.min(ctx.viewportWidth, ctx.viewportHeight) / 600;
     },
     aspect: ctx => ctx.viewportWidth > ctx.viewportHeight
       ? [ctx.viewportHeight / ctx.viewportWidth, 1]
@@ -291,8 +304,8 @@ const yShift = Math.sin(Math.PI / 3);
 const unit = [[0, 0], [1 - Math.cos(Math.PI / 3), Math.sin(Math.PI / 3)]]
 let c = 0;
 const t = [];
-const rows = 20;
-const cols = 11;
+const rows = 20 * extent;
+const cols = 11 * extent;
 
 for (let k = -cols; k <=cols; k++) {
   for (let j of [-1, 1]) {
@@ -304,7 +317,7 @@ for (let k = -cols; k <=cols; k++) {
         -1,
       ]);
 
-      if (Math.hypot(pt[0][0], pt[0][1]) > 36.0) continue;
+      if (Math.hypot(pt[0][0], pt[0][1]) > 36.0 * extent) continue;
       xy.push(pt);
     }
   }
@@ -316,12 +329,12 @@ for (let j = rows; j >= -rows; j--) {
   const shift = 1.5;
   const dx = -0.25;
   const dy = -yShift * 0.25;
-  const extent = 2 * cols + 1;
+  const ext = 2 * cols + 1;
   xy.push([
-    [x1 + dx, j + dy, extent],
+    [x1 + dx, j + dy, ext],
     [-x1 - e + dx, j + dy, 0],
     [-x1 - e + dx + shift, j - 0.5 + dy, 0],
-    [x1 + dx + shift, j - 0.5 + dy, extent]
+    [x1 + dx + shift, j - 0.5 + dy, ext]
   ].map(([x, y, z]) => [
     x,
     (y + 0.25) * yShift * 2,
@@ -348,19 +361,20 @@ const lineData = {
 
 
 const colors = [
-  [1, 0, 0.5],
+  [1, 0.5, 0],
+  [0, 0.5, 1],
   [0.5, 1, 0],
-  [0, 0.5, 1]
 ];
 regl.frame(({time}) => {
+  //const time = 1.0 * Math.PI / 180 / 0.1;
   regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1]});
-  [0, 0.1, 0.2].forEach((rate, i) => {
+  [0, 0.1].forEach((rate, i) => {
     regl.clear({depth: 1});
     drawLines({
       ...lineData,
       transform: mat2rotate([], mat2create(), time * rate),
-      color: colors[i]
+      color: colors[i % colors.length]
     })
   });
 });

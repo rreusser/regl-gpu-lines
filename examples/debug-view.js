@@ -41,7 +41,7 @@ const drawLines = reglLines(regl, {
     precision mediump float;
     uniform float pixelRatio;
     varying float instanceID;
-    varying vec2 triStripGridCoord;
+    varying vec2 triStripCoord;
 
     // Unit grid lines
     float grid (vec3 parameter, float width, float feather) {
@@ -71,7 +71,7 @@ const drawLines = reglLines(regl, {
       //   + --- + --- + --- + --- +
       //   1     3     5     7     9
       //
-      float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 1.0);
+      float wire = grid(vec3(triStripCoord, triStripCoord.x + triStripCoord.y), 0.5 * pixelRatio, 1.0);
       gl_FragColor.rgb = mix(vec3(1), gl_FragColor.rgb, wire);
 
       gl_FragColor.a = 0.6;
