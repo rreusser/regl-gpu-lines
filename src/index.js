@@ -134,7 +134,7 @@ function reglLines(
 
         let endpointProps, segmentProps;
 
-        if (lineProps.endpointAttributes) {
+        if (lineProps.endpointAttributes && lineProps.endpointCount) {
           endpointProps = {
             buffers: endpointAttributes,
             count: lineProps.endpointCount,
@@ -145,7 +145,7 @@ function reglLines(
           };
         }
 
-        if (lineProps.vertexAttributes) {
+        if (lineProps.vertexAttributes && lineProps.vertexCount) {
           segmentProps = {
             buffers: vertexAttributes,
             count: lineProps.vertexCount,

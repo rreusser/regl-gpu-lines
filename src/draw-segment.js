@@ -218,7 +218,9 @@ void main() {
       uOrientation: regl.prop('orientation'),
     },
     primitive: 'triangle strip',
-    instances: (ctx, props) => props.count - 3,
+    instances: isCap
+      ? (ctx, props) => props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count
+      : (ctx, props) => props.count - 3,
     count: isRound
       ? (ctx, props) => 6 + 2 * (props.joinResolution + (isCap ? props.capResolution : props.joinResolution))
       : (ctx, props) => 6 + 2 * (1 + (isCap ? props.capResolution : 1))
