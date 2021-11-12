@@ -33,7 +33,7 @@ const state = wrapGUI(State({
   }, {expanded: false}),
   dash: State.Section({
     length: State.Slider(0.5, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(1.0, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
     wireframeOpacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
@@ -59,12 +59,12 @@ function project(p) {
 }
 
 const path = [
-[-0.4, -0.1],
-[-0.3, -0.8],
-[-0.1, -0.5],
-[-0.0, 0],
+[-0.6, 0.1],
+[-0.4, -0.7],
+[-0.2, 0.5],
+[-0.0, 0.4],
 [ 0.1, -0.5],
-[ 0.3, -0.8],
+[ 0.3, 0.1],
 [ 0.4, -0.1]
 
 /*
