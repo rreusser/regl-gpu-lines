@@ -18,8 +18,8 @@
     "lint-fix": "eslint src/*.js --fix",
     "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js && node scripts/compress.js < dist/regl-gpu-lines.min.js > dist/tmp.js && mv dist/tmp.js dist/regl-gpu-lines.min.js",
     "prepublishOnly": "npm run bundle:rollup && npm run minify:rollup && npm run test && npm run build:examples",
-    "test": "npm run lint && npm run test-render-dev && npm run test-render-prod",
-    "test-render-dev": "ENV=development node test/render.js",
+    "test": "npm run lint && npm run test-render && npm run test-render-prod",
+    "test-render": "ENV=development node test/render.js",
     "test-render-prod": "ENV=production node test/render.js",
     "start": "node scripts/serve-example.js"
   },

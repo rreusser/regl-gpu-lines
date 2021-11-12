@@ -47,6 +47,7 @@ ${meta.orientation ? '' : 'uniform float uOrientation;'}
 
 varying vec2 lineCoord;
 varying float computedWidth;
+varying float isMiter;
 
 ${debug ? 'varying vec2 triStripGridCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}

@@ -44,6 +44,7 @@ uniform float jres2;
 uniform vec2 resolution;
 
 varying vec2 lineCoord;
+varying float isMiter;
 
 ${debug ? 'attribute float debugInstanceID;' : ''}
 ${debug ? 'varying vec2 triStripGridCoord;' : ''}

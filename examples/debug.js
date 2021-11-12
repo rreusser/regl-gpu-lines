@@ -14,11 +14,11 @@ regl._gl.canvas.style.position = 'fixed';
 const state = wrapGUI(State({
   lineConfig: State.Section({
     capResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
-    joinResolution: State.Slider(3, {min: 1, max: 20, step: 1}),
+    joinResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
-    join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
+    join: State.Select('miter', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
-  }, {label: 'line config', expanded: false}),
+  }, {label: 'line config', expanded: true}),
   geometry: State.Section({
     stretch: State.Slider(0.97, {min: 0.01, max: 2, step: 0.001}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
@@ -29,14 +29,14 @@ const state = wrapGUI(State({
   }, {label: 'line', expanded: false}),
   border: State.Section({
     width: State.Slider(5, {min: 0, max: 10, step: 0.1}),
-    opacity: State.Slider(0.7, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false}),
   dash: State.Section({
-    length: State.Slider(1, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
+    length: State.Slider(0.5, {min: 0, max: 8, step: 0.1}),
+    opacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
-    wireframeOpacity: State.Slider(0.7, {min: 0, max: 1, step: 0.01}),
+    wireframeOpacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
     depth: true,
     colorInstances: true,
@@ -59,6 +59,17 @@ function project(p) {
 }
 
 const path = [
+[-0.8, -0.8],
+[-0.7, -0.8],
+[-0.6, 0.2],
+[-0.4, 0.3],
+[-0.2, -0.2],
+[0, 0],
+[0.2, -0.2],
+[0.4, -0.6],
+[0.6, -0.8],
+[0.8, -0.8],
+/*
   [-0.75, -0.5],
   [-0.5, -0.5],
   [-0.4, 0.5],
@@ -78,6 +89,7 @@ const path = [
   [0.5, -0.5],
   [0.75, -0.25],
   [1, -0.25]
+  */
 ];
 const dist = Array(path.length).fill(0);
 
@@ -89,6 +101,7 @@ function computeCumulativeDistance (dist, path, project) {
     dist[i] = d;
     prevPoint = point;
   }
+  for (let i = 0; i < dist.length; i++) dist[i] = i;
   return dist;
 }
 
@@ -140,6 +153,7 @@ const drawLines = reglLines(regl, {
     varying float dist;
     varying float instanceID;
     varying vec2 triStripGridCoord;
+    varying float isMiter;
 
     float grid (vec3 parameter, float width, float feather) {
       float w1 = width - feather * 0.5;
@@ -161,18 +175,23 @@ const drawLines = reglLines(regl, {
       gl_FragColor.a = lineColor.a;
 
       gl_FragColor.rgb = vec3(0.4, 0.7, 1.0);
+      //if (isMiter == 1.0) gl_FragColor = vec4(1, 0, 1, 1);
       if (colorInstances) {
         if (instanceID < 0.0) {
           gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
+          //if (isMiter == 1.0) gl_FragColor = vec4(1, 0, 0, 1);
         } else if (floor(mod(instanceID, 2.0) + 0.5) == 1.0) {
           gl_FragColor.rgb = vec3(0.2, 0.3, 0.7);
+          //if (isMiter == 1.0) gl_FragColor = vec4(1, 1, 0, 1);
         }
       }
 
+      float dl = 0.25;//dashLength;
       if (dashColor.a > 0.0 && dashLength > 0.0) {
-        float dashvar = fract(dist / dashLength) * dashLength;
-        float dash = linearstep(0.0, 1.0, dashvar)
-          * linearstep(dashLength * 0.5 + 1.0 / pixelRatio, dashLength * 0.5, dashvar);
+        //float dashvar = fract(dist / dl) * dl;
+        float dash = fract(dist / dl) > 0.5 ? 1.0 : 0.0;
+        //float dash = linearstep(0.0, 1.0, dashvar)
+          //* linearstep(dl * 0.5 + 1.0 / pixelRatio, dl * 0.5, dashvar);
         gl_FragColor.a *= mix(1.0, 1.0 - dashColor.a, dash);
       }
 
@@ -183,7 +202,8 @@ const drawLines = reglLines(regl, {
           sdf
         );
 
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, borderColor.rgb, border * borderColor.a);
+        vec3 borderCol = lineCoord.y > 0.0 ? vec3(1, 0, 0) : vec3(0,0,1);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, borderCol, border * borderColor.a);
       }
 
       // Draw unit grid lines and a diagonal line using the vertex ID turned into a vec2 varying.
@@ -199,6 +219,8 @@ const drawLines = reglLines(regl, {
         float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 2.0 / pixelRatio);
         gl_FragColor = mix(gl_FragColor, vec4(1), wire * wireframeOpacity);
       }
+
+      if (isMiter == 0.0) gl_FragColor.a *= 0.3;
     }`,
   uniforms: {
     colorInstances: regl.prop('rendering.colorInstances'),

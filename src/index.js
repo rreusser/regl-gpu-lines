@@ -104,6 +104,7 @@ function reglLines(
       userConfig(props, () => {
         if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
         if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
+        //if (allMiterSegments.length) drawRoundedSegment(allMiterSegments);
         if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
         if (allMiterCaps.length) drawMiterCap(allMiterCaps);
         allRoundedSegments.length = 0;
