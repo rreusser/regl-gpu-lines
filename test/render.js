@@ -144,7 +144,13 @@ test('run image tests', function (t) {
               .pipe(fs.createWriteStream(diffPath));
           }
 
-          t.ok(!badPixelCount, `zero unmatched pixels${badPixelCount ? ` (got ${badPixelCount} unmatched)` : ''}`);
+          const result = !badPixelCount;
+          const msg = `zero unmatched pixels${badPixelCount ? ` (got ${badPixelCount} unmatched)` : ''}`;
+          if (fixture.skip) {
+            t.skip(result, msg);
+          } else {
+            t.ok(result, msg);
+          }
 
           t.end();
         })

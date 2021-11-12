@@ -7,914 +7,236 @@
   var CAP_START = 0;
   var CAP_END = 1;
   var CAP_SHORT = 2;
-  var require$$8 = {
+  var require$$5 = {
   	CAP_START: CAP_START,
   	CAP_END: CAP_END,
   	CAP_SHORT: CAP_SHORT
   };
 
-  const ORIENTATION$4 = require$$8;
-  var glslPrelude$4 = `
-#ifndef PI
-#define PI 3.141592653589793
-#endif
+  const ORIENTATION$2 = require$$5;
+  var drawSegment = createDrawSegmentCommand;
 
-#define CAP_START ${ORIENTATION$4.CAP_START}.0
-#define CAP_END ${ORIENTATION$4.CAP_END}.0
+  function createDrawSegmentCommand(isRound, isCap, {
+    regl,
+    meta,
+    frag,
+    segmentSpec,
+    endpointSpec,
+    indexAttributes,
+    debug
+  }) {
+    const spec = isCap ? endpointSpec : segmentSpec;
+    const verts = ['B', 'C', 'D'];
+    if (!isCap) verts.unshift('A');
+    return regl({
+      vert: `${meta.glsl}
 
-float miterExtension(vec2 t01, vec2 t12) {
-  float cosTheta = dot(t01, t12);
-  if (cosTheta - 1e-7 < -1.0) return 0.0;
-  float sinTheta = t01.x * t12.y - t01.y * t12.x;
-  return sinTheta / (1.0 + cosTheta);
-}
+const float CAP_START = ${ORIENTATION$2.CAP_START}.0;
+const float CAP_END = ${ORIENTATION$2.CAP_END}.0;
+
+attribute float index;
+${spec.glsl}
+
+uniform vec2 joinRes;
+uniform vec2 resolution;
+uniform float miterLimit2;
+${meta.orientation || !isCap ? '' : 'uniform float uOrientation;'}
+${isCap ? 'uniform vec2 capScale;' : ''}
+
+varying vec2 lineCoord;
+
+${debug ? 'attribute float debugInstanceID;' : ''}
+${debug ? 'varying vec2 triStripCoord;' : ''}
+${debug ? 'varying float instanceID;' : ''}
 
 bool isnan(float val) {
-  return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
+  return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
 }
 
 bool invalid(vec4 p) {
-  return p.w==0.0||isnan(p.x);
+  return p.w == 0.0 || isnan(p.x);
 }
 
-bool isSelfIntersection(vec2 tBC, vec2 tCD, float widthC, float lBCD) {
-  if (dot(tBC, tCD) > 0.0) return false;
-  return length(tBC + tCD) * lBCD < 2.0 * widthC;
-}`;
-
-  const glslPrelude$3 = glslPrelude$4;
-  var drawMiterSegment = createDrawMiterSegmentCommand$1;
-
-  function createDrawMiterSegmentCommand$1({
-    regl,
-    frag,
-    meta,
-    segmentSpec,
-    indexAttributes,
-    debug
-  }) {
-    return regl({
-      vert: `${meta.glsl}
-
-attribute vec2 linePosition;
-${segmentSpec.glsl}
-
-uniform float miterLimit;
-uniform vec2 resolution;
-
-varying vec2 lineCoord;
-varying float computedWidth;
-
-${debug ? 'attribute float index;' : ''}
-${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 triStripGridCoord;' : ''}
-${debug ? 'varying float instanceID;' : ''}
-
-${glslPrelude$3}
-
 void main() {
-  ${debug ? 'instanceID = debugInstanceID;' : ''}
-  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
-  lineCoord.x = 0.0;
-  lineCoord.y = linePosition.y;
-
-  ${''
-    /* Project all four points */
-    }
-  vec4 pA = ${meta.position.generate('A')};
-  vec4 pB = ${meta.position.generate('B')};
-  vec4 pC = ${meta.position.generate('C')};
-  vec4 pD = ${meta.position.generate('D')};
-
-  if (pA.w == 0.0 || pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0 ||
-    isnan(pA.x) || isnan(pB.x) || isnan(pC.x) || isnan(pD.x)) {
-    gl_Position = vec4(0);
-    return;
-  }
-
-  float _computedWidthB = ${meta.width.generate('B')};
-  float _computedWidthC = ${meta.width.generate('C')};
-  computedWidth = _computedWidthC;
-
-  float useC = 1.0;
-  float pBw = pB.w;
-  float computedW = pC.w;
-
-  ${''
-    /* Convert to screen-pixel coordinates */
-    }
-  pA = vec4(pA.xy * resolution, pA.zw) / pA.w;
-  pB = vec4(pB.xy * resolution, pB.zw) / pBw;
-  pC = vec4(pC.xy * resolution, pC.zw) / computedW;
-  pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
-
-  ${''
-    /* Invalidate triangles too far in front of or behind the camera plane */
-    }
-  if (max(abs(pB.z), abs(pC.z)) > 1.0) {
-    gl_Position = vec4(0);
-    return;
-  }
-
-  ${''
-    /* Tangent and normal vectors */
-    }
-  vec2 rAB = pB.xy - pA.xy;
-  vec2 rBC = pC.xy - pB.xy;
-  vec2 rCD = pD.xy - pC.xy;
-  float lAB = length(rAB);
-  float lBC = length(rBC);
-  float lCD = length(rCD);
-
-  vec2 tAB = rAB / lAB;
-  vec2 tBC = rBC / lBC;
-  vec2 tCD = rCD / lCD;
-
-  vec2 nBC = vec2(-tBC.y, tBC.x);
-  vec2 nCD = vec2(-tCD.y, tCD.x);
-
-  gl_Position = pC;
-
-  float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
-  if (linePosition.x > 1.0) {
-    gl_Position.xy += dirC * linePosition.y * computedWidth * nCD;
-    lineCoord.y = dirC;
-  } else {
-    bool isStart = linePosition.x < 0.5;
-
-    if (isStart) {
-      useC = 0.0;
-      computedWidth = _computedWidthB;
-      computedW = pBw;
-    }
-
-    float m = miterExtension(isStart ? tAB : tBC, isStart ? tBC : tCD);
-    float lABC = min(lAB, lBC);
-    float lBCD = min(lBC, lCD);
-    float m0_abc = min(-m * computedWidth, lABC);
-    float m1_abc = min(m * computedWidth, lABC);
-    float m0_bcd = min(-m * computedWidth, lBCD);
-    float m1_bcd = min(m * computedWidth, lBCD);
-
-    gl_Position.xy += linePosition.y * computedWidth * nBC;
-
-    if (isStart) {
-      gl_Position.z = pB.z;
-      float dirB = dot(tAB, nBC) < 0.0 ? -1.0 : 1.0;
-      bool bIsOuter = dirB * linePosition.y > 0.0;
-      gl_Position.xy -= tBC * (lBC - (linePosition.y < 0.0 ? m0_abc : m1_abc) * (bIsOuter ? 0.0 : 1.0));
-    } else {
-      bool cIsOuter = dirC * linePosition.y > 0.0;
-      bool clipC = abs(m) > miterLimit;
-      gl_Position.xy -= tBC * (linePosition.y > 0.0 ? m1_bcd : m0_bcd) * (cIsOuter && clipC ? 0.0 : 1.0);
-    }
-  }
-
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
-
-  gl_Position.xy /= resolution;
-  gl_Position *= computedW;
-}`,
-      frag,
-      attributes: { ...indexAttributes,
-        ...segmentSpec.attrs,
-        linePosition: {
-          buffer: [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1]],
-          divisor: 0
-        }
-      },
-      uniforms: {
-        miterLimit: (ctx, props) => Math.sqrt(props.miterLimit * props.miterLimit - 1)
-      },
-      primitive: 'triangle strip',
-      instances: (ctx, props) => props.count - 3,
-      count: 5
-    });
-  }
-
-  const ORIENTATION$3 = require$$8;
-  const glslPrelude$2 = glslPrelude$4;
-  var drawMiterCap = createDrawMiterCapCommand$1;
-
-  function createDrawMiterCapCommand$1({
-    regl,
-    frag,
-    meta,
-    endpointSpec,
-    indexPrimitive,
-    indexAttributes,
-    debug
-  }) {
-    return regl({
-      vert: `${meta.glsl}
-
-attribute float index;
-${endpointSpec.glsl}
-
-uniform float miterLimit, capResolution2;
-uniform vec2 resolution, capScale;
-${meta.orientation ? '' : 'uniform float uOrientation;'}
-
-varying vec2 lineCoord;
-varying float computedWidth;
-
-${debug ? 'varying vec2 triStripGridCoord;' : ''}
-${debug ? 'varying float instanceID;' : ''}
-
-${glslPrelude$2}
-
-void main() {
-  ${debug ? 'instanceID = -1.0;' : ''}
-  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
+  const bool useRound = ${isRound ? 'true' : 'false'};
+  float useC = 0.0;
   lineCoord = vec2(0);
 
-  float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
-
-  ${''
-    /* Project points */
-    }
-  vec4 pB = ${meta.position.generate('B')};
-  vec4 pC = ${meta.position.generate('C')};
-  vec4 pD = ${meta.position.generate('D')};
-
-  float widthB = ${meta.width.generate('B')};
-  float widthC = ${meta.width.generate('C')};
-  computedWidth = widthC;
-
-  float useC = 1.0;
-  float pBw = pB.w;
-  float computedW = pC.w;
-
-  ${''
-    /* Convert to screen-pixel coordinates */
-    }
-  pB = vec4(pB.xy * resolution, pB.zw) / pBw;
-  pC = vec4(pC.xy * resolution, pC.zw) / computedW;
-  pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
-
-  if (pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0) {
-    gl_Position = vec4(0);
-    return;
-  }
-
-  ${''
-    /* Invalidate triangles too far in front of or behind the camera plane */
-    }
-  if (max(abs(pB.z), abs(pC.z)) > 1.0) {
-    gl_Position = vec4(0);
-    return;
-  }
-
-  ${''
-    /* Tangent and normal vectors */
-    }
-  vec2 rBC = pC.xy - pB.xy;
-  float lBC = length(rBC);
-  vec2 tBC = rBC / lBC;
-  vec2 nBC = vec2(-tBC.y, tBC.x);
-
-  vec2 rCD = pD.xy - pC.xy;
-  float lCD = length(rCD);
-  vec2 tCD = rCD / lCD;
-  vec2 nCD = vec2(-tCD.y, tCD.x);
-
-  gl_Position = pC;
-
-  ${''
-    /* Left/right turning at each vertex */
-    }
-  ${''
-    /* Note: don't use sign for this! It's zero when the line is straight. */
-    }
-  float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
-  float endSign = orientation == CAP_START ? 1.0 : -1.0;
-
-  float i = index;
-  float iLast = capResolution2 + 4.0;
-
-  ${''
-    /* Flip indexing if we turn the opposite direction, so that we draw backwards */
-    }
-  ${''
-    /* and get the winding order correct */
-    }
-  if (dirC > 0.0) i = iLast - i;
-
-  vec2 xy = vec2(0);
-  mat2 xyBasis = mat2(0);
-
-  if (i <= capResolution2) {
-    ${''
-    /* The first few vertices are on the cap. */
-    }
-    gl_Position = pB;
-
-    computedWidth = widthB;
-    computedW = pBw;
-    useC = 0.0;
-
-    if (mod(i, 2.0) == 0.0) {
-      xyBasis = mat2(-tBC, nBC * dirC);
-      float theta = i / capResolution2 * PI;
-      lineCoord = vec2(sin(theta), cos(theta));
-      if (abs(lineCoord.x) > 0.1) lineCoord *= capScale;
-      gl_Position.xy += computedWidth * (xyBasis * lineCoord);
-      lineCoord.y *= dirC * endSign;
-    }
-  } else {
-    i -= capResolution2 + 1.0;
-
-    vec2 position;
-    if (i == 0.0) position = vec2(0, 1);
-    if (i == 1.0) position = vec2(1, -1);
-    if (i >= 2.0) position = vec2(1, 1);
-    if (i == 3.0 && orientation == CAP_START) position = vec2(2, 1);
-
-    position.y *= dirC;
-    lineCoord.y = position.y * endSign;
-
-    if (position.x > 1.0) {
-      gl_Position.xy += position.y * computedWidth * nCD;
-    } else {
-      bool isSegmentStart = position.x < 0.5;
-
-      if (isSegmentStart) {
-        computedWidth = widthB;
-        computedW = pBw;
-        useC = 0.0;
-        gl_Position = pB;
-      }
-
-      gl_Position.xy += position.y * computedWidth * nBC;
-
-      if (!isSegmentStart) {
-        float m = miterExtension(tBC, tCD);
-        float lBCD = min(lBC, lCD);
-        float m0 = min(-m * computedWidth, lBCD);
-        float m1 = min(m * computedWidth, lBCD);
-        bool cIsOuter = dirC * position.y > 0.0;
-        bool clipC = abs(m) > miterLimit;
-        gl_Position.xy -= tBC * (position.y > 0.0 ? m1 : m0) * (cIsOuter && (clipC || orientation == CAP_END) ? 0.0 : 1.0);
-      }
-    }
-  }
-
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
-
-  gl_Position.xy /= resolution;
-  gl_Position *= computedW;
-}`,
-      frag,
-      attributes: { ...indexAttributes,
-        ...endpointSpec.attrs
-      },
-      uniforms: {
-        uOrientation: regl.prop('orientation'),
-        capScale: regl.prop('capScale'),
-        capResolution2: (ctx, props) => props.capResolution * 2,
-        miterLimit: (ctx, props) => Math.sqrt(props.miterLimit * props.miterLimit - 1)
-      },
-      primitive: indexPrimitive,
-      instances: (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$3.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count,
-      count: (ctx, props) => props.capResolution * 2 + 5
-    });
-  }
-
-  const glslPrelude$1 = glslPrelude$4;
-  var drawRoundedSegment = createDrawRoundedSegmentCommand$1; // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
-  // at the mitered end of the line and render vertices:
-  //
-  // - 0, 1, 2: mitered vertices, using beveled line logic
-  // - 3, 5, 7, 9: vertices around the circular arc join
-  // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
-  // - 10: a final vertex to close it off
-  //
-  // Is it worthwhile? I don't know. Consider that as independent triangles, this would
-  // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
-  //
-  //   1 ------------------------ 3 -5
-  //   | ...                     /|    7
-  //   |     ...                / |     \
-  //   |         ...           /  + ---- 9
-  //   |            ...       /  / \ _ -
-  //   |                ...  / / _ -\
-  //   0 ------------------ x -      \
-  //                         \        + 4, 6, 8 (= pC)
-  //                          \
-  //                           +- 2, 10
-  //
-
-  function createDrawRoundedSegmentCommand$1({
-    regl,
-    meta,
-    frag,
-    segmentSpec,
-    indexAttributes,
-    debug
-  }) {
-    return regl({
-      vert: `${meta.glsl}
-
-attribute float index;
-${segmentSpec.glsl}
-
-uniform float jres2;
-uniform vec2 resolution;
-
-varying vec2 lineCoord;
-
-${debug ? 'attribute float debugInstanceID;' : ''}
-${debug ? 'varying vec2 triStripGridCoord;' : ''}
-${debug ? 'varying float instanceID;' : ''}
-
-${glslPrelude$1}
-
-void main() {
-  gl_PointSize = 10.0;
   ${debug ? 'instanceID = debugInstanceID;' : ''}
-  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
+  ${debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
 
-  lineCoord = vec2(0);
+  ${isCap ? `float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};` : ''};
 
-  ${''
-    /* Project all four points */
-    }
-  vec4 pA = ${meta.position.generate('A')};
-  vec4 pB = ${meta.position.generate('B')};
-  vec4 pC = ${meta.position.generate('C')};
-  vec4 pD = ${meta.position.generate('D')};
+  ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
 
-  if (invalid(pA) || invalid(pB) || invalid(pC) || invalid(pD)) {
+  // Check for invalid vertices
+  if (${verts.map(vert => `invalid(p${vert})`).join(' || ')}) {
     gl_Position = vec4(0);
     return;
   }
 
-  ${''
-    /* Is the first join+half-segment of the instance */
-    }
-  bool isStart = index <= jres2 + 3.0;
-  if (isStart) {
+  bool isMirrored = index > joinRes.x * 2.0 + 3.0;
+
+  // Convert to screen-pixel coordinates
+  float w = isMirrored ? pC.w : pB.w;
+  ${verts.map(v => `p${v} = vec4(vec3(p${v}.xy * resolution, p${v}.z) / p${v}.w, 1);`).join('\n')}
+
+  // If it's a cap, mirror A back onto C to accomplish a round
+  ${isCap ? `vec4 pA = pC;` : ''}
+
+  vec2 res = isMirrored ? joinRes.yx : joinRes;
+  float mirrorSign = isMirrored ? -1.0 : 1.0;
+  if (isMirrored) {
     vec4 tmp;
     tmp = pC; pC = pB; pB = tmp;
     tmp = pD; pD = pA; pA = tmp;
+    useC = 1.0;
   }
+  ${isCap ? `bool isCap = !isMirrored;` : `const bool isCap = false;`};
 
-  float useC = isStart ? 0.0 : 1.0;
-  float _computedWidthB = isStart ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
-  float _computedWidthC = isStart ? ${meta.width.generate('B')} : ${meta.width.generate('C')};
+  float width = isMirrored ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
 
-  float pBw = pB.w;
-  float computedW = pC.w;
-
-  ${''
-    /* Convert to screen-pixel coordinates */
-    }
-  pA = vec4(pA.xy * resolution, pA.zw) / pA.w;
-  pB = vec4(pB.xy * resolution, pB.zw) / pBw;
-  pC = vec4(pC.xy * resolution, pC.zw) / computedW;
-  pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
-
-  ${''
-    /* Invalidate triangles too far in front of or behind the camera plane */
-    }
+  // Invalidate triangles too far in front of or behind the camera plane
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
     gl_Position = vec4(0);
     return;
   }
 
-  ${''
-    /* Tangent and normal vectors */
-    }
-  vec2 rBC = pC.xy - pB.xy;
-  float lBC = length(rBC);
-  vec2 tBC = rBC / lBC;
+  // Tangent and normal vectors
+  vec2 tBC = pC.xy - pB.xy;
+  float lBC = length(tBC);
+  tBC /= lBC;
   vec2 nBC = vec2(-tBC.y, tBC.x);
 
-  vec2 rAB = pB.xy - pA.xy;
-  float lAB = length(rAB);
-  vec2 tAB = rAB / lAB;
-
-  vec2 rCD = vec2(pD.xy - pC.xy);
-  float lCD = length(rCD);
-  vec2 tCD = rCD / lCD;
-  vec2 nCD = vec2(-tCD.y, tCD.x);
-
-  float lBCD = min(lBC, lCD);
-
-  ${''
-    /* Left/right turning at each vertex. Use < vs. <= to break tie when collinear. */
-    }
-  float dirB = dot(tAB, nBC) < 0.0 ? -1.0 : 1.0;
-  float dirC = dot(tBC, nCD) <= 0.0 ? -1.0 : 1.0;
-
-  ${''
-    /* x-component is the index within the part (join vs. fan), y-component is the overall index */
-    }
-  vec2 iindex = vec2(index);
-
-  float flip = dirB * dirC;
-  if (flip < 0.0) {
-    if (iindex.y == jres2 + 2.0) iindex -= 2.0;
-  } else {
-    if (iindex.y == jres2 + 3.0) iindex -= 3.0;
-  }
-
-  vec2 xy = vec2(0);
-  mat2 xyBasis = mat2(0);
-
-  gl_Position = pC;
-  float dz = 0.0;
-
-  bool selfIntersects = isSelfIntersection(nBC, nCD, _computedWidthC, lBCD);
-
-  if (iindex.y < jres2 + 1.0 || iindex.y >= jres2 + 5.0) {
-    vec2 miterNormal = 0.5 * (tCD + tBC);
-    float miterNormalLen = length(miterNormal);
-    bool isDegenerate = miterNormalLen == 0.0;
-
-    vec2 xBasis = isDegenerate ? nBC : miterNormal / miterNormalLen;
-    vec2 yBasis = vec2(-xBasis.y, xBasis.x);
-    if (isDegenerate && !isStart) xBasis = -xBasis;
-    xyBasis = mat2(xBasis, yBasis);
-
-    ${''
-    /*Adjust indices to get the fan anle correct */
-    }
-    if (!isStart) iindex.x = 2.0 * jres2 + 4.0 - iindex.x + 1.0;
-
-    ${''
-    /* Odd-numbered point in this range are around the arc. Every other index is just the center point pC, repeated since has the geometry of a triangle fan */
-    }
-    if (mod(iindex.x, 2.0) == 0.0) {
-      lineCoord.y = isStart ? -dirC : dirC;
-      float cosTheta = clamp(dot(nBC, nCD), -1.0, 1.0);
-      float theta = -0.5 * dirC * acos(cosTheta) * (iindex.x / jres2);
-      xy = dirC * vec2(sin(theta), cos(theta));
-
-      ${''
-    /* Correct for smooth transition of z around the join, but limit to half the z difference to the next point*/
-    }
-      //if (!isDegenerate)
-        dz = -(pB.z - pC.z) * clamp(xy.x * _computedWidthC / lBC, -0.5, 0.5);
-    }
-  } else {
-    ${''
-    /* We're in the miter/segment portion */
-    }
-    ${''
-    /* Use the turning direction to put the positive line coord on a consistent side */
-    }
-    float y = iindex.x == 1.0 ? dirC : -dirC;
-
-    lineCoord.y = isStart ? dirC : -dirC;
-
-    ${''
-    /* Extension of miter tangent to the segment */
-    }
-    float mB = miterExtension(tAB, tBC) * _computedWidthB;
-    float mC = miterExtension(tBC, tCD) * _computedWidthC;
-
-    ${''
-    /*// Place the corners, with clipping against the opposite end*/
-    }
-    float lABC = min(lAB, lBC);
-    float abcClip = selfIntersects ? lABC : lBC;
-    float bcdClip = selfIntersects ? lBCD : lBC;
-    float mB0 = dirB > 0.0 ? min(abcClip, -mB) : 0.0;
-    float mC0 = dirC > 0.0 ? min(bcdClip, -mC) : 0.0;
-    float mB1 = dirB > 0.0 ? 0.0 : min(abcClip, mB);
-    float mC1 = dirC > 0.0 ? 0.0 : min(bcdClip, mC);
-
-    xyBasis = mat2(tBC, nBC);
-    bool isStart = iindex.x < 2.0;
-
-    xy = vec2(
-      (isStart ?
-        ${''
-    /* If start, then use the miter at B */
-    }
-        (y > 0.0 ? mB1 : mB0) - lBC :
-        ${''
-    /* Else, the miter at C */
-    }
-        -(y > 0.0 ? mC1 : mC0)
-      ),
-      y);
-
-    if (lBC > 0.0) useC = clamp(useC - dirC * xy.x / lBC * lineCoord.y, 0.0, 1.0);
-
-    xy.x /= _computedWidthC;
-  }
-
-  ${''
-    /* Compute all varyings with shortening to account for interior miters */
-    }
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
-
-  ${''
-    /* Only make z discontinuous when sharp angle self-intersect. Then treat them like varyings. This *might* prevent z-fighting. */
-    }
-  if (selfIntersects) gl_Position.z = mix(pB.z, pC.z, isStart ? 1.0 - useC : useC);
-
-  ${''
-    /* Compute the final position */
-    }
-  gl_Position.z += dz;
-  gl_Position.xy += _computedWidthC * (xyBasis * xy);
-  gl_Position.xy /= resolution;
-  gl_Position *= computedW;
-}`,
-      frag,
-      attributes: {
-        index: {
-          buffer: [...Array(400).keys()],
-          divisor: 0
-        },
-        ...indexAttributes,
-        ...segmentSpec.attrs
-      },
-      uniforms: {
-        jres2: (ctx, props) => props.joinResolution * 2
-      },
-      primitive: 'triangle strip',
-      instances: (ctx, props) => props.count - 3,
-      count: (ctx, props) => 4 * props.joinResolution + 6
-    });
-  }
-
-  const ORIENTATION$2 = require$$8;
-  const glslPrelude = glslPrelude$4;
-  var drawRoundedCap = createDrawRoundedCapCommand$1; // The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
-  // at the mitered end of the line and render vertices:
-  //
-  // - 0, 1, 2: mitered vertices, using beveled line logic
-  // - 3, 5, 7, 9: vertices around the circular arc join
-  // - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
-  // - 10: a final vertex to close it off
-  //
-  // Is it worthwhile? I don't know. Consider that as independent triangles, this would
-  // contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
-  //
-  //         ...1 ------------------------ 3 -5
-  //      ..    | ...                     /|    7
-  //     .      |     ...                / |     \
-  //     .      |         ...           /  + ---- 9
-  //     .      |            ...       /  / \ _ -
-  //      ..    |                ...  / / _ -\
-  //         ...0 ------------------ x -      \
-  //                                  \        + 4, 6, 8 (= pC)
-  //                                   \
-  //                                    +- 2, 10
-  //
-
-  function createDrawRoundedCapCommand$1({
-    regl,
-    meta,
-    frag,
-    endpointSpec,
-    indexAttributes,
-    debug
-  }) {
-    return regl({
-      vert: `${meta.glsl}
-
-attribute float index;
-${endpointSpec.glsl}
-
-uniform float joinResolution, capResolution2;
-uniform vec2 resolution, capScale;
-${meta.orientation ? '' : 'uniform float uOrientation;'}
-
-varying vec2 lineCoord;
-varying float computedWidth;
-
-${debug ? 'varying vec2 triStripGridCoord;' : ''}
-${debug ? 'varying float instanceID;' : ''}
-
-${glslPrelude}
-
-void main() {
-  ${debug ? 'instanceID = -1.0;' : ''}
-  ${debug ? 'triStripGridCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
-  lineCoord = vec2(0);
-
-  float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(uOrientation,2.0)'};
-
-  ${''
-    /* Project points */
-    }
-  vec4 pB = ${meta.position.generate('B')};
-  vec4 pC = ${meta.position.generate('C')};
-  vec4 pD = ${meta.position.generate('D')};
-
-  if (pB.w == 0.0 || pC.w == 0.0 || pD.w == 0.0) {
-    gl_Position = vec4(0);
-    return;
-  }
-
-  float widthB = ${meta.width.generate('B')};
-  float widthC = ${meta.width.generate('C')};
-  computedWidth = widthC;
-
-  float pBw = pB.w;
-  float computedW = pC.w;
-  float useC = 1.0;
-
-  ${''
-    /* Convert to screen-pixel coordinates */
-    }
-  pB = vec4(pB.xy * resolution, pB.zw) / pBw;
-  pC = vec4(pC.xy * resolution, pC.zw) / computedW;
-  pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
-
-  ${''
-    /* Invalidate triangles too far in front of or behind the camera plane */
-    }
-  if (max(abs(pB.z), abs(pC.z)) > 1.0) {
-    gl_Position = vec4(0);
-    return;
-  }
-
-  ${''
-    /* Tangent and normal vectors */
-    }
-  vec2 rBC = pC.xy - pB.xy;
-  float lBC = length(rBC);
-  vec2 tBC = rBC / lBC;
-  vec2 nBC = vec2(-tBC.y, tBC.x);
+  vec2 tAB = pB.xy - pA.xy;
+  float lAB = length(tAB);
+  tAB /= lAB;
+  vec2 nAB = vec2(-tAB.y, tAB.x);
 
   vec2 rCD = pD.xy - pC.xy;
   float lCD = length(rCD);
   vec2 tCD = rCD / lCD;
   vec2 nCD = vec2(-tCD.y, tCD.x);
 
-  float lBCD = min(lBC, lCD);
+  float cosB = clamp(dot(tAB, tBC), -1.0, 1.0);
 
-  ${''
-    /* Left/right turning at each vertex */
-    }
-  ${''
-    /* Note: don't use sign for this! It's zero when the line is straight. */
-    }
-  float dirC = dot(tBC, nCD) < 0.0 ? -1.0 : 1.0;
-
-  float i = index;
-  float iLast = joinResolution * 2.0 + capResolution2 + 4.0;
-
-  vec2 xy = vec2(0);
-  mat2 xyBasis = mat2(0);
-  float dz = 0.0;
-
-  bool selfIntersects = isSelfIntersection(tBC, tCD, computedWidth, lBCD);
-
-  if (i < capResolution2 + 1.0) {
-    ${''
-    /* The first few vertices are on the cap. */
-    }
-    i -= capResolution2;
-    gl_Position = pB;
-    computedWidth = widthB;
-    useC = 0.0;
-    computedW = pBw;
-
-    if (mod(i, 2.0) == 1.0) {
-      lineCoord = vec2(0);
-    } else {
-      mat2 xyBasis = mat2(tBC, nBC);
-      xyBasis = mat2(tBC, nBC);
-      float theta = i / capResolution2 * PI;
-      xy = vec2(sin(theta), -cos(theta) * dirC);
-      if (abs(xy.x) > 0.1) xy *= capScale;
-      lineCoord = xy;
-      gl_Position.xy += computedWidth * (xyBasis * xy);
-    }
-  } else {
-    i -= capResolution2;
-    iLast = joinResolution * 2.0 + 4.0;
-
-    gl_Position = pC;
-
-    bool isSegment = i <= 2.0 || i == iLast;
-    if (i <= 2.0 || i == iLast) {
-      ${''
-    /* We're in the miter/segment portion */
-    }
-
-      ${''
-    /* Use the turning direction to put the positive line coord on a consistent side */
-    }
-      lineCoord.y = i == 1.0 ? dirC : -dirC;
-
-      ${''
-    /* Extension of miter tangent to the segment */
-    }
-      float mC = miterExtension(tBC, tCD) * widthC;
-
-      ${''
-    /* Place the corners, with clipping against the opposite end */
-    }
-      float bcdClip = selfIntersects ? lBCD : lBC;
-      float mC0 = dirC > 0.0 ? min(bcdClip, -mC) : 0.0;
-      float mC1 = dirC > 0.0 ? 0.0 : min(bcdClip, mC);
-
-      xyBasis = mat2(tBC, nBC);
-      bool isStart = i < 2.0;
-
-      if (isStart) useC = 0.0;
-
-      gl_Position.z = isStart ? pB.z : pC.z;
-
-      xy = vec2(
-        (isStart ?
-          ${''
-    /* If so, then use the miter at B */
-    }
-          -lBC :
-
-          ${''
-    /* Else, the miter at C */
-    }
-          -(lineCoord.y > 0.0 ? mC1 : mC0)
-        ),
-        lineCoord.y
-      );
-
-      if (!isStart) useC -= dirC * xy.x / lBC * lineCoord.y;
-
-      xy.x /= computedWidth;
-    } else {
-      vec2 miterNormal = 0.5 * (tCD + tBC);
-      float miterNormalLen = length(miterNormal);
-      bool isDegenerate = miterNormalLen == 0.0;
-
-      vec2 xBasis = isDegenerate ? nCD : miterNormal / miterNormalLen;
-      vec2 yBasis = vec2(-xBasis.y, xBasis.x);
-      xyBasis = mat2(xBasis, yBasis);
-
-      if (mod(i, 2.0) != 0.0) {
-        ${''
-    /* Odd-numbered point in this range are around the arc. (Even numbered points in this */
-    }
-        ${''
-    /* range are a no-op and fall through to just point C) */
-    }
-        lineCoord.y = dirC;
-
-        ${''
-    /* Our indexing is offset by three, and every other index is just the center point */
-    }
-        ${''
-    /* pC (which we repeat a bunch since we're drawing a triangle strip) */
-    }
-        i = (i - 3.0) * 0.5;
-        if (dirC > 0.0) i = joinResolution - i;
-
-        float cosTheta = clamp(dot(nBC, nCD), -1.0, 1.0);
-        float theta = 0.5 * acos(cosTheta) * (0.5 - 0.5 * dirC - i / joinResolution);
-        xy = dirC * vec2(sin(theta), cos(theta));
-
-      ${''
-    /* Correct for smooth transition of z around the join, but limit to half the z difference to the next point */
-    }
-        if (!isDegenerate) dz = -(pB.z - pC.z) * clamp(xy.x * computedWidth / lBC, -0.5, 0.5);
-      }
-    }
-
-    ${''
-    /* Compute the final position */
-    }
-    gl_Position.xy += computedWidth * (xyBasis * xy);
+  // This section is very fragile. When lines are collinear, signs flip randomly and break orientation
+  // of the middle segment. So we detect and fix three different cases (b collinear, c collinear, b and
+  // c collinear).
+  const float tol = 1e-3;
+  float sgnB = dot(tAB, nBC);
+  float sgnC = dot(tBC, nCD);
+  float dirB = sign(sgnB);
+  float dirC = sign(sgnC);
+  bool bCollinear = abs(sgnB) < tol;
+  bool cCollinear = abs(sgnC) < tol;
+  if (bCollinear && cCollinear) {
+    // When both collinear, assign signs arbitrarily
+    dirB = 1.0;
+    dirC = -1.0;
+  } else if (bCollinear) {
+    // When only B collinear, assign its sign based on C
+    dirB = dirC;
+  } else if (cCollinear) {
+    // When only C collinear, assign its sign from B
+    dirC = dirB;
   }
 
-  if (orientation == CAP_END) lineCoord = -lineCoord;
+  // Override the miter for segments which perfectly fold back on themselves
+  vec2 miter = 0.5 * (nAB + nBC) * dirB;
+  bool isHairpin = bCollinear && cosB < 0.0;
+  if (isHairpin) {
+    miter = -tBC;
+    cosB = -1.0;
+  }
 
-  ${''
-    /* Compute all varyings with shortening to account for interior miters */
+  // The second half of the triangle fan is just the first, reversed, and with vertices swapped!
+  float i = index < 2.0 * joinRes.x + 4.0 ? index : 2.0 * (res.x + res.y) + 5.0 - index;
+
+  // Chop off the join to get at the segment part index
+  float iSeg = i - 2.0 * res.x;
+
+  // Repeat vertices, and if the joins turn opposite directions, swap vertices to get the triangle fan correct
+  if (iSeg > 1.0 && iSeg <= 3.0) {
+    iSeg -= 2.0;
+    if (dirB * dirC >= 0.0) iSeg += iSeg == 0.0 ? 1.0 : -1.0;
+  }
+
+  vec2 xBasis = tBC;
+  vec2 yBasis = nBC * dirB;
+  vec2 xy = vec2(0, 1);
+
+  lineCoord.y = dirB * mirrorSign;
+
+  float dC = 0.0;
+  if (iSeg < 0.0) {
+    float m2 = dot(miter, miter);
+    float lm = length(miter);
+    yBasis = miter / lm;
+    bool isBevel = 1.0 > miterLimit2 * m2;
+
+    if (mod(i, 2.0) == 0.0) {
+      // Outer joint points
+      if (useRound || isCap) {
+        xBasis = dirB * vec2(yBasis.y, -yBasis.x);
+        const float pi = 3.141592653589793;
+        float theta = -0.5 * (0.5 * acos(cosB) * (i / res.x) - pi) * (isCap ? 2.0 : 1.0);
+        xy = vec2(cos(theta), sin(theta));
+        ${isCap ? `if (isCap && xy.y > 0.0) xy *= capScale;` : ''}
+        ${isCap ? `if (isCap) lineCoord = xy.yx * lineCoord.y;` : ''}
+      } else {
+        yBasis = isHairpin ? vec2(0) : miter;
+        if (!isBevel) xy.y /= m2;
+        dC += dot(tBC * mirrorSign, miter);
+      }
+    } else {
+      // vertex B
+      lineCoord.y = 0.0;
+      xy = vec2(0);
+      if (!useRound && isBevel && !isCap) {
+        xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);
+        dC += dot(tBC * mirrorSign, miter / lm) * xy.y;
+      }
     }
+  //} else if (iSeg == 0.0) { // vertex B + line B-C normal
+  } else if (iSeg > 0.0) {
+    lineCoord.y = -lineCoord.y;
+
+    // vertex B + inner miter
+    float miterExt = 0.0;
+    if (cosB > -0.9999) {
+      float sinB = tAB.x * tBC.y - tAB.y * tBC.x;
+      miterExt = sinB / (1.0 + cosB);
+    }
+    float m = abs(miterExt) * width;
+    m = min(m, min(lBC, lAB));
+    xy = vec2(m / width, -1);
+    dC += xy.x * mirrorSign;
+  }
+
+  ${isCap ? `if (orientation == CAP_END) lineCoord = -lineCoord;` : ''}
+
+  useC += dC * (width / lBC);
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
-  ${''
-    /* Only make z discontinuous when sharp angle self-intersect. Then treat them like varyings. This *might* prevent z-fighting. */
-    }
-  if (selfIntersects) gl_Position.z = mix(pB.z, pC.z, useC);
-
-  gl_Position.z += dz;
+  gl_Position = pB;
+  gl_Position.xy += width * (mat2(xBasis, yBasis) * xy);
   gl_Position.xy /= resolution;
-  gl_Position *= computedW;
+  gl_Position *= w;
 }`,
       frag,
       attributes: { ...indexAttributes,
-        ...endpointSpec.attrs
+        ...spec.attrs
       },
       uniforms: {
-        joinResolution: regl.prop('joinResolution'),
-        capResolution2: (ctx, props) => props.capResolution * 2,
+        joinRes: (ctx, props) => [isCap ? props.capResolution : props.joinResolution, props.joinResolution],
+        miterLimit2: (ctx, props) => props.miterLimit * props.miterLimit,
         uOrientation: regl.prop('orientation'),
         capScale: regl.prop('capScale')
       },
       primitive: 'triangle strip',
-      instances: (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count,
-      count: (ctx, props) => (props.joinResolution + props.capResolution) * 2 + 4
+      instances: isCap ? (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count : (ctx, props) => props.count - 3,
+      count: isRound ? (ctx, props) => 6 + 2 * (props.joinResolution + (isCap ? props.capResolution : props.joinResolution)) : (ctx, props) => 6 + 2 * (1 + (isCap ? props.capResolution : 1))
     });
   }
 
@@ -1196,7 +518,7 @@ void main() {
   var createAttrSpec$1 = createAttrSpecs;
   const ATTR_USAGE = attrUsage;
   const GLSL_TYPES = glsltypes;
-  const ORIENTATION$1 = require$$8;
+  const ORIENTATION$1 = require$$5;
 
   function createAttrSpecs(meta, regl, isEndpoints) {
     const suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
@@ -1262,15 +584,12 @@ void main() {
     return value;
   };
 
-  const createDrawMiterSegmentCommand = drawMiterSegment;
-  const createDrawMiterCapCommand = drawMiterCap;
-  const createDrawRoundedSegmentCommand = drawRoundedSegment;
-  const createDrawRoundedCapCommand = drawRoundedCap;
+  const createDrawSegment = drawSegment;
   const parseShaderPragmas = parsePragmas;
   const sanitizeBufferInputs = sanitizeBuffer;
   const createAttrSpec = createAttrSpec$1;
   const sanitizeInclusionInList = sanitizeInList;
-  const ORIENTATION = require$$8;
+  const ORIENTATION = require$$5;
   var src = reglLines;
   reglLines.CAP_START = ORIENTATION.CAP_START;
   reglLines.CAP_END = ORIENTATION.CAP_END;
@@ -1306,16 +625,8 @@ void main() {
         resolution: ctx => [ctx.viewportWidth, ctx.viewportHeight]
       }
     });
-    const userConfig = canReorder ? (props, cb) => cb() : regl(forwardedOpts); // Round geometry is used for both joins and end caps. We use an integer
-    // and divide by the resolution in the shader so that we can allocate a
-    // single, fixed buffer and the resolution is entirely a render-time decision.
-    //
-    // The max value is chosen for aesthetic reasons, but also because there seems to be
-    // a loss of precision or something above 30 at which it starts to get the indices
-    // wrong.
-
-    const MAX_ROUND_JOIN_RESOLUTION = 20;
-    let indexBuffer, indexPrimitive;
+    const userConfig = canReorder ? (props, cb) => cb() : regl(forwardedOpts);
+    const MAX_ROUND_JOIN_RESOLUTION = 30;
     const indexAttributes = {};
 
     if (debug) {
@@ -1327,10 +638,8 @@ void main() {
       };
     }
 
-    indexPrimitive = 'triangle strip';
-    indexBuffer = regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()]));
     indexAttributes.index = {
-      buffer: indexBuffer,
+      buffer: regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])),
       divisor: 0
     }; // Instantiate commands
 
@@ -1340,19 +649,17 @@ void main() {
       segmentSpec,
       endpointSpec,
       frag,
-      indexBuffer,
-      indexPrimitive,
       indexAttributes,
       debug
     };
-    const drawMiterSegment = createDrawMiterSegmentCommand(config);
-    const drawMiterCap = createDrawMiterCapCommand(config);
-    const drawRoundedSegment = createDrawRoundedSegmentCommand(config);
-    const drawRoundedCap = createDrawRoundedCapCommand(config);
+    const drawMiterSegment = createDrawSegment(false, false, config);
+    const drawRoundedSegment = createDrawSegment(true, false, config);
+    const drawMiterCap = createDrawSegment(false, true, config);
+    const drawRoundedCap = createDrawSegment(true, true, config);
     const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
     const VALID_CAP_TYPES = ['round', 'square', 'none'];
     const ROUND_CAP_SCALE = [1, 1];
-    const SQUARE_CAP_SCALE = [2 / Math.sqrt(3), 2];
+    const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
     return function drawLines(props) {
       if (!props) return;
       const isArrayProps = Array.isArray(props);
@@ -1382,8 +689,7 @@ void main() {
           const endpointAttributes = sanitizeBufferInputs(meta, lineProps.endpointAttributes, true);
           const joinType = sanitizeInclusionInList(lineProps.join, 'miter', VALID_JOIN_TYPES, 'join');
           const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
-          const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
-          let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution * 2;
+          let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
 
           if (capType === 'square') {
             capResolution = 3;
@@ -1391,11 +697,13 @@ void main() {
             capResolution = 1;
           }
 
+          let joinResolution = 1;
+          if (joinType === 'round') joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
           const miterLimit = joinType === 'bevel' ? 1 : lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit;
           const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
           let endpointProps, segmentProps;
 
-          if (lineProps.endpointAttributes) {
+          if (lineProps.endpointAttributes && lineProps.endpointCount) {
             endpointProps = {
               buffers: endpointAttributes,
               count: lineProps.endpointCount,
@@ -1406,7 +714,7 @@ void main() {
             };
           }
 
-          if (lineProps.vertexAttributes) {
+          if (lineProps.vertexAttributes && lineProps.vertexCount) {
             segmentProps = {
               buffers: vertexAttributes,
               count: lineProps.vertexCount,

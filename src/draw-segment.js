@@ -20,8 +20,8 @@ function createDrawSegmentCommand(isRound, isCap, {
   return regl({
     vert: `${meta.glsl}
 
-#define CAP_START ${ORIENTATION.CAP_START}.0
-#define CAP_END ${ORIENTATION.CAP_END}.0
+const float CAP_START = ${ORIENTATION.CAP_START}.0;
+const float CAP_END = ${ORIENTATION.CAP_END}.0;
 
 attribute float index;
 ${spec.glsl}
