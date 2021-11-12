@@ -1,6 +1,6 @@
 {
   "name": "regl-gpu-lines",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Pure GPU instanced, screen-projected lines for regl",
   "main": "dist/regl-gpu-lines.min.js",
   "repository": {

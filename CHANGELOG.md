@@ -1,3 +1,9 @@
+## 0.0.17
+
+### Bugfixes
+
+- Fix debug instance ID
+
 ## 0.0.16
 
 ### Features
