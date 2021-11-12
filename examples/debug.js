@@ -16,7 +16,7 @@ const state = wrapGUI(State({
     capResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     joinResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
-    join: State.Select('miter', {options: ['round', 'miter', 'bevel']}),
+    join: State.Select('bevel', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
   }, {label: 'line config', expanded: true}),
   geometry: State.Section({

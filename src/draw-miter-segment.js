@@ -2,9 +2,9 @@
 
 const glslPrelude = require('./glsl-prelude.js');
 
-module.exports = createDrawRoundedSegmentCommand;
+module.exports = createDrawSegmentCommand;
 
-function createDrawRoundedSegmentCommand(isRound, {
+function createDrawSegmentCommand(isRound, {
   regl,
   meta,
   frag,
@@ -20,6 +20,7 @@ ${segmentSpec.glsl}
 
 uniform float joinRes2;
 uniform vec2 resolution;
+uniform float miterLimit2;
 
 varying vec2 lineCoord;
 varying float isMiter;
@@ -63,13 +64,12 @@ void main() {
 
   float computedWidthB = isFirstSeg ? ${meta.width.generate('B')} : ${meta.width.generate('C')};
 
-
   ${''/* Convert to screen-pixel coordinates */}
   float pBw = pB.w;
-  pA = vec4(pA.xy * resolution, pA.zw) / pA.w;
-  pB = vec4(pB.xy * resolution, pB.zw) / pB.w;
-  pC = vec4(pC.xy * resolution, pC.zw) / pC.w;
-  pD = vec4(pD.xy * resolution, pD.zw) / pD.w;
+  pA = vec4(vec3(pA.xy * resolution, pA.z) / pA.w, 1);
+  pB = vec4(vec3(pB.xy * resolution, pB.z) / pB.w, 1);
+  pC = vec4(vec3(pC.xy * resolution, pC.z) / pC.w, 1);
+  pD = vec4(vec3(pD.xy * resolution, pD.z) / pD.w, 1);
 
   ${''/* Invalidate triangles too far in front of or behind the camera plane */}
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
@@ -78,19 +78,19 @@ void main() {
   }
 
   ${''/* Tangent and normal vectors */}
-  vec2 rBC = pC.xy - pB.xy;
-  float lBC = length(rBC);
-  vec2 tBC = rBC / lBC;
+  vec2 tBC = pC.xy - pB.xy;
+  float lBC = length(tBC);
+  tBC /= lBC;
   vec2 nBC = vec2(-tBC.y, tBC.x);
 
-  vec2 rAB = pB.xy - pA.xy;
-  float lAB = length(rAB);
-  vec2 tAB = rAB / lAB;
+  vec2 tAB = pB.xy - pA.xy;
+  float lAB = length(tAB);
+  tAB /= lAB;
   vec2 nAB = vec2(-tAB.y, tAB.x);
 
   vec2 rCD = vec2(pD.xy - pC.xy);
-  float lCD = length(rCD);
-  vec2 tCD = rCD / lCD;
+  //float lCD = length(rCD);
+  //vec2 tCD = rCD / lCD;
   vec2 nCD = vec2(-rCD.y, rCD.x);
 
   float dirB = dot(tAB, nBC) < 0.0 ? -1.0 : 1.0;
@@ -112,22 +112,30 @@ void main() {
   lineCoord.y = dirB * swapSign;
 
   if (iSeg < 0.0) {
+    vec2 m = 0.5 * (nAB + nBC) * dirB;
+    float m2 = dot(m, m);
+    float lm = length(m);
+    yBasis = m / lm;
+
+    bool isBevel = 1.0 > miterLimit2 * m2;
+
     if (mod(i, 2.0) == 0.0) {
       // Outer joint points
-      vec2 m = 0.5 * (nAB + nBC) * dirB;
       if (useRound) {
-        yBasis = normalize(m);
         xBasis = dirB * vec2(yBasis.y, -yBasis.x);
         float theta = 0.5 * acos(cosB) * (i / joinRes2);
         xy = vec2(sin(theta), cos(theta));
       } else {
         yBasis = m;
+        if (!isBevel) xy.y /= m2;
       }
     } else {
       // vertex B
       lineCoord.y = 0.0;
       xy = vec2(0);
-      //if (!useRound) { TODO: fix SDF }
+      if (!useRound) {
+        if (isBevel) xy.y = sqrt((1.0 + cosB) * 0.5) - 1.0;
+      }
     }
   //} else if (iSeg == 0.0) { // vertex B + line B-C normal
   } else if (iSeg > 0.0) {
@@ -135,7 +143,7 @@ void main() {
 
     // vertex B + inner miter
     float miterExt = 0.0;
-    if (cosB > -0.98) {
+    if (cosB > -0.999999) {
       float sinB = tAB.x * tBC.y - tAB.y * tBC.x;
       miterExt = sinB / (1.0 + cosB);
     }
@@ -159,7 +167,8 @@ void main() {
       ...segmentSpec.attrs
     },
     uniforms: {
-      joinRes2: isRound ? (ctx, props) => props.joinResolution * 2 : 1
+      joinRes2: isRound ? (ctx, props) => props.joinResolution * 2 : 2,
+      miterLimit2: (ctx, props) => props.miterLimit * props.miterLimit
     },
     primitive: 'triangle strip',
     instances: (ctx, props) => props.count - 3,
