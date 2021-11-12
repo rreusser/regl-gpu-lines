@@ -153,7 +153,6 @@ const drawLines = reglLines(regl, {
     varying float dist;
     varying float instanceID;
     varying vec2 triStripGridCoord;
-    varying float isMiter;
 
     float grid (vec3 parameter, float width, float feather) {
       float w1 = width - feather * 0.5;
@@ -175,14 +174,11 @@ const drawLines = reglLines(regl, {
       gl_FragColor.a = lineColor.a;
 
       gl_FragColor.rgb = vec3(0.4, 0.7, 1.0);
-      //if (isMiter == 1.0) gl_FragColor = vec4(1, 0, 1, 1);
       if (colorInstances) {
         if (instanceID < 0.0) {
           gl_FragColor.rgb = vec3(0.8, 0.1, 0.4);
-          //if (isMiter == 1.0) gl_FragColor = vec4(1, 0, 0, 1);
         } else if (floor(mod(instanceID, 2.0) + 0.5) == 1.0) {
           gl_FragColor.rgb = vec3(0.2, 0.3, 0.7);
-          //if (isMiter == 1.0) gl_FragColor = vec4(1, 1, 0, 1);
         }
       }
 
@@ -219,8 +215,6 @@ const drawLines = reglLines(regl, {
         float wire = grid(vec3(triStripGridCoord, triStripGridCoord.x + triStripGridCoord.y), 0.5 * pixelRatio, 2.0 / pixelRatio);
         gl_FragColor = mix(gl_FragColor, vec4(1), wire * wireframeOpacity);
       }
-
-      if (isMiter == 0.0) gl_FragColor.a *= 0.3;
     }`,
   uniforms: {
     colorInstances: regl.prop('rendering.colorInstances'),

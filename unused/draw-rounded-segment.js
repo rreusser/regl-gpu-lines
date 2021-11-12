@@ -4,28 +4,6 @@ const glslPrelude = require('./glsl-prelude.js');
 
 module.exports = createDrawRoundedSegmentCommand;
 
-// The segment is rendered as a triangle strip. Consider joinResolution = 3. We start
-// at the mitered end of the line and render vertices:
-//
-// - 0, 1, 2: mitered vertices, using beveled line logic
-// - 3, 5, 7, 9: vertices around the circular arc join
-// - 4, 6, 8: repeated vertices at point C to accomplish a triangle fan
-// - 10: a final vertex to close it off
-//
-// Is it worthwhile? I don't know. Consider that as independent triangles, this would
-// contain 7 triangles (= 21 independent vertices) which we instead render using eleven.
-//
-//   1 ------------------------ 3 -5
-//   | ...                     /|    7
-//   |     ...                / |     \
-//   |         ...           /  + ---- 9
-//   |            ...       /  / \ _ -
-//   |                ...  / / _ -\
-//   0 ------------------ x -      \
-//                         \        + 4, 6, 8 (= pC)
-//                          \
-//                           +- 2, 10
-//
 function createDrawRoundedSegmentCommand({
   regl,
   meta,
