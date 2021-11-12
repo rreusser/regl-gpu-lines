@@ -1,8 +1,6 @@
 'use strict';
 
 const createDrawSegment = require('./draw-segment.js');
-//const createDrawMiterCapCommand = require('./draw-miter-cap.js');
-//const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
 const sanitizeBufferInputs = require('./sanitize-buffer.js');
 const createAttrSpec = require('./create-attr-spec.js');
@@ -53,15 +51,7 @@ function reglLines(
 
   const userConfig = canReorder ? (props, cb) => cb() : regl(forwardedOpts);
 
-  // Round geometry is used for both joins and end caps. We use an integer
-  // and divide by the resolution in the shader so that we can allocate a
-  // single, fixed buffer and the resolution is entirely a render-time decision.
-  //
-  // The max value is chosen for aesthetic reasons, but also because there seems to be
-  // a loss of precision or something above 30 at which it starts to get the indices
-  // wrong.
-  const MAX_ROUND_JOIN_RESOLUTION = 20;
-  let indexBuffer, indexPrimitive;
+  const MAX_ROUND_JOIN_RESOLUTION = 30;
   const indexAttributes = {};
   if (debug) {
     // TODO: Allocate/grow lazily to avoid an arbitrary limit
@@ -71,14 +61,13 @@ function reglLines(
       divisor: 1
     };
   }
-  indexPrimitive = 'triangle strip';
-  indexBuffer = regl.buffer(
-    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])
-  );
-  indexAttributes.index = { buffer: indexBuffer, divisor: 0 };
+  indexAttributes.index = {
+    buffer: regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])),
+    divisor: 0
+  };
 
   // Instantiate commands
-  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
+  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug};
   const drawMiterSegment = createDrawSegment(false, false, config);
   const drawRoundedSegment = createDrawSegment(true, false, config);
   const drawMiterCap = createDrawSegment(false, true, config);
@@ -120,7 +109,7 @@ function reglLines(
         const joinType = sanitizeInclusionInList(lineProps.join, 'miter', VALID_JOIN_TYPES, 'join');
         const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
 
-        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;// * 2;
+        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
         if (capType === 'square') {
           capResolution = 3;
         } else if (capType === 'none') {

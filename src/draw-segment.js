@@ -173,9 +173,6 @@ void main() {
         xy = vec2(cos(theta), sin(theta));
         ${isCap ? `if (isCap && xy.y > 0.0) xy *= capScale;` : ''}
         ${isCap ? `if (isCap) lineCoord = xy.yx * lineCoord.y;` : ''}
-
-        // TOOD: this is not correct
-        if (isHairpin) xy.x *= mirrorSign;
       } else {
         yBasis = isHairpin ? vec2(0) : miter;
         if (!isBevel) xy.y /= m2;
