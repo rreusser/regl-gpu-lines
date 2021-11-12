@@ -19,6 +19,7 @@ const preface = `
 `;
 
 budo(path.join(__dirname, 'dummy.js'), {
+  host: 'localhost',
   open: true,
   live: true,
   browserify: {

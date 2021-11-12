@@ -1,9 +1,6 @@
 'use strict';
 
-const createDrawMiterSegmentCommand = require('./draw-miter-segment.js');
-const createDrawMiterCapCommand = require('./draw-miter-cap.js');
-const createDrawRoundedSegmentCommand = require('./draw-rounded-segment.js');
-const createDrawRoundedCapCommand = require('./draw-rounded-cap.js');
+const createDrawSegment = require('./draw-segment.js');
 const parseShaderPragmas = require('./parse-pragmas.js');
 const sanitizeBufferInputs = require('./sanitize-buffer.js');
 const createAttrSpec = require('./create-attr-spec.js');
@@ -54,15 +51,7 @@ function reglLines(
 
   const userConfig = canReorder ? (props, cb) => cb() : regl(forwardedOpts);
 
-  // Round geometry is used for both joins and end caps. We use an integer
-  // and divide by the resolution in the shader so that we can allocate a
-  // single, fixed buffer and the resolution is entirely a render-time decision.
-  //
-  // The max value is chosen for aesthetic reasons, but also because there seems to be
-  // a loss of precision or something above 30 at which it starts to get the indices
-  // wrong.
-  const MAX_ROUND_JOIN_RESOLUTION = 20;
-  let indexBuffer, indexPrimitive;
+  const MAX_ROUND_JOIN_RESOLUTION = 30;
   const indexAttributes = {};
   if (debug) {
     // TODO: Allocate/grow lazily to avoid an arbitrary limit
@@ -72,23 +61,22 @@ function reglLines(
       divisor: 1
     };
   }
-  indexPrimitive = 'triangle strip';
-  indexBuffer = regl.buffer(
-    new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])
-  );
-  indexAttributes.index = { buffer: indexBuffer, divisor: 0 };
+  indexAttributes.index = {
+    buffer: regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])),
+    divisor: 0
+  };
 
   // Instantiate commands
-  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexBuffer, indexPrimitive, indexAttributes, debug};
-  const drawMiterSegment = createDrawMiterSegmentCommand(config);
-  const drawMiterCap = createDrawMiterCapCommand(config);
-  const drawRoundedSegment = createDrawRoundedSegmentCommand(config);
-  const drawRoundedCap = createDrawRoundedCapCommand(config);
+  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug};
+  const drawMiterSegment = createDrawSegment(false, false, config);
+  const drawRoundedSegment = createDrawSegment(true, false, config);
+  const drawMiterCap = createDrawSegment(false, true, config);
+  const drawRoundedCap = createDrawSegment(true, true, config);
 
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
   const VALID_CAP_TYPES = ['round', 'square', 'none'];
   const ROUND_CAP_SCALE = [1, 1];
-  const SQUARE_CAP_SCALE = [2 / Math.sqrt(3), 2];
+  const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
 
   return function drawLines(props) {
     if (!props) return;
@@ -121,20 +109,21 @@ function reglLines(
         const joinType = sanitizeInclusionInList(lineProps.join, 'miter', VALID_JOIN_TYPES, 'join');
         const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
 
-        const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
-        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution * 2;
+        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
         if (capType === 'square') {
           capResolution = 3;
         } else if (capType === 'none') {
           capResolution = 1;
         }
+        let joinResolution = 1;
+        if (joinType === 'round') joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
 
         const miterLimit = joinType === 'bevel' ? 1 : (lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit);
         const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
 
         let endpointProps, segmentProps;
 
-        if (lineProps.endpointAttributes) {
+        if (lineProps.endpointAttributes && lineProps.endpointCount) {
           endpointProps = {
             buffers: endpointAttributes,
             count: lineProps.endpointCount,
@@ -145,7 +134,7 @@ function reglLines(
           };
         }
 
-        if (lineProps.vertexAttributes) {
+        if (lineProps.vertexAttributes && lineProps.vertexCount) {
           segmentProps = {
             buffers: vertexAttributes,
             count: lineProps.vertexCount,
