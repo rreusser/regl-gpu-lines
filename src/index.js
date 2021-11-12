@@ -121,7 +121,7 @@ function reglLines(
         const capType = sanitizeInclusionInList(lineProps.cap, 'square', VALID_CAP_TYPES, 'cap');
 
         const joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
-        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution * 2;
+        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;// * 2;
         if (capType === 'square') {
           capResolution = 3;
         } else if (capType === 'none') {

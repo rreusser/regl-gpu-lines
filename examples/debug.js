@@ -16,11 +16,11 @@ const state = wrapGUI(State({
     capResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     joinResolution: State.Slider(4, {min: 1, max: 20, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
-    join: State.Select('bevel', {options: ['round', 'miter', 'bevel']}),
+    join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(8, {min: 1, max: 8, step: 0.01}),
   }, {label: 'line config', expanded: true}),
   geometry: State.Section({
-    stretch: State.Slider(0.97, {min: 0.01, max: 2, step: 0.001}),
+    stretch: State.Slider(1.146, {min: 0.01, max: 2, step: 0.001}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
   }, {expanded: true}),
   line: State.Section({
@@ -59,7 +59,22 @@ function project(p) {
 }
 
 const path = [
+
+[-0.9, -0.9],
 [-0.8, -0.8],
+[-0.7, -0.7],
+[-0.6, -0.6],
+[NaN, NaN],
+[-0.5, -0.5],
+[-0.4, -0.4],
+[-0.3, -0.3],
+[-0.2, -0.2],
+[-0.1, -0.1],
+[-0.0, -0.0],
+[0.1, 0.15],
+[0.2, 0.22],
+[0.3, 0.35],
+/*[-0.8, -0.8],
 [-0.7, -0.8],
 [-0.6, 0.2],
 [-0.4, 0.3],
@@ -69,6 +84,7 @@ const path = [
 [0.4, -0.6],
 [0.6, -0.8],
 [0.8, -0.8],
+*/
 /*
   [-0.75, -0.5],
   [-0.5, -0.5],
