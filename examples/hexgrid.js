@@ -141,8 +141,7 @@ xy.reverse();
 // them on every draw call.
 const lineData = {
   roundResolution: 1,
-  join: 'round',
-  cap: 'square',
+  join: 'bevel',
   vertexCount: xy.length,
   vertexAttributes: {
     xy: regl.buffer(xy),
