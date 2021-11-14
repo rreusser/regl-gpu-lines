@@ -22,7 +22,6 @@ function reglLines(
     vert = null,
     frag = null,
     debug = false,
-    capMissing = true
   } = opts;
 
   // Forward all regl parameters except for vert and frag along to regl. Additionally,
@@ -68,7 +67,7 @@ function reglLines(
   };
 
   // Instantiate commands
-  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug, capMissing};
+  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug};
   const drawMiterSegment = createDrawSegment(false, false, config);
   const drawRoundedSegment = createDrawSegment(true, false, config);
   const drawMiterCap = createDrawSegment(false, true, config);
