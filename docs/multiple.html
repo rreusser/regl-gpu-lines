@@ -22,10 +22,8 @@ const drawLines = reglLines(regl, {
     precision highp float;
 
     #pragma lines: attribute vec2 xy;
-    #pragma lines: attribute float capOrientation;
     #pragma lines: position = getPosition(xy);
     #pragma lines: width = getWidth();
-    #pragma lines: orientation = getCapOrientation(capOrientation);
     #pragma lines: varying float x = getX(xy);
 
     vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
@@ -42,9 +40,7 @@ const drawLines = reglLines(regl, {
 
 const n = 51;
 const lineCount = 10;
-const positions = [];
-const endpoints = [];
-const capOrientation = [];
+const positions = [[NaN, NaN]];
 
 function xy (line, i) {
   let t = (i / (n - 1) * 2 - 1) * 0.9;
@@ -57,11 +53,6 @@ for (let line = 0; line < lineCount; line++) {
 
   // Add a break in the line by using NaN
   positions.push([NaN, NaN]);
-
-  // Push a start cap and and end cap for this segment
-  for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
-  for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
-  capOrientation.push(reglLines.CAP_START, reglLines.CAP_END);
 }
 
 // After this, render as normal!
@@ -72,11 +63,6 @@ const lineData = {
   vertexAttributes: {
     xy: regl.buffer(positions)
   },
-  endpointCount: endpoints.length / 3,
-  endpointAttributes: {
-    xy: regl.buffer(endpoints),
-    capOrientation: regl.buffer(capOrientation)
-  }
 };
 
 function draw () {
@@ -115,10 +101,8 @@ const drawLines = reglLines(regl, {
     precision highp float;
 
     #pragma lines: attribute vec2 xy;
-    #pragma lines: attribute float capOrientation;
     #pragma lines: position = getPosition(xy);
     #pragma lines: width = getWidth();
-    #pragma lines: orientation = getCapOrientation(capOrientation);
     #pragma lines: varying float x = getX(xy);
 
     vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }
@@ -135,9 +119,7 @@ const drawLines = reglLines(regl, {
 
 const n = 51;
 const lineCount = 10;
-const positions = [];
-const endpoints = [];
-const capOrientation = [];
+const positions = [[NaN, NaN]];
 
 function xy (line, i) {
   let t = (i / (n - 1) * 2 - 1) * 0.9;
@@ -150,11 +132,6 @@ for (let line = 0; line < lineCount; line++) {
 
   // Add a break in the line by using NaN
   positions.push([NaN, NaN]);
-
-  // Push a start cap and and end cap for this segment
-  for (let i = 0; i < 3; i++) endpoints.push(xy(line, i));
-  for (let i = 0; i < 3; i++) endpoints.push(xy(line, n - 1 - i));
-  capOrientation.push(reglLines.CAP_START, reglLines.CAP_END);
 }
 
 // After this, render as normal!
@@ -165,11 +142,6 @@ const lineData = {
   vertexAttributes: {
     xy: regl.buffer(positions)
   },
-  endpointCount: endpoints.length / 3,
-  endpointAttributes: {
-    xy: regl.buffer(endpoints),
-    capOrientation: regl.buffer(capOrientation)
-  }
 };
 
 function draw () {
