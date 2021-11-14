@@ -21,7 +21,8 @@ function reglLines(
   const {
     vert = null,
     frag = null,
-    debug = false
+    debug = false,
+    capMissing = true
   } = opts;
 
   // Forward all regl parameters except for vert and frag along to regl. Additionally,
@@ -67,7 +68,7 @@ function reglLines(
   };
 
   // Instantiate commands
-  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug};
+  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug, capMissing};
   const drawMiterSegment = createDrawSegment(false, false, config);
   const drawRoundedSegment = createDrawSegment(true, false, config);
   const drawMiterCap = createDrawSegment(false, true, config);
@@ -130,6 +131,7 @@ function reglLines(
             joinResolution,
             capResolution,
             capScale,
+            capType,
             miterLimit,
           };
         }
@@ -140,6 +142,8 @@ function reglLines(
             count: lineProps.vertexCount,
             joinResolution,
             capResolution,
+            capScale,
+            capType,
             miterLimit
           };
         }
