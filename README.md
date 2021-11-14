@@ -29,6 +29,7 @@ Features:
 Limitations:
 
 - Width is best varied slowly as line joins to not take into account varying width
+- Returning `position.w == 0.0` in the shader creates a break in the line. Caps are inserted, but only when using round joins.
 
 ## Install
 
