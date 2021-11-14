@@ -1,3 +1,13 @@
+## 0.0.18
+
+### Features
+
+- Now inserts caps when it encounters NaN. With some remaining API cleanup since miters and bevels don't have enough points per instance to build a proper round.
+
+### Bugfixes
+
+- Resolve hairpin and collinear cases!! :tada:
+
 ## 0.0.17
 
 ### Bugfixes
