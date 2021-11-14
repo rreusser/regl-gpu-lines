@@ -23,15 +23,12 @@ Features:
 - Configure your own attributes, varyings, uniforms, and shaders
 - Round joins, miters, and bevels
 - Square and rounded end caps
-- Use `NaN` to separate disjoint lines (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html))
+- Use `position.w == 0.0` to separate disjoint lines (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
 - Pass additional regl configuration to the constructor
 
 Limitations:
 
-- Lines with two vertices are rendered as overlapping end caps
 - Width is best varied slowly as line joins to not take into account varying width
-- SDF borders Using the `lineCoord` are only constant-width with `round` joins
-- Line dashes are possible by passing a varying attribute, but will be skewed due to the triangulation used
 
 ## Install
 
