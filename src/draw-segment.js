@@ -12,7 +12,6 @@ function createDrawSegmentCommand(isRound, isEndpoints, {
   endpointSpec,
   indexAttributes,
   debug,
-  //capMissing
 }) {
   const spec = isEndpoints ? endpointSpec : segmentSpec;
   const verts = ['B', 'C', 'D'];
