@@ -28,12 +28,12 @@ function reglLines(
     vert = null,
     frag = null,
     debug = false,
-    autoCaps = false,
+    insertCaps = false,
   } = opts;
 
   // Forward all regl parameters except for vert and frag along to regl.
   const forwardedCmdConfig = {...opts};
-  for (const prop of ['vert', 'frag', 'debug', 'autoCaps']) delete forwardedCmdConfig[prop];
+  for (const prop of ['vert', 'frag', 'debug', 'insertCaps']) delete forwardedCmdConfig[prop];
   const forwarded = Object.keys(forwardedCmdConfig);
   const canReorder = forwarded.length === 0;
   forwarded.forEach(fwd => {
@@ -71,7 +71,7 @@ function reglLines(
   };
 
   // Instantiate commands
-  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug, autoCaps};
+  const config = {regl, meta, segmentSpec, endpointSpec, frag, indexAttributes, debug, insertCaps};
   const drawMiterSegment = createDrawSegment(false, false, config);
   const drawRoundedSegment = createDrawSegment(true, false, config);
   const drawMiterCap = createDrawSegment(false, true, config);

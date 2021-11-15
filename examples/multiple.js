@@ -1,6 +1,10 @@
 const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
 
 const drawLines = reglLines(regl, {
+  // Trigger the command to automatically insert caps at any break, signaled
+  // by a position with (w = 0)
+  insertCaps: true,
+
   vert: `
     precision highp float;
 
@@ -21,7 +25,8 @@ const drawLines = reglLines(regl, {
     precision lowp float;
     varying vec2 pos;
     void main () {
-      gl_FragColor = vec4(0.5 + cos(8.0 * (pos.x - vec3(0, 1, 2) * 3.141 / 3.0)), 1.0);
+      // Convert the x-coordinate into a color
+      gl_FragColor = vec4(0.6 + 0.4 * cos(8.0 * (pos.x - vec3(0, 1, 2) * 3.141 / 3.0)), 1.0);
     }`,
 });
 

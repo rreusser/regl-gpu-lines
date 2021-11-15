@@ -11,7 +11,7 @@ function createDrawSegmentCommand(isRound, isEndpoints, {
   segmentSpec,
   endpointSpec,
   indexAttributes,
-  autoCaps,
+  insertCaps,
   debug,
 }) {
   const spec = isEndpoints ? endpointSpec : segmentSpec;
@@ -58,7 +58,7 @@ void main() {
   ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
 
   // Check for invalid vertices
-  if (invalid(pB) || invalid(pC)${autoCaps ? '' : `${isEndpoints ? '' : '|| invalid(pA)'} || invalid(pD)`}) {
+  if (invalid(pB) || invalid(pC)${insertCaps ? '' : `${isEndpoints ? '' : '|| invalid(pA)'} || invalid(pD)`}) {
     gl_Position = vec4(1,1,1,0);
     return;
   }
