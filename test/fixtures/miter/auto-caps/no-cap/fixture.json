@@ -1,0 +1,75 @@
+{
+  "shape": [256, 128],
+  "command": {
+    "autoCaps": true,
+    "vert": [
+      "precision highp float;",
+      "#pragma lines: attribute vec2 xy",
+      "#pragma lines: attribute float break",
+      "#pragma lines: position = getPosition(xy, break)",
+      "#pragma lines: width = getWidth()",
+      "float getWidth() { return 20.0; }",
+      "vec4 getPosition(vec2 xy, float isBreak) {",
+      "  if (isBreak > 0.0) return vec4(0);",
+      "  return vec4(xy, 0, 1);",
+      "}"
+    ],
+    "frag": [
+      "precision lowp float;",
+      "void main () {",
+      "  gl_FragColor = vec4(0,0,0,0.5);",
+      "}"
+    ],
+    "blend": {
+      "enable": true,
+      "func": {
+        "srcRGB": "src alpha",
+        "srcAlpha": 1,
+        "dstRGB": "one minus src alpha",
+        "dstAlpha": 1
+      }
+    },
+    "depth": {
+      "enable": false
+    }
+  },
+  "vertexAttributes": {
+    "xy": [
+      [0,0],
+
+      [-0.8, 0.5],
+      [-0.3, 0.7],
+      [0.3, 0.5],
+      [0.8, 0.7],
+
+      [0,0],
+
+      [-0.8, -0.1],
+      [-0.3, 0.1],
+      [0.3, -0.1],
+      [0.8, 0.1],
+
+      [0,0],
+
+      [-0.8, -0.7],
+      [-0.3, -0.5],
+      [0.3, -0.7],
+      [0.8, -0.5],
+
+      [0,0]
+    ],
+    "break": [
+      1,
+      0,0,0,0,
+      1,
+      0,0,0,0,
+      1,
+      0,0,0,0,
+      1
+    ]
+  },
+  "data": {
+    "join": "miter",
+    "cap": "none"
+  }
+}

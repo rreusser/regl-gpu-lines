@@ -1,6 +1,7 @@
 {
   "shape": [256, 128],
   "command": {
+    "autoCaps": true,
     "vert": [
       "precision highp float;",
       "#pragma lines: attribute vec2 xy",
@@ -68,7 +69,7 @@
     ]
   },
   "data": {
-    "join": "miter",
+    "join": "round",
     "cap": "none"
   }
 }

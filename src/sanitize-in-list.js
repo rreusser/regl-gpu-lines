@@ -5,7 +5,7 @@ module.exports = function createSanitizer(label, list, dflt) {
     if (!value) return dflt;
     if (list.indexOf(value) === -1) {
       throw new Error(
-        `Invalid ${label} type. Options are ${JSON.stringify(list).join(', ')}.`
+        `Invalid ${label} type. Valid options are: ${list.join(', ')}.`
       );
     }
     return value;
