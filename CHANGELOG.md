@@ -1,3 +1,8 @@
+## 0.0.19
+
+- Add `insertCaps` option to be explicit about when caps are automatically inserted
+- Switch to preferring `w = 0` instead of `NaN` since `NaN` detection is a bit unreliable in GLSL.
+
 ## 0.0.18
 
 ### Features
