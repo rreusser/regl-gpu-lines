@@ -1,7 +1,7 @@
 {
   "shape": [256, 128],
   "command": {
-    "autoCaps": true,
+    "insertCaps": true,
     "vert": [
       "precision highp float;",
       "#pragma lines: attribute vec2 xy",

@@ -1,0 +1,1 @@
+This directory contains two sets of UMD bundles. They are identical except that the `compat` bundles are compiled with [`@babel/preset-env`](https://babeljs.io/docs/en/babel-preset-env) for people requiring additional compatibility.

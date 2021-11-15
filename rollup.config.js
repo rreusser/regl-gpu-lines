@@ -10,6 +10,13 @@ export default [
     output: 'dist/regl-gpu-lines.js',
     format: 'umd',
     name: 'reglLines',
+    babelPresets: [],
+  }, {
+    input: 'src/index.js',
+    output: 'dist/regl-gpu-lines.compat.js',
+    format: 'umd',
+    name: 'reglLines',
+    babelPresets: ['@babel/preset-env'],
   },
 ].map(bundle => ({
   input: bundle.input,
@@ -23,7 +30,10 @@ export default [
       browser: true
     }),
     commonjs(),
-    babel({babelHelpers: 'bundled'}),
+    babel({
+      babelHelpers: 'bundled',
+      presets: bundle.babelPresets
+    }),
     json()
   ]
 }));

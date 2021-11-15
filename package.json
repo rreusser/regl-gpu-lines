@@ -11,13 +11,14 @@
     "url": "https://github.com/rreusser/regl-gpu-lines/issues"
   },
   "scripts": {
-    "build": "npm run bundle:rollup && npm run minify:rollup",
+    "bundle": "npm run bundle:rollup && npm run bundle:minify && npm run bundle:minify:compat",
+    "bundle:minify": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js && node scripts/compress.js < dist/regl-gpu-lines.min.js > dist/tmp.js && mv dist/tmp.js dist/regl-gpu-lines.min.js",
+    "bundle:minify:compat": "terser -cm -o dist/regl-gpu-lines.compat.min.js dist/regl-gpu-lines.compat.js && node scripts/compress.js < dist/regl-gpu-lines.compat.min.js > dist/tmp.js && mv dist/tmp.js dist/regl-gpu-lines.compat.min.js",
     "build:examples": "for i in examples/*.js; do node scripts/build-example $i; done",
     "bundle:rollup": "mkdir -p dist && rollup -c",
     "lint": "eslint src/*.js",
     "lint-fix": "eslint src/*.js --fix",
-    "minify:rollup": "terser -cm -o dist/regl-gpu-lines.min.js dist/regl-gpu-lines.js && node scripts/compress.js < dist/regl-gpu-lines.min.js > dist/tmp.js && mv dist/tmp.js dist/regl-gpu-lines.min.js",
-    "prepublishOnly": "npm run bundle:rollup && npm run minify:rollup && npm run test && npm run build:examples",
+    "prepublishOnly": "npm run bundle:rollup && npm run bundle:minify && npm run test && npm run build:examples",
     "test": "npm run lint && npm run test-render && npm run test-render-prod",
     "test-render": "ENV=development node test/render.js",
     "test-render-prod": "ENV=production node test/render.js",
