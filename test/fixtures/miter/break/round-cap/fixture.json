@@ -4,10 +4,14 @@
     "vert": [
       "precision highp float;",
       "#pragma lines: attribute vec2 xy",
-      "#pragma lines: position = getPosition(xy)",
+      "#pragma lines: attribute float break",
+      "#pragma lines: position = getPosition(xy, break)",
       "#pragma lines: width = getWidth()",
       "float getWidth() { return 20.0; }",
-      "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+      "vec4 getPosition(vec2 xy, float isBreak) {",
+      "  if (isBreak > 0.0) return vec4(0);",
+      "  return vec4(xy, 0, 1);",
+      "}"
     ],
     "frag": [
       "precision lowp float;",
@@ -23,32 +27,48 @@
         "dstRGB": "one minus src alpha",
         "dstAlpha": 1
       }
+    },
+    "depth": {
+      "enable": false
     }
   },
   "vertexAttributes": {
     "xy": [
+      [0,0],
+
       [-0.8, 0.5],
       [-0.3, 0.7],
       [0.3, 0.5],
       [0.8, 0.7],
 
-      [null, null],
+      [0,0],
 
       [-0.8, -0.1],
       [-0.3, 0.1],
       [0.3, -0.1],
       [0.8, 0.1],
 
-      [null, null],
+      [0,0],
 
       [-0.8, -0.7],
       [-0.3, -0.5],
       [0.3, -0.7],
-      [0.8, -0.5]
+      [0.8, -0.5],
+
+      [0,0]
+    ],
+    "break": [
+      1,
+      0,0,0,0,
+      1,
+      0,0,0,0,
+      1,
+      0,0,0,0,
+      1
     ]
   },
   "data": {
     "join": "miter",
-    "cap": "square"
+    "cap": "round"
   }
 }

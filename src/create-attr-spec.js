@@ -1,9 +1,11 @@
 module.exports = createAttrSpecs;
 
-const ATTR_USAGE = require('./attr-usage.js');
-const GLSL_TYPES = require('./glsltypes.js');
-const ORIENTATION = require('./orientation.json');
+const ATTR_USAGE = require('./constants/attr-usage.js');
+const GLSL_TYPES = require('./constants/glsltypes.js');
+const ORIENTATION = require('./constants/orientation.json');
 
+// This function returns regl props, used for constructing the attribute layout regl accessors
+// and corresponding GLSL up front.
 function createAttrSpecs (meta, regl, isEndpoints) {
   const suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
   const attrLines = [];
@@ -11,7 +13,6 @@ function createAttrSpecs (meta, regl, isEndpoints) {
 
   meta.attrs.forEach((attr, attrName) => {
     const usage = isEndpoints ? attr.endpointUsage : attr.vertexUsage;
-
     if (!usage) return;
 
     const attrList = [];

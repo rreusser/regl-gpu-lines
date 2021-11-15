@@ -19,8 +19,8 @@
       "  float sdf = 0.5 * width * max(abs(lineCoord.x), abs(lineCoord.y));",
       "  float aa = linearstep(width * 0.5, width * 0.5 - 1.0, sdf);",
       "  float border = linearstep(width * 0.5 - 4.5, width * 0.5 - 3.5, sdf);",
-      "  vec3 color = mix(vec3(0.8), vec3(0), border);",
-      "  gl_FragColor = vec4(color, aa);",
+      "  float alpha = aa * mix(0.2, 1.0, border);",
+      "  gl_FragColor = vec4(vec3(0), alpha);",
       "}"
     ],
     "uniforms": {
@@ -34,6 +34,9 @@
         "dstRGB": "one minus src alpha",
         "dstAlpha": 1
       }
+    },
+    "depth": {
+      "enable": false
     }
   },
   "vertexAttributes": {
@@ -46,6 +49,19 @@
       [-0.3, -0.7],
       [0.5, 0.0],
       [0.8, 0.0]
+    ]
+  },
+  "endpointAttributes": {
+    "xy": [
+      [
+        [-0.8, 0.0],
+        [-0.5, 0.0],
+        [0.3, 0.7]
+      ], [
+        [0.8, 0.0],
+        [0.5, 0.0],
+        [-0.3, -0.7]
+      ]
     ]
   },
   "data": {

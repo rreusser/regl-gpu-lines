@@ -2,13 +2,14 @@
 
 module.exports = sanitizeBufferInput;
 
-const DTYPE_SIZES = require('./dtypesizes.js');
-const DTYPES = require('./dtypes.json');
+const DTYPE_SIZES = require('./constants/dtypesizes.js');
+const DTYPES = require('./constants/dtypes.json');
 
 function has(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
+// This function is run on every draw call in order to sanitize and configure the data layout
 function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
   const outputs = {};
 

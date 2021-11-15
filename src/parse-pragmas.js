@@ -1,6 +1,6 @@
 'use strict';
 
-const ATTR_USAGE = require('./attr-usage.js');
+const ATTR_USAGE = require('./constants/attr-usage.js');
 
 module.exports = parseShaderPragmas;
 

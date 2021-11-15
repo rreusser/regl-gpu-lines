@@ -39,19 +39,6 @@ function replaceNullWithNaN (data) {
   return data;
 }
 
-function constructEndpointsFromNaNGaps (data) {
-  const endpoints = [];
-  endpoints.push(data.slice(0, 3));
-  for (let i = 3; i < data.length; i++) {
-    if ((!Array.isArray(data[i]) && isNaN(data[i])) || (data[i].length && isNaN(data[i][0]))) {
-      endpoints.push(data.slice(i - 3, i).reverse());
-      endpoints.push(data.slice(i + 1, i + 4));
-    }
-  }
-  endpoints.push(data.slice(-3).reverse());
-  return endpoints;
-}
-
 function renderFixture(regl, fixture) {
   const drawLines = createDrawLines(regl, {
     ...fixture.command,
@@ -66,22 +53,17 @@ function renderFixture(regl, fixture) {
 
 
   if (fixture.vertexAttributes) {
+    lineData.vertexAttributes = {};
     for (const [name, attribute] of Object.entries(fixture.vertexAttributes)) {
       const sanitizedAttr = replaceNullWithNaN(attribute);
 
       lineData.vertexAttributes[name] = regl.buffer(sanitizedAttr);
       lineData.vertexCount = sanitizedAttr.length;
-
-      if (!fixture.endpointAttributes) {
-        // Otherwise, as a testing convenience, fill in NaN gaps with endpoints
-        const endpointAttr = constructEndpointsFromNaNGaps(sanitizedAttr)
-        lineData.endpointAttributes[name] = regl.buffer(endpointAttr);
-        lineData.endpointCount = endpointAttr.length;
-      }
     }
   }
 
   if (fixture.endpointAttributes) {
+    lineData.endpointAttributes = {};
     for (const [name, attribute] of Object.entries(fixture.endpointAttributes)) {
       const sanitizedAttr = replaceNullWithNaN(attribute);
 

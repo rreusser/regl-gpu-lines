@@ -1,6 +1,6 @@
 'use strict';
 
-const ORIENTATION = require('./orientation.json');
+const ORIENTATION = require('./constants/orientation.json');
 
 module.exports = createDrawSegmentCommand;
 
