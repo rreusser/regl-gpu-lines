@@ -29,7 +29,7 @@ const state = wrapGUI(State({
   }, {label: 'line', expanded: false}),
   border: State.Section({
     width: State.Slider(5, {min: 0, max: 10, step: 0.1}),
-    opacity: State.Slider(0, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.6, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false}),
   dash: State.Section({
     length: State.Slider(0.25, {min: 0, max: 8, step: 0.1}),
