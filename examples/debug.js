@@ -20,11 +20,11 @@ const state = wrapGUI(State({
     miterLimit: State.Slider(4, {min: 1, max: 8, step: 0.01}),
   }, {label: 'line config', expanded: true}),
   geometry: State.Section({
-    stretch: State.Slider(0.752, {min: -2, max: 2, step: 0.001}),
+    stretch: State.Slider(0.9, {min: -2, max: 2, step: 0.001}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
   }, {expanded: true}),
   line: State.Section({
-    width: State.Slider(70, {min: 1, max: 100, step: 0.1}),
+    width: State.Slider(40, {min: 1, max: 100, step: 0.1}),
     opacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
   }, {label: 'line', expanded: false}),
   border: State.Section({
@@ -32,11 +32,11 @@ const state = wrapGUI(State({
     opacity: State.Slider(0, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false}),
   dash: State.Section({
-    length: State.Slider(0.05, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
+    length: State.Slider(0.25, {min: 0, max: 8, step: 0.1}),
+    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
-    wireframeOpacity: State.Slider(0.05, {min: 0, max: 1, step: 0.01}),
+    wireframeOpacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
     depth: false,
     colorInstances: true,
