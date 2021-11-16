@@ -189,6 +189,7 @@ const lineData = {
 };
 
 const drawLines = reglLines(regl, {
+  insertCaps: true,
   debug: true,
   vert: `
     precision highp float;
