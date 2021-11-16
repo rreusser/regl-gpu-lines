@@ -1,3 +1,7 @@
+## 0.0.20
+
+- Add optional `extrapolate` keyword, as in `#pragma lines: extrapolate varying float name` to distinguish between varyings which are extrapolated outside the bounds of their respective segment endpoint values, and varyings which are clamped to the range of the segment. This can be used to dash caps and joins or to ensure colors are not extrapolated.
+
 ## 0.0.19
 
 - Add `insertCaps` option to be explicit about when caps are automatically inserted
