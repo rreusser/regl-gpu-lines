@@ -18,7 +18,7 @@
     "build:examples": "for i in examples/*.js; do node scripts/build-example $i; done",
     "lint": "eslint src/*.js",
     "lint-fix": "eslint src/*.js --fix",
-    "prepublishOnly": "npm run bundle:rollup && npm run bundle:minify && npm run test && npm run build:examples",
+    "prepublishOnly": "npm run bundle && npm run test && npm run build:examples",
     "test": "npm run lint && npm run test-render && npm run test-render-prod",
     "test-render": "ENV=development node test/render.js",
     "test-render-prod": "ENV=production node test/render.js",
