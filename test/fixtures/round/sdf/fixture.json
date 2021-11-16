@@ -12,11 +12,11 @@
     ],
     "frag": [
       "precision highp float;",
-      "varying vec2 lineCoord;",
+      "varying vec3 lineCoord;",
       "uniform float width;",
       "float linearstep(float a, float b, float x) { return clamp((x - a) / (b - a), 0.0, 1.0); }",
       "void main () {",
-      "  float sdf = 0.5 * width * length(lineCoord);",
+      "  float sdf = 0.5 * width * length(lineCoord.xy);",
       "  float aa = linearstep(width * 0.5, width * 0.5 - 1.0, sdf);",
       "  float border = linearstep(width * 0.5 - 4.5, width * 0.5 - 3.5, sdf);",
       "  float alpha = aa * mix(0.2, 1.0, border);",

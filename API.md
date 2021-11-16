@@ -35,7 +35,7 @@ Additional configuration parameters are forwarded to a `regl` command which wrap
 
 The vertex shader is parsed for GLSL `#pragma` directives which define data flow as well as line properties.
 
-### Vertex attributes *(required)*
+### Vertex attributes *(at least one required)*
 #### `#pragma lines: attribute <dataType> <attributeName>`
 - `dataType`: one of `float`, `vec2`, `vec3`, `vec4`
 - `attributeName`: name of attribute provided to draw command
@@ -59,7 +59,8 @@ A fixed property which defines whether a given line cap is at the beginning or e
 - `attributeList`: command-separated list of vertex attributes passed to the function. Attributes consumed by a `orientation` function advance at a rate of one stride per instance.
 
 ### Varyings *(optional)*
-#### `#pragma lines: varying <type> <name> = <functionName>(<attributeList>)`
+#### `#pragma lines: [extrapolate] varying <type> <name> = <functionName>(<attributeList>)`
+- `extrapolate`: optional keyword to indicate that the varying should be extrapolated in caps and joins. Otherwise the varying is clamped to lie within the range defined by the values at either end of the segment.
 - `type`: type of varying parameter passed to fragment shader. One of `float`, `vec2`, `vec3`, vec4`.
 - `name`: name of varying parameter passed to fragment shader
 - `functionName`: name of GLSL function which receives the attribute values and returns the varying of the specified type
@@ -69,7 +70,7 @@ A fixed property which defines whether a given line cap is at the beginning or e
 
 ## Fragment shader
 
-You may define the fragment shader as you desire. The only builtin parameter is a `varying vec2` called `lineCoord`, which assists in rendering end caps and variation across the width of the line. `lineCoord` lives in the square [-1, 1] &times; [-1, 1]. Starting caps lie in the left half-plane, [-1, 0] &times; [-1, 1]. The full length of the line lies along a vertical slice [0] &times; [-1, 1]. End caps lie in the right half-plane, [0, 1] &times; [-1, 1].
+You may define the fragment shader as you desire. The only builtin parameter is a `varying vec3` called `lineCoord`, which assists in rendering end caps and variation across the width of the line. `lineCoord.xy` lives in the square [-1, 1] &times; [-1, 1]. Starting caps lie in the left half-plane, [-1, 0] &times; [-1, 1]. The full length of the line lies along a vertical slice [0] &times; [-1, 1]. End caps lie in the right half-plane, [0, 1] &times; [-1, 1]. `lineCoord.z` is zero on line segments and is non-zero on caps and joins. This can help to render caps and joins differently, for example so that caps and joins would not entirely disappear when rendering dashed lines.
 
 ---
 

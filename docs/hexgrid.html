@@ -62,7 +62,7 @@ const drawLines = reglLines(regl, {
   frag: `
     precision lowp float;
     varying float t;
-    varying vec2 lineCoord;
+    varying vec3 lineCoord;
     varying vec2 position;
     uniform vec3 color;
     uniform vec2 range;
@@ -253,7 +253,7 @@ const drawLines = reglLines(regl, {
   frag: `
     precision lowp float;
     varying float t;
-    varying vec2 lineCoord;
+    varying vec3 lineCoord;
     varying vec2 position;
     uniform vec3 color;
     uniform vec2 range;

@@ -33,10 +33,10 @@ const drawLines = reglLines(regl, {
     precision highp float;
     uniform float width, borderWidth;
     uniform vec3 color;
-    varying vec2 lineCoord;
+    varying vec3 lineCoord;
     void main () {
       // Convert the line coord into an SDF
-      float sdf = length(lineCoord) * width;
+      float sdf = length(lineCoord.xy) * width;
 
       // Apply a border with 1px transition
       gl_FragColor = vec4(

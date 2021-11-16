@@ -15,16 +15,16 @@ const state = wrapGUI(State({
   lineConfig: State.Section({
     capResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
     joinResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
-    cap: State.Select('square', {options: ['round', 'square', 'none']}),
-    join: State.Select('miter', {options: ['round', 'miter', 'bevel']}),
+    cap: State.Select('round', {options: ['round', 'square', 'none']}),
+    join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(4, {min: 1, max: 8, step: 0.01}),
   }, {label: 'line config', expanded: true}),
   geometry: State.Section({
-    stretch: State.Slider(0.922, {min: -2, max: 2, step: 0.001}),
+    stretch: State.Slider(0.752, {min: -2, max: 2, step: 0.001}),
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
   }, {expanded: true}),
   line: State.Section({
-    width: State.Slider(50, {min: 1, max: 100, step: 0.1}),
+    width: State.Slider(70, {min: 1, max: 100, step: 0.1}),
     opacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
   }, {label: 'line', expanded: false}),
   border: State.Section({
@@ -32,11 +32,11 @@ const state = wrapGUI(State({
     opacity: State.Slider(0, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false}),
   dash: State.Section({
-    length: State.Slider(0.5, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
+    length: State.Slider(0.05, {min: 0, max: 8, step: 0.1}),
+    opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
-    wireframeOpacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
+    wireframeOpacity: State.Slider(0.05, {min: 0, max: 1, step: 0.01}),
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
     depth: false,
     colorInstances: true,
@@ -198,7 +198,7 @@ const drawLines = reglLines(regl, {
     #pragma lines: attribute float dist;
     #pragma lines: position = project(point);
     #pragma lines: width = getWidth();
-    #pragma lines: varying float dist = getProgress(dist);
+    #pragma lines: extrapolate varying float dist = getProgress(dist);
 
     uniform float stretch, flip, lineWidth, borderWidth;
 
@@ -221,7 +221,7 @@ const drawLines = reglLines(regl, {
     uniform float pixelRatio, dashLength, lineWidth, borderWidth, wireframeOpacity;
     uniform vec4 borderColor, lineColor, dashColor;
 
-    varying vec2 lineCoord;
+    varying vec3 lineCoord;
     varying float dist;
     varying float instanceID;
     varying vec2 triStripCoord;
@@ -241,7 +241,7 @@ const drawLines = reglLines(regl, {
 
     void main () {
       float sdf = lineWidth * 0.5 * (
-        squareCap ? max(abs(lineCoord.x), abs(lineCoord.y)) : length(lineCoord)
+        squareCap ? max(abs(lineCoord.x), abs(lineCoord.y)) : length(lineCoord.xy)
       );
 
       gl_FragColor.a = lineColor.a;
@@ -260,6 +260,7 @@ const drawLines = reglLines(regl, {
         float dashvar = fract(dist / dl) * dl;
         float dash = linearstep(0.0, 1.0, dashvar)
           * linearstep(dl * 0.5 + 1.0 / pixelRatio, dl * 0.5, dashvar);
+        //if (lineCoord.z > 0.0) dash = 0.0;
         gl_FragColor.a *= mix(1.0, 1.0 - dashColor.a, dash);
       }
 

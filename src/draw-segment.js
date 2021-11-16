@@ -33,7 +33,7 @@ uniform vec2 resolution, capScale;
 uniform float miterLimit;
 ${meta.orientation || !isEndpoints ? '' : 'uniform float orientation;'}
 
-varying vec2 lineCoord;
+varying vec3 lineCoord;
 varying float dir;
 ${debug ? 'varying vec2 triStripCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
@@ -50,7 +50,7 @@ const bool isRound = ${isRound ? 'true' : 'false'};
 const float pi = 3.141592653589793;
 
 void main() {
-  lineCoord = vec2(0);
+  lineCoord = vec3(0);
 
   ${debug ? `instanceID = ${isEndpoints ? '-1.0' : 'debugInstanceID'};` : ''}
   ${debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
@@ -149,13 +149,11 @@ void main() {
 
   lineCoord.y = dirB * mirrorSign;
 
-  // Adjustment of B-C varying due to vertex offsets
-  float dC = 0.0;
-
   if (iSeg < 0.0) {
     // Draw half of a join
     float m2 = dot(miter, miter);
     float lm = length(miter);
+    float tBCm = dot(tBC, miter);
     yBasis = miter / lm;
     bool isBevel = 1.0 > miterLimit * m2;
 
@@ -165,19 +163,17 @@ void main() {
         // Round joins
         xBasis = dirB * vec2(yBasis.y, -yBasis.x);
         float divisor = ${isEndpoints ? 'res.x' : 'min(res.x, isCap ? joinRes.z : res.x)'} * 2.0;
-        //
         float theta = -0.5 * (acos(cosB) * (min(i, divisor) / divisor) - pi) * (isCap ? 2.0 : 1.0);
         xy = vec2(cos(theta), sin(theta));
 
         if (isCap) {
           if (xy.y > 0.5) xy *= capScale;
-          lineCoord = xy.yx * lineCoord.y;
+          lineCoord.xy = xy.yx * lineCoord.y;
         }
       } else {
         // Miter joins
         yBasis = bIsHairpin ? vec2(0) : miter;
         if (!isBevel) xy.y /= m2;
-        dC += dot(tBC * mirrorSign, miter);
       }
     } else {
       // Repeat vertex B to create a triangle fan
@@ -187,7 +183,6 @@ void main() {
       // Offset the center vertex position to get bevel SDF correct
       if (!isRound && isBevel && !isCap) {
         xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);
-        dC += dot(tBC * mirrorSign, miter / lm) * xy.y;
       }
     }
   //} else if (iSeg == 0.0) { // No op: vertex B + line B-C normal
@@ -203,17 +198,20 @@ void main() {
     float m = abs(miterExt);
     m = min(m, min(lBC, lAB) / width);
     xy = vec2(m, -1);
-    dC += xy.x * mirrorSign;
   }
 
   ${isEndpoints ? `float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(orientation,2.0)'};` : ''};
-  ${isEndpoints ? `if (orientation == CAP_END) lineCoord = -lineCoord;` : ''}
+  ${isEndpoints ? `if (orientation == CAP_END) lineCoord.xy = -lineCoord.xy;` : ''}
+
+  vec2 dP = mat2(xBasis, yBasis) * xy;
+  float dC = dot(dP, tBC) * mirrorSign;
 
   float useC = (isMirrored ? 1.0 : 0.0) + dC * (width / lBC);
+  lineCoord.z = useC < 0.0 || useC > 1.0 ? 1.0 : 0.0;
   ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
 
   gl_Position = pB;
-  gl_Position.xy += width * (mat2(xBasis, yBasis) * xy);
+  gl_Position.xy += width * dP;
   gl_Position.xy /= resolution;
   gl_Position *= pw;
 }`,

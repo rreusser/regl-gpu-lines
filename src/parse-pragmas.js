@@ -7,7 +7,7 @@ module.exports = parseShaderPragmas;
 const PRAGMA_REGEX = /^\s*#pragma\s+lines\s*:\s*([^;]*);?$/i;
 const ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
 const PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
-const VARYING_REGEX = /^\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
+const VARYING_REGEX = /^\s*(?:(extrapolate)?)\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
 
 const DIMENSION_GLSL_TYPES = {
   "float": 1,
@@ -46,12 +46,14 @@ function parsePragma (pragma) {
     const generate = (label, prefix) => `${name}(${inputs.map(input => (prefix || '') + input + label).join(', ')})`;
     return {type: 'property', property, returnType, name, inputs, generate};
   } else if ((match = pragma.match(VARYING_REGEX))) {
-    const returnType = match[1];
-    const name = match[2];
-    const getter = match[3];
-    const inputs = match[4].split(',').map(str => str.trim()).filter(x => !!x);
+    const extrapolate = match[1] === 'extrapolate';
+    const returnType = match[2];
+    const name = match[3];
+    const getter = match[4];
+    const inputs = match[5].split(',').map(str => str.trim()).filter(x => !!x);
     const generate = (interp, a, b) => {
-      return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${interp})`).join(', ')});`;
+      const clamped = extrapolate ? interp : `clamp(${interp},0.0,1.0)`;
+      return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${clamped})`).join(', ')});`;
     };
     return {type: 'varying', returnType, name, getter, inputs, generate};
   } else {

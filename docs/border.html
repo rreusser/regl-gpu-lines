@@ -40,11 +40,11 @@ const drawLines = reglLines(regl, {
     float getX(vec2 xy) { return xy.x; }`,
   frag: `
     precision highp float;
-    varying vec2 lineCoord;
+    varying vec3 lineCoord;
     uniform float width, borderWidth;
     void main () {
       // Convert the line coord into an SDF
-      float sdf = length(lineCoord) * width;
+      float sdf = length(lineCoord.xy) * width;
 
       // Use the y-value of the line coord to distinguish between sides of the line
       vec3 borderColor = lineCoord.y < 0.0 ? vec3(1, 0.5, 0.5) : vec3(0.5, 0.5, 1);
@@ -140,11 +140,11 @@ const drawLines = reglLines(regl, {
     float getX(vec2 xy) { return xy.x; }`,
   frag: `
     precision highp float;
-    varying vec2 lineCoord;
+    varying vec3 lineCoord;
     uniform float width, borderWidth;
     void main () {
       // Convert the line coord into an SDF
-      float sdf = length(lineCoord) * width;
+      float sdf = length(lineCoord.xy) * width;
 
       // Use the y-value of the line coord to distinguish between sides of the line
       vec3 borderColor = lineCoord.y < 0.0 ? vec3(1, 0.5, 0.5) : vec3(0.5, 0.5, 1);
