@@ -1,0 +1,4059 @@
+<!DOCTYPE html><html lang="en" dir="ltr"><head><title>regl-gpu-lines tests</title><meta charset="utf-8">
+          <script src="https://unpkg.com/regl@2.1.0/dist/regl.js"></script>
+          <script src="https://unpkg.com/regl-gpu-lines@latest"></script>
+          </head><body>
+<script>const fixtures = {
+  "miter/basic": {
+    "name": "miter/basic",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "threshold": 0.1,
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square"
+      }
+    }
+  },
+  "miter/dash/extrapolate": {
+    "name": "miter/dash/extrapolate",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float t",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "#pragma lines: extrapolate varying float t = getT(t)",
+          "uniform float width;",
+          "float getWidth() { return width; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }",
+          "float getT(float t) { return t; }"
+        ],
+        "frag": [
+          "precision highp float;",
+          "varying float t;",
+          "uniform float width;",
+          "void main () {",
+          "  gl_FragColor = vec4(vec3(fract(t) > 0.5 ? 1.0 : 0.0), 0.5);",
+          "}"
+        ],
+        "uniforms": {
+          "width": 15
+        },
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ],
+        "t": [
+          0,
+          4,
+          16,
+          22,
+          46,
+          52,
+          64,
+          68
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ],
+        "t": [
+          [
+            0,
+            4,
+            16
+          ],
+          [
+            68,
+            34,
+            52
+          ]
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square"
+      }
+    }
+  },
+  "miter/dash/no-extrapolate": {
+    "name": "miter/dash/no-extrapolate",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float t",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "#pragma lines: varying float t = getT(t)",
+          "uniform float width;",
+          "float getWidth() { return width; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }",
+          "float getT(float t) { return t; }"
+        ],
+        "frag": [
+          "precision highp float;",
+          "varying float t;",
+          "uniform float width;",
+          "void main () {",
+          "  gl_FragColor = vec4(vec3(fract(t) > 0.5 ? 1.0 : 0.0), 0.5);",
+          "}"
+        ],
+        "uniforms": {
+          "width": 15
+        },
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ],
+        "t": [
+          0,
+          4,
+          16,
+          22,
+          46,
+          52,
+          64,
+          68
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ],
+        "t": [
+          [
+            0,
+            4,
+            16
+          ],
+          [
+            68,
+            34,
+            52
+          ]
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square"
+      }
+    }
+  },
+  "miter/degenerate": {
+    "name": "miter/degenerate",
+    "fixture": {
+      "shape": [
+        128,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.2);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            0.8,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            -0.8
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0.8
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0.6,
+            0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.6,
+            0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.6,
+            -0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0.6,
+            -0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.1,
+            0.1
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0.8,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              -0.1,
+              0.1
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0.6,
+              -0.6
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square",
+        "capResolution": 4,
+        "joinResolution": 4
+      }
+    }
+  },
+  "miter/depth": {
+    "name": "miter/depth",
+    "fixture": {
+      "shape": [
+        128,
+        64
+      ],
+      "threshold": 0.1,
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec3 xyz",
+          "#pragma lines: attribute vec3 color",
+          "#pragma lines: position = getPosition(xyz)",
+          "#pragma lines: varying vec3 color = getColor(color)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 10.0; }",
+          "vec3 getColor(vec3 color) { return color; }",
+          "vec4 getPosition(vec3 xyz) { return vec4(xyz, 1); }"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "varying vec3 color;",
+          "void main () {",
+          "  gl_FragColor = vec4(color,1);",
+          "}"
+        ],
+        "depth": {
+          "enable": true
+        }
+      },
+      "vertexAttributes": {
+        "xyz": [
+          [
+            -0.6,
+            -0.6,
+            0.7
+          ],
+          [
+            0,
+            0.6,
+            0.7
+          ],
+          [
+            0.6,
+            -0.6,
+            0.7
+          ],
+          [
+            0.6,
+            0.6,
+            0.7
+          ],
+          [
+            0,
+            -0.6,
+            0.7
+          ],
+          [
+            -0.6,
+            0.6,
+            -0.7
+          ]
+        ],
+        "color": [
+          [
+            0.8,
+            0.2,
+            0.2
+          ],
+          [
+            0.8,
+            0.2,
+            0.2
+          ],
+          [
+            0.8,
+            0.2,
+            0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.8
+          ],
+          [
+            0.2,
+            0.2,
+            0.8
+          ],
+          [
+            0.2,
+            0.2,
+            0.8
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xyz": [
+          [
+            [
+              -0.6,
+              -0.6,
+              0.7
+            ],
+            [
+              0,
+              0.6,
+              0.7
+            ],
+            [
+              0.6,
+              -0.6,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.6,
+              0.6,
+              -0.7
+            ],
+            [
+              0,
+              -0.6,
+              0.7
+            ],
+            [
+              0.6,
+              0.6,
+              0.7
+            ]
+          ]
+        ],
+        "color": [
+          [
+            [
+              0.8,
+              0.2,
+              0.2
+            ],
+            [
+              0.8,
+              0.2,
+              0.2
+            ],
+            [
+              0.8,
+              0.2,
+              0.2
+            ]
+          ],
+          [
+            [
+              0.2,
+              0.2,
+              0.8
+            ],
+            [
+              0.2,
+              0.2,
+              0.8
+            ],
+            [
+              0.2,
+              0.2,
+              0.8
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square"
+      }
+    }
+  },
+  "miter/insert-caps/none": {
+    "name": "miter/insert-caps/none",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "insertCaps": true,
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "break": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "none"
+      }
+    }
+  },
+  "miter/insert-caps/round": {
+    "name": "miter/insert-caps/round",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "insertCaps": true,
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "break": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "round"
+      }
+    }
+  },
+  "miter/insert-caps/square": {
+    "name": "miter/insert-caps/square",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "insertCaps": true,
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "break": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square"
+      }
+    }
+  },
+  "miter/manual-caps/none": {
+    "name": "miter/manual-caps/none",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ]
+        ],
+        "break": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ]
+          ]
+        ],
+        "break": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "none"
+      }
+    }
+  },
+  "miter/manual-caps/round": {
+    "name": "miter/manual-caps/round",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ]
+        ],
+        "break": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ]
+          ]
+        ],
+        "break": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "miter/manual-caps/square": {
+    "name": "miter/manual-caps/square",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ]
+        ],
+        "break": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ]
+          ]
+        ],
+        "break": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "square"
+      }
+    }
+  },
+  "miter/sdf": {
+    "name": "miter/sdf",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "uniform float width;",
+          "float getWidth() { return width; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+        ],
+        "frag": [
+          "precision highp float;",
+          "varying vec3 lineCoord;",
+          "uniform float width;",
+          "float linearstep(float a, float b, float x) { return clamp((x - a) / (b - a), 0.0, 1.0); }",
+          "void main () {",
+          "  float sdf = 0.5 * width * max(abs(lineCoord.x), abs(lineCoord.y));",
+          "  float aa = linearstep(width * 0.5, width * 0.5 - 1.0, sdf);",
+          "  float border = linearstep(width * 0.5 - 4.5, width * 0.5 - 3.5, sdf);",
+          "  float alpha = aa * mix(0.2, 1.0, border);",
+          "  gl_FragColor = vec4(vec3(0), alpha);",
+          "}"
+        ],
+        "uniforms": {
+          "width": 20
+        },
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "miter",
+        "cap": "square"
+      }
+    }
+  },
+  "round/basic": {
+    "name": "round/basic",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "round/dash/extrapolate": {
+    "name": "round/dash/extrapolate",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float t",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "#pragma lines: extrapolate varying float t = getT(t)",
+          "uniform float width;",
+          "float getWidth() { return width; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }",
+          "float getT(float t) { return t; }"
+        ],
+        "frag": [
+          "precision highp float;",
+          "varying float t;",
+          "uniform float width;",
+          "void main () {",
+          "  gl_FragColor = vec4(vec3(fract(t) > 0.5 ? 1.0 : 0.0), 0.5);",
+          "}"
+        ],
+        "uniforms": {
+          "width": 15
+        },
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ],
+        "t": [
+          0,
+          4,
+          16,
+          22,
+          46,
+          52,
+          64,
+          68
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ],
+        "t": [
+          [
+            0,
+            4,
+            16
+          ],
+          [
+            68,
+            34,
+            52
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "round/dash/no-extrapolate": {
+    "name": "round/dash/no-extrapolate",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float t",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "#pragma lines: varying float t = getT(t)",
+          "uniform float width;",
+          "float getWidth() { return width; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }",
+          "float getT(float t) { return t; }"
+        ],
+        "frag": [
+          "precision highp float;",
+          "varying float t;",
+          "uniform float width;",
+          "void main () {",
+          "  gl_FragColor = vec4(vec3(fract(t) > 0.5 ? 1.0 : 0.0), 0.5);",
+          "}"
+        ],
+        "uniforms": {
+          "width": 15
+        },
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ],
+        "t": [
+          0,
+          4,
+          16,
+          22,
+          46,
+          52,
+          64,
+          68
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ],
+        "t": [
+          [
+            0,
+            4,
+            16
+          ],
+          [
+            68,
+            34,
+            52
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "round/degenerate": {
+    "name": "round/degenerate",
+    "fixture": {
+      "shape": [
+        128,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.2);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            0.8,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            -0.8
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0.8
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0.6,
+            0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.6,
+            0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.6,
+            -0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0.6,
+            -0.6
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.1,
+            0.1
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0.8,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              -0.1,
+              0.1
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0.6,
+              -0.6
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round",
+        "capResolution": 4,
+        "joinResolution": 4
+      }
+    }
+  },
+  "round/depth": {
+    "name": "round/depth",
+    "fixture": {
+      "shape": [
+        128,
+        64
+      ],
+      "threshold": 0.1,
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec3 xyz",
+          "#pragma lines: attribute vec3 color",
+          "#pragma lines: position = getPosition(xyz)",
+          "#pragma lines: varying vec3 color = getColor(color)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 10.0; }",
+          "vec3 getColor(vec3 color) { return color; }",
+          "vec4 getPosition(vec3 xyz) { return vec4(xyz, 1); }"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "varying vec3 color;",
+          "void main () {",
+          "  gl_FragColor = vec4(color,1);",
+          "}"
+        ],
+        "depth": {
+          "enable": true
+        }
+      },
+      "vertexAttributes": {
+        "xyz": [
+          [
+            -0.6,
+            -0.6,
+            0.7
+          ],
+          [
+            0,
+            0.6,
+            0.7
+          ],
+          [
+            0.6,
+            -0.6,
+            0.7
+          ],
+          [
+            0.6,
+            0.6,
+            0.7
+          ],
+          [
+            0,
+            -0.6,
+            0.7
+          ],
+          [
+            -0.6,
+            0.6,
+            -0.7
+          ]
+        ],
+        "color": [
+          [
+            0.8,
+            0.2,
+            0.2
+          ],
+          [
+            0.8,
+            0.2,
+            0.2
+          ],
+          [
+            0.8,
+            0.2,
+            0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.8
+          ],
+          [
+            0.2,
+            0.2,
+            0.8
+          ],
+          [
+            0.2,
+            0.2,
+            0.8
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xyz": [
+          [
+            [
+              -0.6,
+              -0.6,
+              0.7
+            ],
+            [
+              0,
+              0.6,
+              0.7
+            ],
+            [
+              0.6,
+              -0.6,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.6,
+              0.6,
+              -0.7
+            ],
+            [
+              0,
+              -0.6,
+              0.7
+            ],
+            [
+              0.6,
+              0.6,
+              0.7
+            ]
+          ]
+        ],
+        "color": [
+          [
+            [
+              0.8,
+              0.2,
+              0.2
+            ],
+            [
+              0.8,
+              0.2,
+              0.2
+            ],
+            [
+              0.8,
+              0.2,
+              0.2
+            ]
+          ],
+          [
+            [
+              0.2,
+              0.2,
+              0.8
+            ],
+            [
+              0.2,
+              0.2,
+              0.8
+            ],
+            [
+              0.2,
+              0.2,
+              0.8
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "round/insert-caps/none": {
+    "name": "round/insert-caps/none",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "insertCaps": true,
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "break": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "none"
+      }
+    }
+  },
+  "round/insert-caps/round": {
+    "name": "round/insert-caps/round",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "insertCaps": true,
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "break": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "round/insert-caps/square": {
+    "name": "round/insert-caps/square",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "insertCaps": true,
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "break": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "square"
+      }
+    }
+  },
+  "round/manual-caps/none": {
+    "name": "round/manual-caps/none",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ]
+        ],
+        "break": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ]
+          ]
+        ],
+        "break": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "none"
+      }
+    }
+  },
+  "round/manual-caps/round": {
+    "name": "round/manual-caps/round",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ]
+        ],
+        "break": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ]
+          ]
+        ],
+        "break": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  },
+  "round/manual-caps/square": {
+    "name": "round/manual-caps/square",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: attribute float break",
+          "#pragma lines: position = getPosition(xy, break)",
+          "#pragma lines: width = getWidth()",
+          "float getWidth() { return 20.0; }",
+          "vec4 getPosition(vec2 xy, float isBreak) {",
+          "  if (isBreak > 0.0) return vec4(0);",
+          "  return vec4(xy, 0, 1);",
+          "}"
+        ],
+        "frag": [
+          "precision lowp float;",
+          "void main () {",
+          "  gl_FragColor = vec4(0,0,0,0.5);",
+          "}"
+        ],
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0.5
+          ],
+          [
+            -0.3,
+            0.7
+          ],
+          [
+            0.3,
+            0.5
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.1
+          ],
+          [
+            -0.3,
+            0.1
+          ],
+          [
+            0.3,
+            -0.1
+          ],
+          [
+            0.8,
+            0.1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.7
+          ],
+          [
+            0.8,
+            -0.5
+          ]
+        ],
+        "break": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.7
+            ],
+            [
+              0.3,
+              0.5
+            ],
+            [
+              -0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          [
+            [
+              0.8,
+              0.1
+            ],
+            [
+              0.3,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.1
+            ]
+          ],
+          [
+            [
+              -0.8,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.7
+            ],
+            [
+              -0.3,
+              -0.5
+            ]
+          ]
+        ],
+        "break": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "square"
+      }
+    }
+  },
+  "round/sdf": {
+    "name": "round/sdf",
+    "fixture": {
+      "shape": [
+        256,
+        128
+      ],
+      "command": {
+        "vert": [
+          "precision highp float;",
+          "#pragma lines: attribute vec2 xy",
+          "#pragma lines: position = getPosition(xy)",
+          "#pragma lines: width = getWidth()",
+          "uniform float width;",
+          "float getWidth() { return width; }",
+          "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }"
+        ],
+        "frag": [
+          "precision highp float;",
+          "varying vec3 lineCoord;",
+          "uniform float width;",
+          "float linearstep(float a, float b, float x) { return clamp((x - a) / (b - a), 0.0, 1.0); }",
+          "void main () {",
+          "  float sdf = 0.5 * width * length(lineCoord.xy);",
+          "  float aa = linearstep(width * 0.5, width * 0.5 - 1.0, sdf);",
+          "  float border = linearstep(width * 0.5 - 4.5, width * 0.5 - 3.5, sdf);",
+          "  float alpha = aa * mix(0.2, 1.0, border);",
+          "  gl_FragColor = vec4(vec3(0), alpha);",
+          "}"
+        ],
+        "uniforms": {
+          "width": 20
+        },
+        "blend": {
+          "enable": true,
+          "func": {
+            "srcRGB": "src alpha",
+            "srcAlpha": 1,
+            "dstRGB": "one minus src alpha",
+            "dstAlpha": 1
+          }
+        },
+        "depth": {
+          "enable": false
+        }
+      },
+      "vertexAttributes": {
+        "xy": [
+          [
+            -0.8,
+            0
+          ],
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.3,
+            0.7
+          ],
+          [
+            0.8,
+            0.7
+          ],
+          [
+            -0.8,
+            -0.7
+          ],
+          [
+            -0.3,
+            -0.7
+          ],
+          [
+            0.5,
+            0
+          ],
+          [
+            0.8,
+            0
+          ]
+        ]
+      },
+      "endpointAttributes": {
+        "xy": [
+          [
+            [
+              -0.8,
+              0
+            ],
+            [
+              -0.5,
+              0
+            ],
+            [
+              0.3,
+              0.7
+            ]
+          ],
+          [
+            [
+              0.8,
+              0
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              -0.3,
+              -0.7
+            ]
+          ]
+        ]
+      },
+      "data": {
+        "join": "round",
+        "cap": "round"
+      }
+    }
+  }
+};</script>
+<script>(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+// We currently use these from unpkg instead:
+//const createREGL = require('regl');
+//const reglLines = require('../');
+
+const renderFixture = require('../test/util/render-fixture.js');
+
+const h = (type, props, c) => {
+  const el = document.createElement(type);
+  if (c) (Array.isArray(c) ? c : [c]).forEach(c => el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  return Object.assign(el, props);
+}
+
+document.body.appendChild(h('style', {}, `
+html { font-family: sans-serif; }
+p { line-height: 1.4em; max-width: 640px; }
+.actual { border: 1px solid #888 }
+.expected { border: 1px solid #23f; }
+.group { margin-bottom: 1em; }
+summary { cursor: pointer; }
+`));
+
+const initialFixtureName = window.location.hash.replace(/^#/, '') || Object.keys(fixtures)[0];
+
+const fixtureSelector = h('select', null, Object.keys(fixtures).map(value =>
+  h('option', {value, selected: value === initialFixtureName ? 'selected' : ''}, value)
+));
+const expected = h('img', {className: 'expected'});
+const canvas = h('canvas', {className: 'actual'});
+const fixtureDataLabel = h('summary');
+const fixtureDataPre = h('pre');
+
+document.body.appendChild(h('div', {}, [
+  h('h1', {}, 'regl-gpu-lines render tests'),
+  h('a', {href: 'https://github.com/rreusser/regl-gpu-lines'}, '← Back to project page'),
+  h('p', {}, [
+    'This page uses ',
+    h('a', {href: 'https://unpkg.com/regl-gpu-lines@latest'}, 'regl-gpu-lines@latest'),
+    ' from ',
+    h('a', {href: 'https://unpkg.com'}, 'unpkg.com'),
+    ' to run tests live. The "actual" version shows a live-rendered image, while the "expected" version is pulled from GitHub. If reporting an issue, please click the unpkg link above and note the version of regl-gpu-lines used. If you need to check versions or investigate more closely, you may need to clone the repo and run these manually.'
+  ]),
+  h('div', {className: 'group'}, [fixtureSelector]),
+  h('div', {className: 'group'}, [
+    h('div', {}, 'Actual:'),
+    canvas,
+  ]),
+  h('div', {className: 'group'}, [
+    h('div', {}, 'Expected:'),
+    expected,
+  ]),
+  h('details', {}, [fixtureDataLabel, h('code', {}, fixtureDataPre)])
+]));
+
+const regl = createREGL({
+  canvas,
+  pixelRatio: 1,
+  attributes: {antialias: false},
+  extensions: ['ANGLE_instanced_arrays'],
+  optionalExtensions: ['OES_standard_derivatives']
+});
+
+fixtureSelector.addEventListener('input', function (event) {
+  const fixtureName = event.target.value;
+  window.location.hash = fixtureName;
+  executeFixture(fixtures[fixtureName]);
+});
+
+function executeFixture (fixture) {
+  const [width, height] = fixture.fixture.shape;
+  canvas.width = width;
+  canvas.height = height;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  renderFixture(regl, reglLines, fixture.fixture);
+
+  fixtureDataLabel.textContent = `${fixture.name}/fixture.json`;
+  fixtureDataPre.textContent = JSON.stringify(fixture.fixture, null, 2);
+
+  expected.src = '';
+  expected.src = `https://raw.githubusercontent.com/rreusser/regl-gpu-lines/main/test/fixtures/${fixture.name}/expected.png`;
+}
+
+executeFixture(fixtures[initialFixtureName]);
+
+},{"../test/util/render-fixture.js":2}],2:[function(require,module,exports){
+module.exports = renderFixture;
+
+function replaceNullWithNaN (data) {
+  for (let i = 0; i < data.length; i++) {
+    if (Array.isArray(data[i])) {
+      replaceNullWithNaN(data[i]);
+    } else if (data[i] === null) {
+      data[i] = NaN;
+    }
+  }
+  return data;
+}
+
+function renderFixture(regl, createDrawLines, fixture) {
+  const drawLines = createDrawLines(regl, {
+    ...fixture.command,
+    vert: fixture.command.vert.join('\n'),
+    frag: fixture.command.frag.join('\n')
+  });
+  regl.poll();
+  regl.clear({color: [1, 1, 1, 1], depth: 1});
+
+  const lineData = fixture.data ? {...fixture.data} : {};
+  lineData.vertexAttributes = {};
+  lineData.endpointAttributes = {};
+
+
+  if (fixture.vertexAttributes) {
+    lineData.vertexAttributes = {};
+    for (const [name, attribute] of Object.entries(fixture.vertexAttributes)) {
+      const sanitizedAttr = replaceNullWithNaN(attribute);
+
+      lineData.vertexAttributes[name] = regl.buffer(sanitizedAttr);
+      lineData.vertexCount = sanitizedAttr.length;
+    }
+  }
+
+  if (fixture.endpointAttributes) {
+    lineData.endpointAttributes = {};
+    for (const [name, attribute] of Object.entries(fixture.endpointAttributes)) {
+      const sanitizedAttr = replaceNullWithNaN(attribute);
+
+      // If endpoint data is provided, use it
+      lineData.endpointAttributes[name] = regl.buffer(sanitizedAttr);
+      lineData.endpointCount = sanitizedAttr.length;
+    }
+  }
+
+  drawLines(lineData);
+}
+
+},{}]},{},[1]);
+</script>
+</body></html>

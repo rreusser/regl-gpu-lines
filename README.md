@@ -14,25 +14,26 @@
 
 This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library.
 
-Apart from drawing nice lines, architecturally it has two goals:
-- **Data may live on the GPU.** Since the CPU is not required to touch the data, you can draw thousands of separate lines very efficiently with as little as just one WebGL draw call!
-- **Minimize unnecessary constraints.** The module facilitates setup but is agnostic toward projection, colors, blending, etc. Attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
+Architecturally this module has two goals:
+- **Data may live on the GPU.**
+- **Minimize unnecessary constraints.**
 
 Features:
 
 - Configure your own attributes, varyings, uniforms, and shaders
-- Easily compute vertex positions and line width in the vertex shader
-- Round joins, bevels, and miters (with miter limit)
+- Compute positions and line width in the vertex shader
+- Round joins, bevels, and miters (with limit)
 - Square and rounded end caps
-- Optional automatic end cap insertion wherever the line breaks
-- Use `position.w == 0.0` to insert a break in the line (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
-- Permits regl-compatible attribute specification with your own strides and offsets
+- Optional automatic end cap insertion, using `position.w == 0.0` to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
+- Regl-compatible attribute specification with strides and offsets
 - Pass additional regl configuration to the constructor
 
 Limitations:
 
+- `ANGLE_instanced_arrays` extension is required (which ought to be [universally supported](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#understand_extension_availability))
 - Width is best varied slowly as line joins to not take into account varying width
 - Automatic end cap insertion may waste vertices, as every segment then needs enough vertices to potentially draw two end caps.
+- Line dashes are not built-in, but you can easily build them yourself
 
 ## Install
 
@@ -106,6 +107,33 @@ const lineData = {
 };
 
 drawLines(lineData);
+```
+
+## Development
+
+To run the example pages, for example, the example in `examples/closed-loop.js`, run
+
+```bash
+npm start closed-loop
+```
+
+The render tests require the [headless-gl](https://www.npmjs.com/package/gl) module which can be a little tricky to install. Use [nodemon](https://www.npmjs.com/package/nodemon) to run and live-update the render tests
+
+```bash
+npm install -g nodemon
+nodemon test/render.js
+```
+
+Filter tests with
+
+```bash
+FILTER=miter/basic nodemon test/render.js
+```
+
+and update expectation images with
+
+```bash
+UPDATE=1 FILTER=miter/basic node test/render.js
 ```
 
 ## See also
