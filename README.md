@@ -15,21 +15,24 @@
 This module implements a very general command for drawing lines using the [regl](https://github.com/regl-project/regl) WebGL library.
 
 Apart from drawing nice lines, architecturally it has two goals:
-- **Data may live on the GPU.** Since the CPU is not required to touch the data, you can draw thousands of separate lines very efficiently with just two WebGL draw calls.
+- **Data may live on the GPU.** Since the CPU is not required to touch the data, you can draw thousands of separate lines very efficiently with as little as just one WebGL draw call!
 - **Minimize unnecessary constraints.** The module facilitates setup but is agnostic toward projection, colors, blending, etc. Attributes and varyings are up to you. Think of it as a data flow framework for line rendering with which you can build the line rendering you require.
 
 Features:
 
 - Configure your own attributes, varyings, uniforms, and shaders
-- Round joins, miters, and bevels
+- Easily compute vertex positions and line width in the vertex shader
+- Round joins, bevels, and miters (with miter limit)
 - Square and rounded end caps
-- Use `position.w == 0.0` to separate disjoint lines (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
+- Optional automatic end cap insertion wherever the line breaks
+- Use `position.w == 0.0` to insert a break in the line (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
+- Permits regl-compatible attribute specification with your own strides and offsets
 - Pass additional regl configuration to the constructor
 
 Limitations:
 
 - Width is best varied slowly as line joins to not take into account varying width
-- Returning `position.w == 0.0` in the shader creates a break in the line. Caps are inserted, but only when using round joins.
+- Automatic end cap insertion may waste vertices, as every segment then needs enough vertices to potentially draw two end caps.
 
 ## Install
 
