@@ -57,7 +57,7 @@ for (let line = 0; line < lineCount; line++) {
     isBreak.push(0);
   }
 
-  // Add a break in the line by using NaN
+  // Add a dummy vertex and signal a break in the line
   positions.push([0,0]);
   isBreak.push(1);
 }
