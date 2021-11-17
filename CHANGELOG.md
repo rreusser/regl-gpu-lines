@@ -1,10 +1,23 @@
+## 0.0.21
+
+### Features
+
+- Clean up one of the worst parts of the shader code and get end cap insertion working with all combinations of joins and caps. :tada:
+
 ## 0.0.20
+
+### Features
 
 - Add optional `extrapolate` keyword, as in `#pragma lines: extrapolate varying float name` to distinguish between varyings which are extrapolated outside the bounds of their respective segment endpoint values, and varyings which are clamped to the range of the segment. This can be used to dash caps and joins or to ensure colors are not extrapolated.
 
 ## 0.0.19
 
+### Features
+
 - Add `insertCaps` option to be explicit about when caps are automatically inserted
+
+### Bugfixes
+
 - Switch to preferring `w = 0` instead of `NaN` since `NaN` detection is a bit unreliable in GLSL.
 
 ## 0.0.18

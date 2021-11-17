@@ -14,7 +14,7 @@ regl._gl.canvas.style.position = 'fixed';
 const state = wrapGUI(State({
   lineConfig: State.Section({
     capResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
-    joinResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
+    joinResolution: State.Slider(6, {min: 1, max: 30, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(4, {min: 1, max: 8, step: 0.01}),
@@ -24,7 +24,7 @@ const state = wrapGUI(State({
     flip: State.Slider(1, {min: -1, max: 1, step: 0.001}),
   }, {expanded: true}),
   line: State.Section({
-    width: State.Slider(40, {min: 1, max: 100, step: 0.1}),
+    width: State.Slider(70, {min: 1, max: 100, step: 0.1}),
     opacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
   }, {label: 'line', expanded: false}),
   border: State.Section({
@@ -344,6 +344,7 @@ function draw () {
     lineColor: [0, 0, 0, state.line.opacity],
     borderColor: [0, 0, 0, state.border.opacity],
     dashColor: [0, 0, 0, state.dash.opacity],
+    //vertexCount: 0
   });
 }
 

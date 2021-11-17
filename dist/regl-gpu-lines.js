@@ -29,6 +29,15 @@
     const spec = isEndpoints ? endpointSpec : segmentSpec;
     const verts = ['B', 'C', 'D'];
     if (!isEndpoints) verts.unshift('A');
+
+    function computeCount(props) {
+      return insertCaps ? isEndpoints // Cap has fixed number, join could either be a cap or a join
+      ? [props.capResolution, Math.max(props.capResolution, props.joinResolution)] // Both could be either a cap or a join
+      : [Math.max(props.capResolution, props.joinResolution), Math.max(props.capResolution, props.joinResolution)] : isEndpoints // Draw a cap
+      ? [props.capResolution, props.joinResolution] // Draw two joins
+      : [props.joinResolution, props.joinResolution];
+    }
+
     return regl({
       vert: `${meta.glsl}
 const float CAP_START = ${ORIENTATION$2.CAP_START}.0;
@@ -39,7 +48,7 @@ ${spec.glsl}
 attribute float index;
 ${debug ? 'attribute float debugInstanceID;' : ''}
 
-uniform vec3 joinRes;
+uniform vec2 vertexCount, capJoinRes;
 uniform vec2 resolution, capScale;
 uniform float miterLimit;
 ${meta.orientation || !isEndpoints ? '' : 'uniform float orientation;'}
@@ -69,14 +78,21 @@ void main() {
   ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
 
   // Check for invalid vertices
-  if (invalid(pB) || invalid(pC)${insertCaps ? '' : `${isEndpoints ? '' : '|| invalid(pA)'} || invalid(pD)`}) {
+  if (invalid(pB) || invalid(pC)) {
     gl_Position = vec4(1,1,1,0);
     return;
   }
 
+  float mirrorIndex = 2.0 * vertexCount.x + 3.0;
+  float totalVertexCount = mirrorIndex + 2.0 + 2.0 * vertexCount.y;
+
   // If we're past the first half-join and half of the segment, then we swap all vertices and start
   // over from the opposite end.
-  bool isMirrored = index > joinRes.x * 2.0 + 3.0;
+  bool isMirrored = index > mirrorIndex;
+
+  // When rendering dedicated endoints, this allows us to insert an end cap *alone* (without the attached
+  // segment and join)
+  ${isEndpoints ? 'if (invalid(pD) && isMirrored) { gl_Position = vec4(0); return; }' : ''}
 
   // Convert to screen-pixel coordinates
   // Save w so we can perspective re-multiply at the end to get varyings depth-correct
@@ -85,8 +101,6 @@ void main() {
 
   // If it's a cap, mirror A back onto C to accomplish a round
   ${isEndpoints ? `vec4 pA = pC;` : ''}
-
-  vec2 res = isMirrored ? joinRes.yx : joinRes.xy;
 
   float mirrorSign = isMirrored ? -1.0 : 1.0;
   if (isMirrored) {
@@ -97,14 +111,14 @@ void main() {
 
   ${isEndpoints ? `bool isCap = !isMirrored;` : `bool isCap = false;`};
 
-  if (invalid(pA)) { pA = pC; isCap = true; }
-  if (invalid(pD)) { pD = pB; }
+  if (invalid(pA)) { ${insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;'} }
+  if (invalid(pD)) { ${insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;'} }
 
   float width = isMirrored ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
 
   // Invalidate triangles too far in front of or behind the camera plane
   if (max(abs(pB.z), abs(pC.z)) > 1.0) {
-    gl_Position = vec4(1,1,1,0);
+    gl_Position = vec4(0);
     return;
   }
 
@@ -141,10 +155,10 @@ void main() {
   vec2 miter = bIsHairpin ? -tBC : 0.5 * (nAB + nBC) * dirB;
 
   // The second half of the triangle strip instance is just the first, reversed, and with vertices swapped!
-  float i = index < 2.0 * joinRes.x + 4.0 ? index : 2.0 * (res.x + res.y) + 5.0 - index;
+  float i = index <= mirrorIndex ? index : totalVertexCount - index;
 
   // Chop off the join to get at the segment part index
-  float iSeg = i - 2.0 * res.x;
+  float iSeg = i - 2.0 * (isMirrored ? vertexCount.y : vertexCount.x);
 
   // After the first half-join, repeat two vertices of the segment strip in order to get the orientation correct
   // for the next join. These are wasted vertices, but they enable using a triangle strip. for two joins which
@@ -173,12 +187,12 @@ void main() {
       if (isRound || isCap) {
         // Round joins
         xBasis = dirB * vec2(yBasis.y, -yBasis.x);
-        float divisor = ${isEndpoints ? 'res.x' : 'min(res.x, isCap ? joinRes.z : res.x)'} * 2.0;
-        float theta = -0.5 * (acos(cosB) * (min(i, divisor) / divisor) - pi) * (isCap ? 2.0 : 1.0);
+        float cnt = (isCap ? capJoinRes.x : capJoinRes.y) * 2.0;
+        float theta = -0.5 * (acos(cosB) * (min(i, cnt) / cnt) - pi) * (isCap ? 2.0 : 1.0);
         xy = vec2(cos(theta), sin(theta));
 
         if (isCap) {
-          if (xy.y > 0.5) xy *= capScale;
+          if (xy.y > 0.001) xy *= capScale;
           lineCoord.xy = xy.yx * lineCoord.y;
         }
       } else {
@@ -231,17 +245,18 @@ void main() {
         ...spec.attrs
       },
       uniforms: {
-        joinRes: (ctx, props) => [// First half-join is actually a cap if we're drawing endpoints
-        isEndpoints ? props.capResolution : props.joinResolution, // Second half-join is always a join
-        props.joinResolution, // The resolution of inserted caps
-        props.capType === 'square' ? props.capResolution : props.capType === 'none' ? 0 : props.joinResolution],
+        vertexCount: (ctx, props) => computeCount(props),
+        capJoinRes: (ctx, props) => [props.capResolution, props.joinResolution],
         miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
         orientation: regl.prop('orientation'),
         capScale: regl.prop('capScale')
       },
       primitive: 'triangle strip',
       instances: isEndpoints ? (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count : (ctx, props) => props.count - 3,
-      count: isRound ? (ctx, props) => 6 + 2 * (props.joinResolution + (isEndpoints ? props.capResolution : props.joinResolution)) : (ctx, props) => 6 + 2 * (1 + (isEndpoints ? props.capResolution : 1)) + 10
+      count: (ctx, props) => {
+        const count = computeCount(props);
+        return 6 + 2 * (count[0] + count[1]);
+      }
     });
   }
 
