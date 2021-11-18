@@ -121,7 +121,13 @@ npm start closed-loop
 
 ### Tests
 
-The render tests require the [headless-gl](https://www.npmjs.com/package/gl) module which can be a little tricky to install. You may use [nodemon](https://www.npmjs.com/package/nodemon) to live-run the render tests when the code is changed
+You may run the render tests interactively with
+
+```bash
+npm run serve-render-tests
+```
+
+Propertly executing the render tests require the [headless-gl](https://www.npmjs.com/package/gl) module which can be a little tricky to install. You may use [nodemon](https://www.npmjs.com/package/nodemon) to live-run the render tests when the code is changed
 
 ```bash
 npm install -g nodemon
