@@ -52,12 +52,12 @@ varying float dir;
 ${debug ? 'varying vec2 triStripCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 
-bool isnan(float val) {
-  return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
-}
+// bool isnan(float val) {
+//   return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
+// }
 
 bool invalid(vec4 p) {
-  return p.w == 0.0 || isnan(p.x);
+  return p.w == 0.0;
 }
 
 const bool isRound = ${isRound ? 'true' : 'false'};
@@ -71,6 +71,7 @@ void main() {
 
   ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
 
+  bool aInvalid = ${isEndpoints ? 'false' : 'invalid(pA)'};
   bool bInvalid = invalid(pB);
   bool cInvalid = invalid(pC);
   bool dInvalid = invalid(pD);
@@ -97,8 +98,6 @@ void main() {
   // If it's a cap, mirror A back onto C to accomplish a round
   ${isEndpoints ? `vec4 pA = pC;` : ''}
 
-  bool aInvalid = invalid(pA);
-
   if (bInvalid || cInvalid || max(abs(pB.z), abs(pC.z)) > 1.0) {
     gl_Position = pB;
     return;
@@ -106,10 +105,9 @@ void main() {
 
   float mirrorSign = isMirrored ? -1.0 : 1.0;
   if (isMirrored) {
-    vec4 tmp;
-    tmp = pC; pC = pB; pB = tmp;
-    tmp = pD; pD = pA; pA = tmp;
-    bool bTmp = aInvalid; aInvalid = dInvalid; dInvalid = bTmp;
+    vec4 vTmp = pC; pC = pB; pB = vTmp;
+    vTmp = pD; pD = pA; pA = vTmp;
+    bool bTmp = dInvalid; dInvalid = aInvalid; aInvalid = bTmp;
   }
 
   ${isEndpoints ? `bool isCap = !isMirrored;` : `bool isCap = false;`};
