@@ -71,9 +71,9 @@ void main() {
 
   ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
 
-  // Check for invalid vertices
-  if (invalid(pB) || invalid(pC)) {
-    gl_Position = vec4(1,1,1,0);
+  // All triangles degenerate
+  if (invalid(pB) || invalid(pC) || max(abs(pB.z), abs(pC.z)) > 1.0) {
+    gl_Position = pB;
     return;
   }
 
@@ -86,7 +86,10 @@ void main() {
 
   // When rendering dedicated endoints, this allows us to insert an end cap *alone* (without the attached
   // segment and join)
-  ${isEndpoints ? 'if (invalid(pD) && isMirrored) { gl_Position = vec4(0); return; }' : ''}
+  ${isEndpoints ? `if (invalid(pD) && isMirrored) {
+    gl_Position = pB;
+    return;
+  }` : ''}
 
   // Convert to screen-pixel coordinates
   // Save w so we can perspective re-multiply at the end to get varyings depth-correct
@@ -109,12 +112,6 @@ void main() {
   if (invalid(pD)) { ${insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;'} }
 
   float width = isMirrored ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
-
-  // Invalidate triangles too far in front of or behind the camera plane
-  if (max(abs(pB.z), abs(pC.z)) > 1.0) {
-    gl_Position = vec4(0);
-    return;
-  }
 
   // Tangent and normal vectors
   vec2 tBC = pC.xy - pB.xy;
