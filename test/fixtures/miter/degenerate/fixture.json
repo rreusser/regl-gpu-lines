@@ -1,5 +1,6 @@
 {
-  "shape": [128, 128],
+  "width": 128,
+  "height": 128,
   "command": {
     "vert": [
       "precision highp float;",

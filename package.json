@@ -23,6 +23,7 @@
     "test": "npm run lint && npm run test-render && npm run test-render-prod",
     "test-render": "ENV=development node test/render.js",
     "test-render-prod": "ENV=production node test/render.js",
+    "serve-render-tests": "node scripts/serve-render-tests.js",
     "start": "node scripts/serve-example.js"
   },
   "keywords": [

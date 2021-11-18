@@ -5,7 +5,7 @@ const hyperstream = require('hyperstream');
 const entry = process.argv[2];
 const output = path.join(__dirname, '..', 'docs', path.basename(entry, '.js') + '.html');
 
-const htmlStream = fs.createReadStream(path.join(__dirname, '_template.html'));
+const htmlStream = fs.createReadStream(path.join(__dirname, '_example.html'));
 const content = fs.readFileSync(path.join(__dirname, '..', entry), 'utf8');
 const outStream = fs.createWriteStream(output);
 

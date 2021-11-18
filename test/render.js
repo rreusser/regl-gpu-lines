@@ -40,8 +40,9 @@ test('run image tests', function (t) {
     t.test(path.dirname(relPath), function (t) {
       const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 
-      const shape = fixture.shape || [256, 256];
-      gl.resize(shape[0], shape[1]);
+      const {width, height} = fixture;
+      if (!width || !height) throw new Error(`Invalid dimensions, ${width} x ${height}`);
+      gl.resize(width, height);
 
       const regl = createREGL({gl, extensions: ['ANGLE_instanced_arrays']});
 
@@ -49,7 +50,7 @@ test('run image tests', function (t) {
 
       const outputName = UPDATE ? 'expected.png' : 'actual.png';
       const outputPath = path.join(path.dirname(fixturePath), outputName);
-      const actualPixels = ndarray(regl.read(), [shape[1], shape[0], 4]).transpose(1, 0);
+      const actualPixels = ndarray(regl.read(), [height, width, 4]).transpose(1, 0);
 
       regl.destroy();
 
@@ -66,15 +67,15 @@ test('run image tests', function (t) {
 
           const expectedPixels = pool.clone(unflippedExpectedPixels.step(1, -1).transpose(1, 0));
 
-          const diffData = new Uint8Array(shape[0] * shape[1] * 4);
-          const badPixelCount = pixelmatch(actualPixels.data, expectedPixels.data, diffData, shape[0], shape[1], {
+          const diffData = new Uint8Array(width * height * 4);
+          const badPixelCount = pixelmatch(actualPixels.data, expectedPixels.data, diffData, width, height, {
             threshold: fixture.threshold || 0.1,
             includeAA: true
           });
 
           if (!CI || badPixelCount) {
             const diffPath = path.join(path.dirname(fixturePath), 'diff.png');
-            const diffPixels = ndarray(diffData, [shape[1], shape[0], 4]);
+            const diffPixels = ndarray(diffData, [height, width, 4]);
             savePixels(diffPixels.transpose(1, 0).step(1, -1), 'png')
               .pipe(fs.createWriteStream(diffPath));
           }

@@ -1,5 +1,6 @@
 {
-  "shape": [128, 64],
+  "width": 128,
+  "height": 64,
   "threshold": 0.1,
   "command": {
     "vert": [
