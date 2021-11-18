@@ -4,7 +4,7 @@
 
 - A new live-reloading test page with `npm run serve-render-tests`, accessible online using published module at https://rreusser.github.io/regl-gpu-lines/docs/tests.html
 
-## Bugfixes
+### Bugfixes
 
 - Fixes badly broken behavior on devices which don't successfully check for NaN in the shader
 
