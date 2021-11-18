@@ -106,7 +106,7 @@ function getFixture (name) {
       });
   } else {
     console.info(`Using fixture: ${name}`);
-    return Promise.resolve(JSON.parse(fixtures[name].fixture));
+    return Promise.resolve(fixtures[name].fixture);
   }
 }
 
