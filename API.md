@@ -17,7 +17,7 @@
 import reglLines from 'regl-gpu-lines';
 ```
 
-## `reglLines(regl, {vert, frag, debug, ...})`
+## `reglLines(regl, {vert, frag, insertCaps, debug, ...})`
 
 Instantiate a drawing command using the specified shaders.
 
@@ -25,7 +25,7 @@ Instantiate a drawing command using the specified shaders.
 - `vert` (string): vertex shader, using pragma specification defined below
 - `frag` (string): fragment shader
 - `debug`: Debug mode, which exposes additional properties for viewing triangle mesh
-- `insertCaps` (boolean, default: `false`) Automatically insert a cap wherever a break is encountered, signaled by a position with `w = 0`. Allows drawing lines and caps with a single draw call. *Use this option with care.* If, for example, using miter joins combined with round caps with a high cap resolution, then *every segment instance* will have enough points to draw two full-resolution rounded caps, even if there are no breaks and the extra vertices never actually result in valid triangles.
+- `insertCaps` (boolean, default: `false`) Automatically insert a cap wherever a break is encountered, signaled by a position with `w = 0`. Allows drawing lines and caps with a single draw call. *Use this option with care.* If, for example, using miter joins and round caps, then *every segment instance* will have enough points to draw two full-resolution rounded caps, even if there are no breaks and the extra vertices never actually result in valid triangles.
 
 Additional configuration parameters are forwarded to a `regl` command which wraps drawing.
 
