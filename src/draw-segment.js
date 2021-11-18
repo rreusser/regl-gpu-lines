@@ -156,8 +156,7 @@ void main() {
   float iSeg = i - 2.0 * (isMirrored ? vertexCount.y : vertexCount.x);
 
   // After the first half-join, repeat two vertices of the segment strip in order to get the orientation correct
-  // for the next join. These are wasted vertices, but they enable using a triangle strip. for two joins which
-  // might be oriented differently.
+  // for the next join. These are wasted vertices, but they enable using a triangle strip.
   if (iSeg > 1.0 && iSeg <= 3.0) {
     iSeg -= 2.0;
     if (dirB * dirC >= 0.0) iSeg += iSeg == 0.0 ? 1.0 : -1.0;
