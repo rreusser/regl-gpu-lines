@@ -37,7 +37,7 @@ const prodMaterial = window.env === 'development' ? [] : [
     h('a', {href: 'https://unpkg.com/regl-gpu-lines@latest'}, 'regl-gpu-lines@latest'),
     ' from ',
     h('a', {href: 'https://unpkg.com'}, 'unpkg.com'),
-    ' to run tests live. The "actual" version shows a live-rendered image, while the "expected" version is pulled from GitHub. If reporting an issue, please click the unpkg link above and note the version of regl-gpu-lines used. If you need to check versions or investigate more closely, you may need to clone the repo and run these manually.'
+    ' to run tests live.'
   ]),
 ];
 
