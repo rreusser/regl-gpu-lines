@@ -14,8 +14,8 @@ const preface = `
 
 budo(path.join(__dirname, 'dummy.js'), {
   host: 'localhost',
-  open: false,
-  live: false,
+  open: true,
+  live: true,
   watchGlob: [
     path.join(__dirname, '..', 'test', '**', 'fixture.json'),
     path.join(__dirname, '..', '**', '*.js'),
