@@ -13,7 +13,7 @@ const preface = `
 `;
 
 budo(path.join(__dirname, 'dummy.js'), {
-  host: 'localhost',
+  //host: 'localhost',
   open: true,
   live: true,
   watchGlob: [
@@ -25,6 +25,16 @@ budo(path.join(__dirname, 'dummy.js'), {
       b => b.add(toStream(preface)),
       b => b.add(path.join(__dirname, 'browser-fixture-renderer.js'))
     ]
+  },
+  forceDefaultIndex: true,
+  defaultIndex: function () {
+    return defaultIndex({
+      entry: 'dummy.js'
+    }).pipe(hyperstream({
+      head: {
+        _appendHtml: '<meta name="viewport" content="width=device-width, initial-scale=1">'
+      }
+    }));
   },
   middleware: [
     function (req, res, next) {

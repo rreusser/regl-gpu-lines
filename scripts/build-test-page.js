@@ -11,10 +11,13 @@ toString(
   function (err, bundle) {
     if (err) throw new Error(err);
 
-    htmlIndex({title: 'regl-gpu-lines tests'})
+    htmlIndex({
+      title: 'regl-gpu-lines tests'
+    })
       .pipe(hyperstream({
         head: {
           _appendHtml: `
+          <meta name="viewport" content="width=device-width, initial-scale=1">
           <script src="https://unpkg.com/regl@2.1.0/dist/regl.js"></script>
           <script src="https://unpkg.com/regl-gpu-lines@latest"></script>
           `

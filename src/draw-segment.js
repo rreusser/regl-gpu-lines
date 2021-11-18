@@ -71,11 +71,9 @@ void main() {
 
   ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
 
-  // All triangles degenerate
-  if (invalid(pB) || invalid(pC) || max(abs(pB.z), abs(pC.z)) > 1.0) {
-    gl_Position = pB;
-    return;
-  }
+  bool bInvalid = invalid(pB);
+  bool cInvalid = invalid(pC);
+  bool dInvalid = invalid(pD);
 
   float mirrorIndex = 2.0 * vertexCount.x + 3.0;
   float totalVertexCount = mirrorIndex + 2.0 + 2.0 * vertexCount.y;
@@ -86,7 +84,7 @@ void main() {
 
   // When rendering dedicated endoints, this allows us to insert an end cap *alone* (without the attached
   // segment and join)
-  ${isEndpoints ? `if (invalid(pD) && isMirrored) {
+  ${isEndpoints ? `if (dInvalid && isMirrored) {
     gl_Position = pB;
     return;
   }` : ''}
@@ -99,17 +97,25 @@ void main() {
   // If it's a cap, mirror A back onto C to accomplish a round
   ${isEndpoints ? `vec4 pA = pC;` : ''}
 
+  bool aInvalid = invalid(pA);
+
+  if (bInvalid || cInvalid || max(abs(pB.z), abs(pC.z)) > 1.0) {
+    gl_Position = pB;
+    return;
+  }
+
   float mirrorSign = isMirrored ? -1.0 : 1.0;
   if (isMirrored) {
     vec4 tmp;
     tmp = pC; pC = pB; pB = tmp;
     tmp = pD; pD = pA; pA = tmp;
+    bool bTmp = aInvalid; aInvalid = dInvalid; dInvalid = bTmp;
   }
 
   ${isEndpoints ? `bool isCap = !isMirrored;` : `bool isCap = false;`};
 
-  if (invalid(pA)) { ${insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;'} }
-  if (invalid(pD)) { ${insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;'} }
+  if (aInvalid) { ${insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;'} }
+  if (dInvalid) { ${insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;'} }
 
   float width = isMirrored ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
 
