@@ -22,7 +22,7 @@ Features:
 
 - Configure your own attributes, varyings, uniforms, and shaders
 - Compute positions and line width in the vertex shader
-- Round joins, bevels, and miters (with limit)
+- Round joins, bevels, and miters (with miter limit)
 - Square and rounded end caps
 - Optional automatic end cap insertion, using `position.w == 0.0` to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
 - Regl-compatible attribute specification with strides and offsets
