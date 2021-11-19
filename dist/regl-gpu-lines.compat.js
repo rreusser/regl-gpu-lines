@@ -213,31 +213,35 @@
     var spec = isEndpoints ? endpointSpec : segmentSpec;
     var verts = ['B', 'C', 'D'];
     if (!isEndpoints) verts.unshift('A');
-
-    function computeCount(props) {
-      return insertCaps ? isEndpoints // Cap has fixed number, join could either be a cap or a join
-      ? [props.capResolution, Math.max(props.capResolution, props.joinResolution)] // Both could be either a cap or a join
-      : [Math.max(props.capResolution, props.joinResolution), Math.max(props.capResolution, props.joinResolution)] : isEndpoints // Draw a cap
-      ? [props.capResolution, props.joinResolution] // Draw two joins
-      : [props.joinResolution, props.joinResolution];
-    }
-
+    var computeCount = insertCaps ? isEndpoints // Cap has fixed number, join could either be a cap or a join
+    ? function (props) {
+      return [props.capRes2, Math.max(props.capRes2, props.joinRes2)];
+    } // Both could be either a cap or a join
+    : function (props) {
+      return [Math.max(props.capRes2, props.joinRes2), Math.max(props.capRes2, props.joinRes2)];
+    } : isEndpoints // Draw a cap
+    ? function (props) {
+      return [props.capRes2, props.joinRes2];
+    } // Draw two joins
+    : function (props) {
+      return [props.joinRes2, props.joinRes2];
+    };
     return regl({
-      vert: "".concat(meta.glsl, "\nconst float CAP_START = ").concat(ORIENTATION$2.CAP_START, ".0;\nconst float CAP_END = ").concat(ORIENTATION$2.CAP_END, ".0;\n\n").concat(spec.glsl, "\n\nattribute float index;\n").concat(debug ? 'attribute float debugInstanceID;' : '', "\n\nuniform vec2 vertexCount, capJoinRes;\nuniform vec2 resolution, capScale;\nuniform float miterLimit;\n").concat(meta.orientation || !isEndpoints ? '' : 'uniform float orientation;', "\n\nvarying vec3 lineCoord;\nvarying float dir;\n").concat(debug ? 'varying vec2 triStripCoord;' : '', "\n").concat(debug ? 'varying float instanceID;' : '', "\n\n// bool isnan(float val) {\n//   return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;\n// }\n\nbool invalid(vec4 p) {\n  return p.w == 0.0;\n}\n\nconst bool isRound = ").concat(isRound ? 'true' : 'false', ";\nconst float pi = 3.141592653589793;\n\nvoid main() {\n  lineCoord = vec3(0);\n\n  ").concat(debug ? "instanceID = ".concat(isEndpoints ? '-1.0' : 'debugInstanceID', ";") : '', "\n  ").concat(debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : '', "\n\n  ").concat(verts.map(function (vert) {
+      vert: "".concat(meta.glsl, "\nconst float CAP_START = ").concat(ORIENTATION$2.CAP_START, ".0;\nconst float CAP_END = ").concat(ORIENTATION$2.CAP_END, ".0;\n\n").concat(spec.glsl, "\n\nattribute float index;\n").concat(debug ? 'attribute float debugInstanceID;' : '', "\n\nuniform vec2 vertCnt2, capJoinRes2;\nuniform vec2 resolution, capScale;\nuniform float miterLimit;\n").concat(meta.orientation || !isEndpoints ? '' : 'uniform float orientation;', "\n\nvarying vec3 lineCoord;\nvarying float dir;\n").concat(debug ? 'varying vec2 triStripCoord;' : '', "\n").concat(debug ? 'varying float instanceID;' : '', "\n").concat(debug ? 'varying float vertexIndex;' : '', "\n\n// This turns out not to work very well\n// bool isnan(float val) {\n//   return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;\n// }\n\nbool invalid(vec4 p) {\n  return p.w == 0.0;\n}\n\nvoid main() {\n  const float pi = 3.141592653589793;\n\n  bool isRound = ").concat(isRound ? 'true' : 'false', ";\n  ").concat(debug ? 'vertexIndex = index;' : '', "\n  lineCoord = vec3(0);\n\n  ").concat(debug ? "instanceID = ".concat(isEndpoints ? '-1.0' : 'debugInstanceID', ";") : '', "\n  ").concat(debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : '', "\n\n  ").concat(verts.map(function (vert) {
         return "vec4 p".concat(vert, " = ").concat(meta.position.generate(vert), ";");
-      }).join('\n'), "\n\n  bool aInvalid = ").concat(isEndpoints ? 'false' : 'invalid(pA)', ";\n  bool bInvalid = invalid(pB);\n  bool cInvalid = invalid(pC);\n  bool dInvalid = invalid(pD);\n\n  float mirrorIndex = 2.0 * vertexCount.x + 3.0;\n  float totalVertexCount = mirrorIndex + 2.0 + 2.0 * vertexCount.y;\n\n  // If we're past the first half-join and half of the segment, then we swap all vertices and start\n  // over from the opposite end.\n  bool isMirrored = index > mirrorIndex;\n\n  // When rendering dedicated endoints, this allows us to insert an end cap *alone* (without the attached\n  // segment and join)\n  ").concat(isEndpoints ? "if (dInvalid && isMirrored) {\n    gl_Position = pB;\n    return;\n  }" : '', "\n\n  // Convert to screen-pixel coordinates\n  // Save w so we can perspective re-multiply at the end to get varyings depth-correct\n  float pw = isMirrored ? pC.w : pB.w;\n  ").concat(verts.map(function (v) {
+      }).join('\n'), "\n\n  // A sensible default for early returns\n  gl_Position = pB;\n\n  bool aInvalid = ").concat(isEndpoints ? 'false' : 'invalid(pA)', ";\n  bool bInvalid = invalid(pB);\n  bool cInvalid = invalid(pC);\n  bool dInvalid = invalid(pD);\n\n  // Vertex count for each part (first half of join, second (mirrored) half). Note that not all of\n  // these vertices may be used, for example if we have enough for a round cap but only draw a miter\n  // join.\n  vec2 v = vertCnt2 + 3.0;\n\n  // Total vertex count\n  float N = dot(v, vec2(1));\n\n  // If we're past the first half-join and half of the segment, then we swap all vertices and start\n  // over from the opposite end.\n  bool mirror = index >= v.x;\n\n  // When rendering dedicated endoints, this allows us to insert an end cap *alone* (without the attached\n  // segment and join)\n  ").concat(isEndpoints ? "if (dInvalid && mirror) return;" : '', "\n\n  // Convert to screen-pixel coordinates\n  // Save w so we can perspective re-multiply at the end to get varyings depth-correct\n  float pw = mirror ? pC.w : pB.w;\n  ").concat(verts.map(function (v) {
         return "p".concat(v, " = vec4(vec3(p").concat(v, ".xy * resolution, p").concat(v, ".z) / p").concat(v, ".w, 1);");
-      }).join('\n'), "\n\n  // If it's a cap, mirror A back onto C to accomplish a round\n  ").concat(isEndpoints ? "vec4 pA = pC;" : '', "\n\n  if (bInvalid || cInvalid || max(abs(pB.z), abs(pC.z)) > 1.0) {\n    gl_Position = pB;\n    return;\n  }\n\n  float mirrorSign = isMirrored ? -1.0 : 1.0;\n  if (isMirrored) {\n    vec4 vTmp = pC; pC = pB; pB = vTmp;\n    vTmp = pD; pD = pA; pA = vTmp;\n    bool bTmp = dInvalid; dInvalid = aInvalid; aInvalid = bTmp;\n  }\n\n  ").concat(isEndpoints ? "bool isCap = !isMirrored;" : "bool isCap = false;", ";\n\n  if (aInvalid) { ").concat(insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;', " }\n  if (dInvalid) { ").concat(insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;', " }\n\n  float width = isMirrored ? ").concat(meta.width.generate('C'), " : ").concat(meta.width.generate('B'), ";\n\n  // Tangent and normal vectors\n  vec2 tBC = pC.xy - pB.xy;\n  float lBC = length(tBC);\n  tBC /= lBC;\n  vec2 nBC = vec2(-tBC.y, tBC.x);\n\n  vec2 tAB = pB.xy - pA.xy;\n  float lAB = length(tAB);\n  if (lAB > 0.0) tAB /= lAB;\n  vec2 nAB = vec2(-tAB.y, tAB.x);\n\n  vec2 tCD = pD.xy - pC.xy;\n  float lCD = length(tCD);\n  if (lCD > 0.0) tCD /= lCD;\n  vec2 nCD = vec2(-tCD.y, tCD.x);\n\n  float cosB = clamp(dot(tAB, tBC), -1.0, 1.0);\n\n  // This section is very fragile. When lines are collinear, signs flip randomly and break orientation\n  // of the middle segment. The fix appears straightforward, but this took a few hours to get right.\n  const float tol = 1e-4;\n  float dirB = -dot(tBC, nAB);\n  float dirC = dot(tBC, nCD);\n  bool bCollinear = abs(dirB) < tol;\n  bool cCollinear = abs(dirC) < tol;\n  bool bIsHairpin = bCollinear && cosB < 0.0;\n  bool cIsHairpin = cCollinear && dot(tBC, tCD) < 0.0;\n  dirB = bCollinear ? -mirrorSign : sign(dirB);\n  dirC = cCollinear ? -mirrorSign : sign(dirC);\n\n  vec2 miter = bIsHairpin ? -tBC : 0.5 * (nAB + nBC) * dirB;\n\n  // The second half of the triangle strip instance is just the first, reversed, and with vertices swapped!\n  float i = index <= mirrorIndex ? index : totalVertexCount - index;\n\n  // Chop off the join to get at the segment part index\n  float iSeg = i - 2.0 * (isMirrored ? vertexCount.y : vertexCount.x);\n\n  // After the first half-join, repeat two vertices of the segment strip in order to get the orientation correct\n  // for the next join. These are wasted vertices, but they enable using a triangle strip. for two joins which\n  // might be oriented differently.\n  if (iSeg > 1.0 && iSeg <= 3.0) {\n    iSeg -= 2.0;\n    if (dirB * dirC >= 0.0) iSeg += iSeg == 0.0 ? 1.0 : -1.0;\n  }\n\n  vec2 xBasis = tBC;\n  vec2 yBasis = nBC * dirB;\n  vec2 xy = vec2(0, 1);\n\n  lineCoord.y = dirB * mirrorSign;\n\n  if (iSeg < 0.0) {\n    // Draw half of a join\n    float m2 = dot(miter, miter);\n    float lm = length(miter);\n    float tBCm = dot(tBC, miter);\n    yBasis = miter / lm;\n    bool isBevel = 1.0 > miterLimit * m2;\n\n    if (mod(i, 2.0) == 0.0) {\n      // Outer joint points\n      if (isRound || isCap) {\n        // Round joins\n        xBasis = dirB * vec2(yBasis.y, -yBasis.x);\n        float cnt = (isCap ? capJoinRes.x : capJoinRes.y) * 2.0;\n        float theta = -0.5 * (acos(cosB) * (min(i, cnt) / cnt) - pi) * (isCap ? 2.0 : 1.0);\n        xy = vec2(cos(theta), sin(theta));\n\n        if (isCap) {\n          if (xy.y > 0.001) xy *= capScale;\n          lineCoord.xy = xy.yx * lineCoord.y;\n        }\n      } else {\n        // Miter joins\n        yBasis = bIsHairpin ? vec2(0) : miter;\n        if (!isBevel) xy.y /= m2;\n      }\n    } else {\n      // Repeat vertex B to create a triangle fan\n      lineCoord.y = 0.0;\n      xy = vec2(0);\n\n      // Offset the center vertex position to get bevel SDF correct\n      if (!isRound && isBevel && !isCap) {\n        xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);\n      }\n    }\n  //} else if (iSeg == 0.0) { // No op: vertex B + line B-C normal\n  } else if (iSeg > 0.0) {\n    // vertex B + inner miter\n    lineCoord.y = -lineCoord.y;\n\n    float miterExt = 0.0;\n    if (cosB > -0.9999) {\n      float sinB = tAB.x * tBC.y - tAB.y * tBC.x;\n      miterExt = sinB / (1.0 + cosB);\n    }\n    float m = abs(miterExt);\n    m = min(m, min(lBC, lAB) / width);\n    xy = vec2(m, -1);\n  }\n\n  ").concat(isEndpoints ? "float orientation = ".concat(meta.orientation ? meta.orientation.generate('') : 'mod(orientation,2.0)', ";") : '', ";\n  ").concat(isEndpoints ? "if (orientation == CAP_END) lineCoord.xy = -lineCoord.xy;" : '', "\n\n  vec2 dP = mat2(xBasis, yBasis) * xy;\n  float dC = dot(dP, tBC) * mirrorSign;\n\n  float useC = (isMirrored ? 1.0 : 0.0) + dC * (width / lBC);\n  lineCoord.z = useC < 0.0 || useC > 1.0 ? 1.0 : 0.0;\n  ").concat(_toConsumableArray(meta.varyings.values()).map(function (varying) {
+      }).join('\n'), "\n\n  // If it's a cap, mirror A back onto C to accomplish a round\n  ").concat(isEndpoints ? "vec4 pA = pC;" : '', "\n\n  // Reject if invalid or if outside viewing planes\n  if (bInvalid || cInvalid || max(abs(pB.z), abs(pC.z)) > 1.0) return;\n\n  // Swap everything computed so far if computing mirrored half\n  if (mirror) {\n    vec4 vTmp = pC; pC = pB; pB = vTmp;\n    vTmp = pD; pD = pA; pA = vTmp;\n    bool bTmp = dInvalid; dInvalid = aInvalid; aInvalid = bTmp;\n  }\n\n  ").concat(isEndpoints ? "bool isCap = !mirror;" : "".concat(insertCaps ? '' : 'const ', "bool isCap = false"), ";\n\n  // Either flip A onto C (and D onto B) to produce a 180 degree-turn cap, or extrapolate to produce a\n  // degenerate (no turn) join, depending on whether we're inserting caps or just leaving ends hanging.\n  if (aInvalid) { ").concat(insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;', " }\n  if (dInvalid) { ").concat(insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;', " }\n  isRound = isRound || isCap;\n\n  // TODO: swap inputs rather than computing both and discarding one\n  float width = mirror ? ").concat(meta.width.generate('C'), " : ").concat(meta.width.generate('B'), ";\n\n  // Tangent and normal vectors\n  vec2 tBC = pC.xy - pB.xy;\n  float lBC = length(tBC);\n  tBC /= lBC;\n  vec2 nBC = vec2(-tBC.y, tBC.x);\n\n  vec2 tAB = pB.xy - pA.xy;\n  float lAB = length(tAB);\n  if (lAB > 0.0) tAB /= lAB;\n  vec2 nAB = vec2(-tAB.y, tAB.x);\n\n  vec2 tCD = pD.xy - pC.xy;\n  float lCD = length(tCD);\n  if (lCD > 0.0) tCD /= lCD;\n  vec2 nCD = vec2(-tCD.y, tCD.x);\n\n  // Clamp for safety, since we take the arccos\n  float cosB = clamp(dot(tAB, tBC), -1.0, 1.0);\n\n  // This section is somewhat fragile. When lines are collinear, signs flip randomly and break orientation\n  // of the middle segment. The fix appears straightforward, but this took a few hours to get right.\n  const float tol = 1e-4;\n  float mirrorSign = mirror ? -1.0 : 1.0;\n  float dirB = -dot(tBC, nAB);\n  float dirC = dot(tBC, nCD);\n  bool bCollinear = abs(dirB) < tol;\n  bool cCollinear = abs(dirC) < tol;\n  bool bIsHairpin = bCollinear && cosB < 0.0;\n  // bool cIsHairpin = cCollinear && dot(tBC, tCD) < 0.0;\n  dirB = bCollinear ? -mirrorSign : sign(dirB);\n  dirC = cCollinear ? -mirrorSign : sign(dirC);\n\n  vec2 miter = bIsHairpin ? -tBC : 0.5 * (nAB + nBC) * dirB;\n\n  // Compute our primary \"join index\", that is, the index starting at the very first point of the join.\n  // The second half of the triangle strip instance is just the first, reversed, and with vertices swapped!\n  float i = mirror ? N - index : index;\n\n  // Decide the resolution of whichever feature we're drawing. n is twice the number of points used since\n  // that's the only form in which we use this number.\n  float res = (isCap ? capJoinRes2.x : capJoinRes2.y);\n\n  // Shift the index to send unused vertices to an index below zero, which will then just get clamped to\n  // zero and result in repeated points, i.e. degenerate triangles.\n  i -= max(0.0, (mirror ? vertCnt2.y : vertCnt2.x) - res);\n\n  // Use the direction to offset the index by one. This has the effect of flipping the winding number so\n  // that it's always consistent no matter which direction the join turns.\n  i += (dirB < 0.0 ? -1.0 : 0.0);\n\n  // Vertices of the second (mirrored) half of the join are offset by one to get it to connect correctly\n  // in the middle, where the mirrored and unmirrored halves meet.\n  i -= mirror ? 1.0 : 0.0;\n\n  // Clamp to zero and repeat unused excess vertices.\n  i = max(0.0, i);\n\n  // Start with a default basis pointing along the segment with normal vector outward\n  vec2 xBasis = tBC;\n  vec2 yBasis = nBC * dirB;\n\n  // Default point is 0 along the segment, 1 (width unit) normal to it\n  vec2 xy = vec2(0);\n\n  lineCoord.y = dirB * mirrorSign;\n\n  if (i == res + 1.0) {\n    // pick off this one specific index to be the interior miter point\n    // If not div-by-zero, then sinB / (1 + cosB)\n    float m = cosB > -0.9999 ? (tAB.x * tBC.y - tAB.y * tBC.x) / (1.0 + cosB) : 0.0;\n    xy = vec2(min(abs(m), min(lBC, lAB) / width), -1);\n    lineCoord.y = -lineCoord.y;\n  } else {\n    // Draw half of a join\n    float m2 = dot(miter, miter);\n    float lm = sqrt(m2);\n    yBasis = miter / lm;\n    xBasis = dirB * vec2(yBasis.y, -yBasis.x);\n    bool isBevel = 1.0 > miterLimit * m2;\n\n    if (mod(i, 2.0) == 0.0) {\n      // Outer joint points\n      if (isRound || i != 0.0) {\n        // Round joins\n        float theta = -0.5 * (acos(cosB) * (clamp(i, 0.0, res) / res) - pi) * (isCap ? 2.0 : 1.0);\n        xy = vec2(cos(theta), sin(theta));\n\n        if (isCap) {\n          // A special multiplier factor for turning 3-point rounds into square caps (but leave the\n          // y == 0.0 point unaffected)\n          if (xy.y > 0.001) xy *= capScale;\n          lineCoord.xy = xy.yx * lineCoord.y;\n        }\n      } else {\n        // Miter joins\n        yBasis = bIsHairpin ? vec2(0) : miter;\n        xy.y = isBevel ? 1.0 : 1.0 / m2;\n      }\n    } else {\n      // Center of the fan\n      lineCoord.y = 0.0;\n\n      // Offset the center vertex position to get bevel SDF correct\n      if (isBevel && !isRound) {\n        xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);\n      }\n    }\n  }\n\n  ").concat(isEndpoints ? "float orientation = ".concat(meta.orientation ? meta.orientation.generate('') : 'mod(orientation,2.0)', ";") : '', ";\n\n  // Since we can't know the orientation of end caps without being told. This comes either from\n  // input via the orientation property or from a uniform, assuming caps are interleaved (start,\n  // end, start, end, etc.) and rendered in two passes: first starts, then ends.\n  ").concat(isEndpoints ? "if (orientation == CAP_END) lineCoord.xy = -lineCoord.xy;" : '', "\n\n  // Point offset from main vertex position\n  vec2 dP = mat2(xBasis, yBasis) * xy;\n\n  // Dot with the tangent to account for dashes. Note that by putting this in *one place*, dashes\n  // should always be correct without having to compute a unique correction for every point.\n  float dx = dot(dP, tBC) * mirrorSign;\n\n  // Interpolant: zero for using B, 1 for using C\n  float useC = (mirror ? 1.0 : 0.0) + dx * (width / lBC);\n\n  lineCoord.z = useC < 0.0 || useC > 1.0 ? 1.0 : 0.0;\n\n  // The varying generation code handles clamping, if needed\n  ").concat(_toConsumableArray(meta.varyings.values()).map(function (varying) {
         return varying.generate('useC', 'B', 'C');
       }).join('\n'), "\n\n  gl_Position = pB;\n  gl_Position.xy += width * dP;\n  gl_Position.xy /= resolution;\n  gl_Position *= pw;\n}"),
       frag: frag,
       attributes: _objectSpread2(_objectSpread2({}, indexAttributes), spec.attrs),
       uniforms: {
-        vertexCount: function vertexCount(ctx, props) {
+        vertCnt2: function vertCnt2(ctx, props) {
           return computeCount(props);
         },
-        capJoinRes: function capJoinRes(ctx, props) {
-          return [props.capResolution, props.joinResolution];
+        capJoinRes2: function capJoinRes2(ctx, props) {
+          return [props.capRes2, props.joinRes2];
         },
         miterLimit: function miterLimit(ctx, props) {
           return props.miterLimit * props.miterLimit;
@@ -245,7 +249,9 @@
         orientation: regl.prop('orientation'),
         capScale: regl.prop('capScale')
       },
-      primitive: 'triangle strip',
+      primitive: function primitive(ctx, props) {
+        return props.primitive || 'triangle strip';
+      },
       instances: isEndpoints ? function (ctx, props) {
         return props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count;
       } : function (ctx, props) {
@@ -253,7 +259,7 @@
       },
       count: function count(ctx, props) {
         var count = computeCount(props);
-        return 6 + 2 * (count[0] + count[1]);
+        return 6 + (count[0] + count[1]);
       }
     });
   }
@@ -820,24 +826,29 @@
             var lineProps = _step.value;
             var joinType = sanitizeJoinType(lineProps.join);
             var capType = sanitizeCapType(lineProps.cap);
-            var capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
+            var capRes2 = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
 
             if (capType === 'square') {
-              capResolution = 3;
+              capRes2 = 3;
             } else if (capType === 'none') {
-              capResolution = 1;
+              capRes2 = 1;
             }
 
-            var joinResolution = 1;
-            if (joinType === 'round') joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
+            var joinRes2 = 1;
+            if (joinType === 'round') joinRes2 = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution; // We only ever use these in doubled-up form
+
+            capRes2 *= 2;
+            joinRes2 *= 2;
             var miterLimit = joinType === 'bevel' ? 1 : lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit;
             var capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
+            var primitive = lineProps.primitive;
             var sharedProps = {
-              joinResolution: joinResolution,
-              capResolution: capResolution,
+              joinRes2: joinRes2,
+              capRes2: capRes2,
               capScale: capScale,
               capType: capType,
-              miterLimit: miterLimit
+              miterLimit: miterLimit,
+              primitive: primitive
             };
 
             if (lineProps.endpointAttributes && lineProps.endpointCount) {

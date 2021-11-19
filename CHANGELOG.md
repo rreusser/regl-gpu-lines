@@ -1,3 +1,14 @@
+## 0.0.23
+
+### Features
+
+- Turning an integer index into a position was somewhat badly done. This release completely renumbers all of the indices. Instead of modifying geometry and flipping it in order to get winding order correct, it now shifts vertex indices by one while preserving geometry. At the cost of one extra wasted vertex, this has the effect of flipping winding order when needed in order to make it consistent--but without modifying geometry. The resuing code is easier to follow, shorter, cleaner, and shows better results.
+
+### Bugfixes
+
+- As a result of renumbering, winding order is now consistent.
+- Collapsed triangle vertices are now repeated at the first and last points only, rather than scattered throughout the instances.
+
 ## 0.0.22
 
 ### Features
