@@ -1,2 +1,3 @@
+.circleci
 docs
 test/fixtures/**/*.png
