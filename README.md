@@ -24,7 +24,7 @@ Features:
 - Compute positions and line width in the vertex shader
 - Round joins, bevels, and miters (with miter limit)
 - Square and rounded end caps
-- Optional automatic end cap insertion, using `position.w == 0.0` to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
+- Optional automatic end cap insertion, using `position.w == 0.0` or alternatively `position.x` NaN to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
 - Regl-compatible attribute specification with strides and offsets
 - Pass additional regl configuration to the constructor
 - No dependencies; 11.6 KB minified, 4.7 KB gzipped.
@@ -54,7 +54,7 @@ See [API documentation](./API.md).
 
 - [Basic example](https://rreusser.github.io/regl-gpu-lines/docs/basic.html): A minimal example. Just a line.
 - [Variable width](https://rreusser.github.io/regl-gpu-lines/docs/variable-width.html): A basic line with variable width and color
-- [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use `position.w = 0` to break up lines into multiple segments
+- [Multiple lines](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html): Use position NaN to break up lines into multiple segments
 - [Depth](https://rreusser.github.io/regl-gpu-lines/docs/depth.html): Layer lines using the z-coordinate
 - [Closed loop](https://rreusser.github.io/regl-gpu-lines/docs/closed-loop.html): Create a closed loop by omitting end caps and repeating the first three vertices at the end.
 - [Line border](https://rreusser.github.io/regl-gpu-lines/docs/border.html): Use `lineCoord` to draw a SDF line border

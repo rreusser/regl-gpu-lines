@@ -9,14 +9,11 @@ const drawLines = reglLines(regl, {
     precision highp float;
 
     #pragma lines: attribute vec2 xy;
-    #pragma lines: attribute float break;
-    #pragma lines: position = getPosition(xy, break);
+    #pragma lines: position = getPosition(xy);
     #pragma lines: width = getWidth();
     #pragma lines: varying vec2 pos = getXY(xy);
 
-    // Return w = 0 wherever there's a break
-    vec4 getPosition(vec2 xy, float isBreak) {
-      if (isBreak > 0.0) return vec4(0);
+    vec4 getPosition(vec2 xy) {
       return vec4(xy, 0, 1);
     }
     float getWidth() { return 40.0; }
@@ -31,6 +28,7 @@ const drawLines = reglLines(regl, {
   // Turn off depth and turn on blending to make it very clear if we accidentally
   // draw end caps twice
   depth: { enable: false },
+  cull: {enable: true, face: 'back'},
   blend: {
     enable: true,
     func: { srcRGB: "src alpha", srcAlpha: 1, dstRGB: "one minus src alpha", dstAlpha: 1 }
@@ -40,26 +38,21 @@ const drawLines = reglLines(regl, {
 const n = 31;
 const lineCount = 10;
 
-// Detecting NaN in GLSL can be questionable, so we can just be verbose and use a separate
-// attribute to indicate breaks.
-const positions = [[0,0]];
-const isBreak = [1];
-
 function xy (line, i) {
   let t = (i / (n - 1) * 2 - 1) * 0.9;
   const y = ((line + 0.5) / lineCount * 2 - 1) * 0.9;
   return [t, y + 1 / lineCount * Math.sin((t - line * 0.1) * 8.0)];
 }
 
+// Start with a break in order to signal a cap
+const positions = [[NaN, NaN]];
+
 for (let line = 0; line < lineCount; line++) {
   for (let i = 0; i < n; i++) {
     positions.push(xy(line, i));
-    isBreak.push(0);
   }
-
-  // Add a dummy vertex and signal a break in the line
-  positions.push([0,0]);
-  isBreak.push(1);
+  // Signal a cap after each line
+  positions.push([NaN, NaN]);
 }
 
 // After this, render as normal!
@@ -69,7 +62,6 @@ const lineData = {
   vertexCount: positions.length,
   vertexAttributes: {
     xy: regl.buffer(positions),
-    break: regl.buffer(new Uint8Array(isBreak))
   },
 };
 

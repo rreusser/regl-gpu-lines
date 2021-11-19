@@ -1,3 +1,9 @@
+## 1.0.1
+
+## Features
+
+- Reenable NaN to signal line breaks. It seems to work now. [Confirm here](https://rreusser.github.io/regl-gpu-lines/docs/tests.html#miter/insert-caps/nan).
+
 ## 1.0.0
 
 This release has no new features. Flipping the switch since, for the first time since starting, I don't have major new features or blocking bugs which would prevent me from calling this a piece of usable software. :tada:

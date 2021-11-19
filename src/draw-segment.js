@@ -53,12 +53,12 @@ ${debug ? 'varying float instanceID;' : ''}
 ${debug ? 'varying float vertexIndex;' : ''}
 
 // This turns out not to work very well
-// bool isnan(float val) {
-//   return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
-// }
+bool isnan(float val) {
+  return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
+}
 
 bool invalid(vec4 p) {
-  return p.w == 0.0;
+  return p.w == 0.0 || isnan(p.x);
 }
 
 void main() {
