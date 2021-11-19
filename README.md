@@ -2,7 +2,7 @@
   <img src="./docs/debug.png" alt="Lines with round joins and caps" width="600">
 </p>
 
-# [experimental] regl-gpu-lines
+# regl-gpu-lines
 
 > Pure GPU instanced, screen-projected lines for [regl](https://github.com/regl-project/regl)
 
