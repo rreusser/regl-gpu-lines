@@ -1,3 +1,4 @@
+const createNumberCanvas = require('./number-texture.js');
 const pixelRatio = window.devicePixelRatio;
 const regl = createREGL({
   pixelRatio,
@@ -11,21 +12,37 @@ const regl = createREGL({
 });
 regl._gl.canvas.style.position = 'fixed';
 
+const createREGLProxy = function (regl, argWrapper) {
+  const proxy = args => regl({...args, ...argWrapper(args)});
+  Object.assign(proxy, regl);
+  return proxy;
+}
+
+const reglProxy = createREGLProxy(regl, function (args) {
+  if (!args.vert) return {};
+  return {
+    vert: args.vert.slice(0, args.vert.length - 1) + `
+    float theta = (2.0 * pi) * (0.5 + index / 8.0);
+      gl_Position.xy += vec2(cos(theta), sin(theta)) * numberOffset / resolution;
+    }`
+  }
+});
+
 const state = wrapGUI(State({
   lineConfig: State.Section({
-    capResolution: State.Slider(18, {min: 1, max: 30, step: 1}),
-    joinResolution: State.Slider(16, {min: 1, max: 30, step: 1}),
+    capResolution: State.Slider(4, {min: 1, max: 30, step: 1}),
+    joinResolution: State.Slider(2, {min: 1, max: 30, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
-    join: State.Select('miter', {options: ['round', 'miter', 'bevel']}),
+    join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(1.7, {min: 1, max: 8, step: 0.01}),
   }, {label: 'line config', expanded: true}),
   geometry: State.Section({
-    stretch: State.Slider(0.8, {min: -2, max: 2, step: 0.001}),
-    flip: State.Slider(0.98, {min: -1, max: 1, step: 0.001}),
+    stretch: State.Slider(0.9, {min: -2, max: 2, step: 0.001}),
+    flip: State.Slider(1.0, {min: -1, max: 1, step: 0.001}),
   }, {expanded: true}),
   line: State.Section({
     width: State.Slider(70, {min: 1, max: 100, step: 0.1}),
-    opacity: State.Slider(1.0, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.8, {min: 0, max: 1, step: 0.01}),
   }, {label: 'line', expanded: false}),
   border: State.Section({
     width: State.Slider(5, {min: 0, max: 10, step: 0.1}),
@@ -33,13 +50,14 @@ const state = wrapGUI(State({
   }, {expanded: false}),
   dash: State.Section({
     length: State.Slider(0.1, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
-    wireframeOpacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
+    wireframeOpacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
     depth: false,
     colorInstances: true,
+    labelPoints: false
   }, {
     expanded: false
   })
@@ -59,108 +77,23 @@ function project(p) {
 }
 
 const path = [
-/*
-[-1, 0.38],
-[-0.05, 0.4],
-[0, 0.8],
-[0.05, 0.1],
-[1, 0],
-[0.05, -0.1],
-[0, -0.8],
-[-0.05, -0.4],
-[-1, -0.38],
-
-[0, 0],
-[0.3, 0],
-[0,0],
-[0,-0.3],
-[0,0],
-[-0.3,0],
-[0,0],
-[0,0.3],
-[0,0],
-[0.3, 0.3],
-[0, 0],
-[-0.3, 0.3],
-[0, 0],
-[-0.3, -0.3],
-[0, 0],
-[0.3, -0.3],
-[0,0],
-[-0.1, 0.1],
-*/
-
-//[-Infinity, -Infinity],
-[-0.9,  0.1],
-[-0.8,  -0.3],
-[-0.7,  -0.4],
-[-0.5, -0.5],
-[-0.4, -0.3],
-[-Infinity, -Infinity],
-[-0.3, -0.1],
-[-0.2, 0.1],
-[-Infinity, -Infinity],
-[-0.1, 0.3],
-[ 0, 0.5],
-[ 0.3,  0.4],
-[ 0.4, -0.5],
-[ 0.7, -0.5],
-[ 0.9, 0.5],
-//[NaN, NaN],
-
-
-// Collinearity test
-/*
-[-0.9, -0.9],
-[-0.8, -0.8],
-[-0.7, -0.7],
-[-0.6, -0.6],
-[NaN, NaN],
-[-0.5, -0.5],
-[-0.4, -0.4],
-[-0.3, -0.3],
-[-0.2, -0.2],
-[-0.1, -0.1],
-[-0.0, -0.0],
-[0.1, 0.15],
-[0.2, 0.22],
-[0.3, 0.35],
-*/
-
-/*
-[-0.7, -0.8],
-[-0.6, -0.8],
-[-0.5, 0.2],
-[-0.3, 0.3],
-[-0.1, -0.2],
-[0, 0],
-[0.2, -0.2],
-[0.4, -0.6],
-[0.6, -0.8],
-[0.8, -0.8],
-*/
-
-/*
-  [-0.75, -0.5],
+  //[-Infinity, -Infinity],
+  [-0.9,  0.1],
+  [-0.8,  -0.3],
+  [-0.7,  -0.4],
   [-0.5, -0.5],
-  [-0.4, 0.5],
-  [-0.35, 0.0],
-  [-0.1, 0.5],
-  [0.0, 0.0],
-  [0.01, 0.0],
-  //[0.02, 0.0],
-  //[0.03, 0.0],
-  //[0.04, 0.0],
-  //[0.05, 0.0],
-  //[0.06, 0.0],
-  //[0.07, 0.0],
-  //[0.07, 0.5],
-  //[0.07, 0.0],
-  [0.25, 0.0],
-  [0.5, -0.5],
-  [0.75, -0.25],
-  [1, -0.25]
-  */
+  [-0.4, -0.3],
+  [-Infinity, -Infinity],
+  [-0.3, -0.1],
+  [-0.2, 0.1],
+  [-Infinity, -Infinity],
+  [-0.1, 0.3],
+  [ 0, 0.5],
+  [ 0.3,  0.4],
+  [ 0.4, -0.5],
+  [ 0.7, -0.5],
+  [ 0.9, 0.5],
+  //[-Infinity, -Infinity],
 ];
 const dist = Array(path.length).fill(0);
 
@@ -177,7 +110,7 @@ function computeCumulativeDistance (dist, path, project) {
 }
 
 const lineData = {
-  vertexCount: path.length,//Math.min(path.length, state.lineConfig.count),
+  vertexCount: path.length,
   vertexAttributes: {
     point: regl.buffer(path),
     dist: regl.buffer(dist),
@@ -189,7 +122,20 @@ const lineData = {
   },
 };
 
-const drawLines = reglLines(regl, {
+let numTex = regl.texture([[0, 0, 0, 0]]);
+createNumberCanvas(50).then(img => {
+  numTex = numTex({data: img, min: 'linear', mag: 'linear'})
+  draw();
+});
+
+const drawLines = [{
+  constructor: reglLines,
+  primitive: 'points'
+}, {
+  constructor: reglLines,
+  primitive: 'triangle strip'
+}].map(({primitive, constructor}) =>
+constructor(reglProxy, {
   insertCaps: true,
   debug: true,
   vert: `
@@ -201,7 +147,7 @@ const drawLines = reglLines(regl, {
     #pragma lines: width = getWidth();
     #pragma lines: extrapolate varying float dist = getProgress(dist);
 
-    uniform float stretch, flip, lineWidth, borderWidth;
+    uniform float stretch, flip, lineWidth, borderWidth, numberOffset;
 
     float getProgress(float p) { return p; }
     float getPointIndex(float p) { return p; }
@@ -212,6 +158,7 @@ const drawLines = reglLines(regl, {
     }
 
     float getWidth () {
+      gl_PointSize = 30.0; // Oops; has to be anywhere within main func
       return lineWidth;
     }`,
   frag: `
@@ -221,6 +168,8 @@ const drawLines = reglLines(regl, {
     uniform bool squareCap, useBorder, colorInstances;
     uniform float pixelRatio, dashLength, lineWidth, borderWidth, wireframeOpacity;
     uniform vec4 borderColor, lineColor, dashColor;
+    varying float vertexIndex;
+    uniform sampler2D numTex;
 
     varying vec3 lineCoord;
     varying float dist;
@@ -254,7 +203,25 @@ const drawLines = reglLines(regl, {
         } else if (floor(mod(instanceID, 2.0) + 0.5) == 1.0) {
           gl_FragColor.rgb = vec3(0.2, 0.3, 0.7);
         }
+      } else {
+        gl_FragColor.rgb = lineColor.rgb;
       }
+
+#if ${primitive === 'triangle strip' ? 0 : 1}
+      bool neg = vertexIndex < 0.0;
+      vec2 uv = gl_PointCoord.xy;
+      float ones = mod(floor(abs(vertexIndex) + 0.5), 10.0);
+      float tens = floor((abs(vertexIndex) + 0.5) / 10.0);
+      if (tens == 0.0) uv.x += 0.25;
+      if (tens == 0.0 && uv.x < 0.5 || uv.x > 1.0) discard;
+      vec2 numCenter = vec2(((uv.x < 0.5 ? tens : ones) + 0.5) / 10.0, 0.5);
+      vec2 numRange = vec2(0.5 / 10.0, 0.5);
+      vec2 numCoord = vec2(fract(uv.x * 2.0) - 0.5, uv.y * 2.0 - 1.0);
+      gl_FragColor = vec4(
+        mix(gl_FragColor.rgb, vec3(1), 0.8),
+        texture2D(numTex, numCenter + numRange * numCoord).r
+      );
+#else
 
       float dl = dashLength;
       if (dashColor.a > 0.0 && dashLength > 0.0) {
@@ -290,9 +257,12 @@ const drawLines = reglLines(regl, {
         float wire = grid(vec3(triStripCoord, triStripCoord.x + triStripCoord.y), 0.5 * pixelRatio, 2.0 / pixelRatio);
         gl_FragColor = mix(gl_FragColor, vec4(1), wire * wireframeOpacity);
       }
+#endif
     }`,
   uniforms: {
+    numTex,
     colorInstances: regl.prop('rendering.colorInstances'),
+    numberOffset: regl.prop('numberOffset'),
     wireframeOpacity: regl.prop('rendering.wireframeOpacity'),
     useBorder: (ctx, props) => props.border.width > 0,
     lineColor: regl.prop('lineColor'),
@@ -322,7 +292,7 @@ const drawLines = reglLines(regl, {
   depth: {
     enable: (ctx, props) => !!props.rendering.depth
   }
-});
+}));
 
 function updateBuffers () {
   //lineData.vertexAttributes.xy.subdata(path);
@@ -338,15 +308,29 @@ function draw () {
   regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1], depth: 1});
 
-  drawLines({
+  drawLines[1]({
+    ...lineData,
+    ...state.lineConfig,
+    ...state,
+    lineColor: [0.3, 0.2, 0.8, state.line.opacity],
+    borderColor: [0, 0, 0, state.border.opacity],
+    dashColor: [0, 0, 0, state.dash.opacity],
+    primitive: 'triangle strip',
+    numberOffset: 0,
+  });
+
+  if (state.rendering.labelPoints) {
+  drawLines[0]({
     ...lineData,
     ...state.lineConfig,
     ...state,
     lineColor: [0, 0, 0, state.line.opacity],
     borderColor: [0, 0, 0, state.border.opacity],
     dashColor: [0, 0, 0, state.dash.opacity],
-    //vertexCount: 0
+    primitive: 'points',
+    numberOffset: 40
   });
+  }
 }
 
 computeCumulativeDistance(dist, path, project);

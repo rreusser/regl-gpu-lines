@@ -110,19 +110,25 @@ function reglLines(
         const joinType = sanitizeJoinType(lineProps.join);
         const capType = sanitizeCapType(lineProps.cap);
 
-        let capResolution = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
+        let capRes2 = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
         if (capType === 'square') {
-          capResolution = 3;
+          capRes2 = 3;
         } else if (capType === 'none') {
-          capResolution = 1;
+          capRes2 = 1;
         }
-        let joinResolution = 1;
-        if (joinType === 'round') joinResolution = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
+
+        let joinRes2 = 1;
+        if (joinType === 'round') joinRes2 = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution;
+
+        // We only ever use these in doubled-up form
+        capRes2 *= 2;
+        joinRes2 *= 2;
 
         const miterLimit = joinType === 'bevel' ? 1 : (lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit);
         const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
 
-        const sharedProps = { joinResolution, capResolution, capScale, capType, miterLimit };
+        const primitive = lineProps.primitive;
+        const sharedProps = {joinRes2, capRes2, capScale, capType, miterLimit, primitive};
 
         if (lineProps.endpointAttributes && lineProps.endpointCount) {
           const endpointProps = {

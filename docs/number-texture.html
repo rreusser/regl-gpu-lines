@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>regl-gpu-lines Example</title>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/javascript.min.js"></script>
+</head>
+<body>
+<script src="https://unpkg.com/controls-state@2.0.0/dist/controls-state.min.js"></script>
+<script src="https://unpkg.com/controls-gui@2.0.0/dist/controls-gui.min.js"></script>
+<script src="https://unpkg.com/regl@2.1.0/dist/regl.js"></script>
+<script src="https://unpkg.com/regl-gpu-lines@latest"></script>
+
+<script>
+module.exports = createNumberCanvas;
+
+function createNumberCanvas (size) {
+  const canvas = document.createElement('canvas');
+  const img = document.createElement('img');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 10 * size;
+  canvas.height = size;
+  ctx.font = `${size}px monospace`;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, size * 10, size);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < 10; i++) {
+    ctx.fillText(i, (i + 0.5) * size, size * 0.5);
+  }
+
+  const returnValue = new Promise(resolve => {
+    img.onload = () => resolve(img);
+  });
+  img.src = canvas.toDataURL();
+  return returnValue;
+}
+
+</script>
+<style>
+#code-container {
+  font-family: sans-serif;
+  position: absolute;
+  left: 0;
+  z-index: 10;
+  max-height: 90%;
+  overflow: auto;
+  background-color: white;
+}
+#code-container summary {
+  padding: 15px;
+  cursor: pointer;
+}
+</style>
+<div id="code-container">
+<details>
+<summary>Code</summary>
+<pre><code id="code">
+module.exports = createNumberCanvas;
+
+function createNumberCanvas (size) {
+  const canvas = document.createElement('canvas');
+  const img = document.createElement('img');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 10 * size;
+  canvas.height = size;
+  ctx.font = `${size}px monospace`;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, size * 10, size);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < 10; i++) {
+    ctx.fillText(i, (i + 0.5) * size, size * 0.5);
+  }
+
+  const returnValue = new Promise(resolve => {
+    img.onload = () => resolve(img);
+  });
+  img.src = canvas.toDataURL();
+  return returnValue;
+}
+
+</code></pre>
+</details>
+</div>
+<script>
+const code = document.getElementById('code');
+hljs.highlightElement(code);
+</script>
+</body>
+</html>
