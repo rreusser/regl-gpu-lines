@@ -35,10 +35,12 @@
     ? props => [props.capRes2, props.joinRes2] // Draw two joins
     : props => [props.joinRes2, props.joinRes2];
     return regl({
+      // Insert user GLSL at the top
       vert: `${meta.glsl}
 const float CAP_START = ${ORIENTATION$2.CAP_START}.0;
 const float CAP_END = ${ORIENTATION$2.CAP_END}.0;
 
+// Attribute specification
 ${spec.glsl}
 
 attribute float index;
@@ -50,7 +52,6 @@ uniform float miterLimit;
 ${meta.orientation || !isEndpoints ? '' : 'uniform float orientation;'}
 
 varying vec3 lineCoord;
-varying float dir;
 ${debug ? 'varying vec2 triStripCoord;' : ''}
 ${debug ? 'varying float instanceID;' : ''}
 ${debug ? 'varying float vertexIndex;' : ''}

@@ -1,3 +1,7 @@
+## 1.0.0
+
+This release has no new features. Flipping the switch since, for the first time since starting, I don't have major new features or blocking bugs which would prevent me from calling this a piece of usable software. :tada:
+
 ## 0.0.23
 
 ### Features
