@@ -69,7 +69,7 @@ const reglProxy = createREGLProxy(regl, function (args) {
 
 const state = wrapGUI(State({
   lineConfig: State.Section({
-    capResolution: State.Slider(4, {min: 1, max: 30, step: 1}),
+    capResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
     joinResolution: State.Slider(2, {min: 1, max: 30, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
@@ -86,11 +86,11 @@ const state = wrapGUI(State({
   }, {label: 'line', expanded: false}),
   border: State.Section({
     width: State.Slider(5, {min: 0, max: 10, step: 0.1}),
-    opacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.65, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false}),
   dash: State.Section({
-    length: State.Slider(0.1, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
+    length: State.Slider(0.2, {min: 0, max: 2, step: 0.05}),
+    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
     wireframeOpacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
@@ -464,7 +464,7 @@ const reglProxy = createREGLProxy(regl, function (args) {
 
 const state = wrapGUI(State({
   lineConfig: State.Section({
-    capResolution: State.Slider(4, {min: 1, max: 30, step: 1}),
+    capResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
     joinResolution: State.Slider(2, {min: 1, max: 30, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
@@ -481,11 +481,11 @@ const state = wrapGUI(State({
   }, {label: 'line', expanded: false}),
   border: State.Section({
     width: State.Slider(5, {min: 0, max: 10, step: 0.1}),
-    opacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
+    opacity: State.Slider(0.65, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false}),
   dash: State.Section({
-    length: State.Slider(0.1, {min: 0, max: 8, step: 0.1}),
-    opacity: State.Slider(0.0, {min: 0, max: 1, step: 0.01}),
+    length: State.Slider(0.2, {min: 0, max: 2, step: 0.05}),
+    opacity: State.Slider(0.3, {min: 0, max: 1, step: 0.01}),
   }, {expanded: false, label: 'dash'}),
   rendering: State.Section({
     wireframeOpacity: State.Slider(0.5, {min: 0, max: 1, step: 0.01}),
