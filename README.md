@@ -29,7 +29,7 @@ Features:
 - Optional automatic end cap insertion, using `position.w == 0.0` or alternatively `position.x` NaN to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
 - Regl-compatible attribute specification with strides and offsets
 - Pass additional regl configuration to the constructor
-- No dependencies; 11.6 KB minified, 4.7 KB gzipped.
+- 11.8 KB minified, 4.8 KB gzipped. No dependencies (apart from usage together with regl, which I'd like to [consider removing](https://github.com/rreusser/regl-gpu-lines/issues/7))
 
 Limitations:
 
