@@ -116,7 +116,7 @@ drawLines(lineData);
 
 ### Examples
 
-To run the example pages, for example, the example in `examples/closed-loop.js`, run
+To run the example pages—e.g. the example in `examples/closed-loop.js`—run
 
 ```bash
 npm start closed-loop
