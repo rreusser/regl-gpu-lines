@@ -116,7 +116,7 @@ drawLines(lineData);
 
 ### Examples
 
-To run the example pages—e.g. the example in `examples/closed-loop.js`—run
+Serve example pages—e.g. the example in `examples/closed-loop.js`—with
 
 ```bash
 npm start closed-loop
@@ -124,13 +124,13 @@ npm start closed-loop
 
 ### Tests
 
-You may run the render tests interactively with
+Run live-reloading render tests with
 
 ```bash
 npm run serve-render-tests
 ```
 
-Propertly executing the render tests require the [headless-gl](https://www.npmjs.com/package/gl) module which can be a little tricky to install. You may use [nodemon](https://www.npmjs.com/package/nodemon) to live-run the render tests when the code is changed
+Executing the render tests from the CLI requires the [headless-gl](https://www.npmjs.com/package/gl) module. You may use [nodemon](https://www.npmjs.com/package/nodemon) to live-run the render tests when the code is changed.
 
 ```bash
 npm install -g nodemon
@@ -149,7 +149,7 @@ and update expectation images with
 UPDATE=1 FILTER=miter/basic node test/render.js
 ```
 
-You may view the tests, run against the latest version, at https://rreusser.github.io/regl-gpu-lines/docs/tests.html
+You may view the tests, run against the latest version from unpkg.com, at https://rreusser.github.io/regl-gpu-lines/docs/tests.html
 
 ## See also
 
