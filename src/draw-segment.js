@@ -4,16 +4,19 @@ const ORIENTATION = require('./constants/orientation.json');
 
 module.exports = createDrawSegmentCommand;
 
-function createDrawSegmentCommand(isRound, isEndpoints, {
+function createDrawSegmentCommand(
   regl,
+  isEndpoints,
+  insertCaps,
   meta,
   frag,
   segmentSpec,
   endpointSpec,
   indexAttributes,
-  insertCaps,
-  debug,
-}) {
+  forwardedCmdConfig,
+  forwardedUniforms,
+  debug
+) {
   const spec = isEndpoints ? endpointSpec : segmentSpec;
   const verts = ['B', 'C', 'D'];
   if (!isEndpoints) verts.unshift('A');
@@ -42,10 +45,11 @@ ${spec.glsl}
 attribute float index;
 ${debug ? 'attribute float debugInstanceID;' : ''}
 
-uniform vec2 vertCnt2, capJoinRes2;
-uniform vec2 resolution, capScale;
-uniform float miterLimit;
-${meta.orientation || !isEndpoints ? '' : 'uniform float orientation;'}
+uniform bool _isRound;
+uniform vec2 _vertCnt2, _capJoinRes2;
+uniform vec2 resolution, _capScale;
+uniform float _miterLimit;
+${meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;'}
 
 varying vec3 lineCoord;
 ${debug ? 'varying vec2 triStripCoord;' : ''}
@@ -64,7 +68,6 @@ bool invalid(vec4 p) {
 void main() {
   const float pi = 3.141592653589793;
 
-  bool isRound = ${isRound ? 'true' : 'false'};
   ${debug ? 'vertexIndex = index;' : ''}
   lineCoord = vec3(0);
 
@@ -84,7 +87,7 @@ void main() {
   // Vertex count for each part (first half of join, second (mirrored) half). Note that not all of
   // these vertices may be used, for example if we have enough for a round cap but only draw a miter
   // join.
-  vec2 v = vertCnt2 + 3.0;
+  vec2 v = _vertCnt2 + 3.0;
 
   // Total vertex count
   float N = dot(v, vec2(1));
@@ -121,7 +124,7 @@ void main() {
   // degenerate (no turn) join, depending on whether we're inserting caps or just leaving ends hanging.
   if (aInvalid) { ${insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;'} }
   if (dInvalid) { ${insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;'} }
-  isRound = isRound || isCap;
+  bool roundOrCap = _isRound || isCap;
 
   // TODO: swap inputs rather than computing both and discarding one
   float width = mirror ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
@@ -166,11 +169,11 @@ void main() {
 
   // Decide the resolution of whichever feature we're drawing. n is twice the number of points used since
   // that's the only form in which we use this number.
-  float res = (isCap ? capJoinRes2.x : capJoinRes2.y);
+  float res = (isCap ? _capJoinRes2.x : _capJoinRes2.y);
 
   // Shift the index to send unused vertices to an index below zero, which will then just get clamped to
   // zero and result in repeated points, i.e. degenerate triangles.
-  i -= max(0.0, (mirror ? vertCnt2.y : vertCnt2.x) - res);
+  i -= max(0.0, (mirror ? _vertCnt2.y : _vertCnt2.x) - res);
 
   // Use the direction to offset the index by one. This has the effect of flipping the winding number so
   // that it's always consistent no matter which direction the join turns.
@@ -204,11 +207,11 @@ void main() {
     float lm = sqrt(m2);
     yBasis = miter / lm;
     xBasis = dirB * vec2(yBasis.y, -yBasis.x);
-    bool isBevel = 1.0 > miterLimit * m2;
+    bool isBevel = 1.0 > _miterLimit * m2;
 
     if (mod(i, 2.0) == 0.0) {
       // Outer joint points
-      if (isRound || i != 0.0) {
+      if (roundOrCap || i != 0.0) {
         // Round joins
         float theta = -0.5 * (acos(cosB) * (clamp(i, 0.0, res) / res) - pi) * (isCap ? 2.0 : 1.0);
         xy = vec2(cos(theta), sin(theta));
@@ -216,7 +219,7 @@ void main() {
         if (isCap) {
           // A special multiplier factor for turning 3-point rounds into square caps (but leave the
           // y == 0.0 point unaffected)
-          if (xy.y > 0.001) xy *= capScale;
+          if (xy.y > 0.001) xy *= _capScale;
           lineCoord.xy = xy.yx * lineCoord.y;
         }
       } else {
@@ -229,18 +232,18 @@ void main() {
       lineCoord.y = 0.0;
 
       // Offset the center vertex position to get bevel SDF correct
-      if (isBevel && !isRound) {
+      if (isBevel && !roundOrCap) {
         xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);
       }
     }
   }
 
-  ${isEndpoints ? `float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(orientation,2.0)'};` : ''};
+  ${isEndpoints ? `float _orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(_orientation,2.0)'};` : ''};
 
   // Since we can't know the orientation of end caps without being told. This comes either from
   // input via the orientation property or from a uniform, assuming caps are interleaved (start,
   // end, start, end, etc.) and rendered in two passes: first starts, then ends.
-  ${isEndpoints ? `if (orientation == CAP_END) lineCoord.xy = -lineCoord.xy;` : ''}
+  ${isEndpoints ? `if (_orientation == CAP_END) lineCoord.xy = -lineCoord.xy;` : ''}
 
   // Point offset from main vertex position
   vec2 dP = mat2(xBasis, yBasis) * xy;
@@ -268,20 +271,22 @@ void main() {
       ...spec.attrs
     },
     uniforms: {
-      vertCnt2: (ctx, props) => computeCount(props),
-      capJoinRes2: (ctx, props) => [props.capRes2, props.joinRes2],
-      miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
-      orientation: regl.prop('orientation'),
-      capScale: regl.prop('capScale'),
+      ...forwardedUniforms,
+      _vertCnt2: (ctx, props) => computeCount(props),
+      _capJoinRes2: (ctx, props) => [props.capRes2, props.joinRes2],
+      _miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
+      _orientation: regl.prop('orientation'),
+      _capScale: regl.prop('capScale'),
+      _isRound: (ctx, props) => props.join === 'round',
     },
-    primitive: (ctx, props) => props.primitive || 'triangle strip',
+    primitive: 'triangle strip',
     instances: isEndpoints
       ? (ctx, props) => props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count
       : (ctx, props) => props.count - 3,
     count: (ctx, props) => {
       const count = computeCount(props);
       return 6 + (count[0] + count[1]);
-    }
+    },
+    ...forwardedCmdConfig
   });
-
 }

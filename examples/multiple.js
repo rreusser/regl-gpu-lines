@@ -1,10 +1,6 @@
 const regl = createREGL({extensions: ['ANGLE_instanced_arrays']});
 
 const drawLines = reglLines(regl, {
-  // Trigger the command to automatically insert caps at any break, signaled
-  // by a position with (w = 0)
-  insertCaps: true,
-
   vert: `
     precision highp float;
 
@@ -57,6 +53,9 @@ for (let line = 0; line < lineCount; line++) {
 
 // After this, render as normal!
 const lineData = {
+  // Trigger the command to automatically insert caps at any break, signaled by a position with (w = 0)
+  insertCaps: true,
+
   join: 'round',
   cap: 'round',
   vertexCount: positions.length,

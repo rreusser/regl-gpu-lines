@@ -17,15 +17,15 @@
 import reglLines from 'regl-gpu-lines';
 ```
 
-## `reglLines(regl, {vert, frag, insertCaps, debug, ...})`
+## `reglLines(regl, {vert, frag, reorder, debug, ...})`
 
 Instantiate a drawing command using the specified shaders.
 
 - `regl`: [regl](https://github.com/regl-project/regl) instance
 - `vert` (string): vertex shader, using pragma specification defined below
 - `frag` (string): fragment shader
-- `debug`: Debug mode, which exposes additional properties for viewing triangle mesh
-- `insertCaps` (boolean, default: `false`) Automatically insert a cap wherever a break is encountered, signaled by a position with `w = 0` or first component `NaN`. Allows drawing lines and caps with a single draw call. *Use this option with care.* If, for example, using miter joins and round caps, then *every segment instance* will have enough points to draw two full-resolution rounded caps, even if there are no breaks and the extra vertices never actually result in valid triangles.
+- `debug`: (boolean, default: `false`) Debug mode, which exposes additional properties for viewing triangle mesh
+- `reorder`: (boolean, default: `true`) Reorder draw calls to optimize rendering. Applies only when drawing is invoked with an array of line properties, e.g. `drawLines([{...}, {...}, ...])`.
 
 Additional configuration parameters are forwarded to a `regl` command which wraps drawing.
 
@@ -86,7 +86,8 @@ Drawing is invoked by passing an object with the following optional properties t
 | `cap` | `'square'` `'round'` `'none'` | `'square'` | Type of end caps | 
 | `joinResolution` | `number` (1-20) | 8 | Number of triangles used to construct round joins | 
 | `capResolution` | `number` (1-20) | 12 | Number of triangles used to construct round end caps | 
-| `miterLimit` | `number` | 4 | Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins. |
+| `insertCaps` | `boolean` | `false` | Automatically insert caps at line breaks |
+| `miterLimit` | `number` | 4 | Maximum extension of miter joins, in multiples of line widths, before they fall back to bevel joins |
 | `vertexCount` | `number` | 0 | Total number of line vertices |
 | `endpointCount` | `number` | 0 | Number end caps drawn (number of endpoint vertices divided by three) |
 | `vertexAttribues` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
@@ -96,3 +97,4 @@ Drawing is invoked by passing an object with the following optional properties t
 - `endpointAttributes` requires all attributes used in the computation of `orientation`, but `vertexAttributes` may exclude them.
 - If either `endpointAttributes` or `vertexAttributes` is excluded, the corresponding geometry will not be rendered
 - You must at least provide regl buffer objects, but in the style of regl, you may either just provide a buffer, or you may provide an object of the form `{buffer, stride, offset, divisor, type}`.
+- `insertCaps` automatically insert a cap wherever a break is encountered, signaled by a position with `w = 0` or first component `NaN`. Allows drawing lines and caps with a single draw call. *Use this option with care.* To avoid wasting vertices on degenerate triangles when caps are not drawn, use `capResolution ≤ joinResolution`.

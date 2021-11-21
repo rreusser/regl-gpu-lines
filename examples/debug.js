@@ -52,8 +52,8 @@ const reglProxy = createREGLProxy(regl, function (args) {
 
 const state = wrapGUI(State({
   lineConfig: State.Section({
-    capResolution: State.Slider(8, {min: 1, max: 30, step: 1}),
-    joinResolution: State.Slider(2, {min: 1, max: 30, step: 1}),
+    capResolution: State.Slider(8, {min: 1, max: 32, step: 1}),
+    joinResolution: State.Slider(2, {min: 1, max: 32, step: 1}),
     cap: State.Select('round', {options: ['round', 'square', 'none']}),
     join: State.Select('round', {options: ['round', 'miter', 'bevel']}),
     miterLimit: State.Slider(1.7, {min: 1, max: 8, step: 0.01}),
@@ -155,15 +155,13 @@ const commandCache = {};
 function getDrawLines(config) {
   config = Object.assign({}, {
     primitive: 'triangle strip',
-    insertCaps: true
   }, config);
 
-  const {primitive, insertCaps} = config;
+  const {primitive} = config;
   const cacheKey = JSON.stringify(config);
 
   if (!commandCache[cacheKey]) {
     commandCache[cacheKey] = reglLines(reglProxy, {
-      insertCaps,
       debug: true,
       vert: `
         precision highp float;
@@ -338,9 +336,7 @@ function draw () {
   regl.poll();
   regl.clear({color: [0.2, 0.2, 0.2, 1], depth: 1});
 
-  getDrawLines({
-    insertCaps: state.lineConfig.insertCaps,
-  })({
+  getDrawLines({})({
     ...lineData,
     ...state.lineConfig,
     ...state,
@@ -352,10 +348,7 @@ function draw () {
   });
 
   if (state.rendering.labelPoints) {
-    getDrawLines({
-      insertCaps: state.lineConfig.insertCaps,
-      primitive: 'points'
-    })({
+    getDrawLines({primitive: 'points'})({
       ...lineData,
       ...state.lineConfig,
       ...state,

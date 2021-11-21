@@ -60,6 +60,7 @@ See [API documentation](./API.md).
 - [Line border](https://rreusser.github.io/regl-gpu-lines/docs/border.html): Use `lineCoord` to draw a SDF line border
 - [Interleaved attributes](https://rreusser.github.io/regl-gpu-lines/docs/strided.html): Instead of a [regl buffer](https://github.com/regl-project/regl/blob/master/API.md#buffers), you can pass a [regl-style attribute description](https://github.com/regl-project/regl/blob/master/API.md#attributes) with `buffer`, `stride`, `offset`, and `divisor` properties in order to used interleaved, packed attribute data.
 - [Torus knot](https://rreusser.github.io/regl-gpu-lines/docs/knot.html): A [torus knot](https://en.wikipedia.org/wiki/Torus_knot) with layering which can be difficult to draw with SVG.
+- [Batched rendering](https://rreusser.github.io/regl-gpu-lines/docs/batching.html): Illustrates how to take advantage of `reorder: true` to reduce shader program changes from, in this example, thirty to four.
 - [Debug page](https://rreusser.github.io/regl-gpu-lines/docs/debug-view.html): Shows how to use `instanceID` and `triStripCoord` varyings to draw a wireframe
 - [Full debug view](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): A page for exploring all the bells and whistles
 - [GPGPU Strange Attractors](https://observablehq.com/d/ab6cd8bb0137889c): Feed a GPU particle simulation from texture data directly into line rendering
