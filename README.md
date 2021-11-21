@@ -18,6 +18,8 @@ Architecturally this module has two goals:
 - **Data may live on the GPU.**
 - **Minimize unnecessary constraints.**
 
+To accomplish this, it implements a simple pragma-based interface for specifying how your attributes connect to line properties and to varyings.
+
 Features:
 
 - Configure your own attributes, varyings, uniforms, and shaders

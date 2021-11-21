@@ -41,7 +41,7 @@ The vertex shader is parsed for GLSL `#pragma` directives which define data flow
 - `attributeName`: name of attribute provided to draw command
 
 ### Vertex position *(required)*
-A fixed property which defines computation of the `vec4` position of line vertices. Perspective division is performed automatically. Signal line breaks by returning a \`vec4` with `w = 0.0` or position.x `NaN`. Unless using `insertCaps`, it is up to you to supply the corresponding endpoint data wherever this is a break.
+A fixed property which defines computation of the `vec4` position of line vertices. Perspective division is performed automatically. Signal line breaks by returning a `vec4` with `w = 0.0` or position.x `NaN`. Unless using `insertCaps`, it is up to you to supply the corresponding endpoint data wherever this is a break.
 #### `#pragma lines: position = <functionName>(<attributeList>)`
 - `functionName`: name of GLSL function which returns the `vec4`-valued position of the vertex
 - `attributeList`: comma-separated list of vertex attribute names passed to the function
@@ -53,9 +53,9 @@ A fixed property which defines the width at a given vertex, measured in device p
 - `attributeList`: comman-separated list of vertex attributes passed to the function
 
 ### End cap orientation *(optional)*
-A fixed property which defines whether a given line cap is at the beginning or end of a line. If `orientation` is not provided, then end caps are rendered in two passes, first starting line caps, then ending line caps. If provided, then end caps are rendered in a single pass. (This complication results from the fact that there's no mechanism to tell which instance we're on, for example with `gl\_InstanceID` which does not exist in GLSL ES 1.00.)
+A fixed property which defines whether a given line cap is at the beginning or end of a line. If `orientation` is not provided, then end caps are rendered in two passes, first starting line caps, then ending line caps. If provided, then end caps are rendered in a single pass. (This complication results from the fact that there's no mechanism to tell which instance we're on, for example with `gl_InstanceID` which does not exist in GLSL ES 1.00.)
 #### `#pragma lines: orientation = <functionName>(<attributeList>)`
-- `functionName`: name of GLSL function which returns a `float`, `reglLines.START\_CAP` (`0.0`) if the cap is a start cap and `reglLines.END\_CAP` (`1.0`) if an end cap.
+- `functionName`: name of GLSL function which returns a `float`, `reglLines.START_CAP` (`0.0`) if the cap is a start cap and `reglLines.END_CAP` (`1.0`) if an end cap.
 - `attributeList`: command-separated list of vertex attributes passed to the function. Attributes consumed by a `orientation` function advance at a rate of one stride per instance.
 
 ### Varyings *(optional)*
