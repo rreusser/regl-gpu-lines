@@ -4,7 +4,7 @@
 
 # regl-gpu-lines
 
-> Pure GPU instanced, screen-projected lines for [regl](https://github.com/regl-project/regl)
+> Pure GPU, instanced, screen-projected lines for [regl](https://github.com/regl-project/regl)
 
 [API documentation &rarr;](./API.md)
 
