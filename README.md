@@ -24,18 +24,17 @@ Features:
 
 - Configure your own attributes, varyings, uniforms, and shaders
 - Compute positions and line width in the vertex shader
-- Round joins, bevels, and miters (with miter limit)
-- Square and rounded end caps
-- Optional automatic end cap insertion, using `position.w == 0.0` or alternatively `position.x` NaN to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
+- GPU computation of round joins, bevels, and miters (with miter limit), and square and rounded end caps.
+- Optional end cap insertion, using `position.w == 0.0` or alternatively `position.x` NaN to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
 - Regl-compatible attribute specification with strides and offsets
-- Pass additional regl configuration to the constructor
+- Forward additional regl configuration to the draw command
 - 11.8 KB minified, 4.8 KB gzipped. No dependencies (apart from usage together with regl, which I'd like to [consider removing](https://github.com/rreusser/regl-gpu-lines/issues/7))
 
 Limitations:
 
 - `ANGLE_instanced_arrays` extension is required (which ought to be [universally supported](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#understand_extension_availability))
 - Width is best varied slowly as line joins to not take into account varying width
-- Automatic end cap insertion may waste vertices, as every segment then needs enough vertices to potentially draw two end caps.
+- Automatic end cap insertion wastes vertices when the cap resolution exceeds the join resolution
 - Line dashes are not built-in, but you can easily build them yourself
 
 ## Install
