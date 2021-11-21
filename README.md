@@ -23,7 +23,7 @@ To accomplish this, it implements a simple pragma-based interface for specifying
 Features:
 
 - Configure your own attributes, varyings, uniforms, and shaders
-- Compute positions and line width in the vertex shader
+- Compute position and line width in the vertex shader
 - GPU computation of round joins, bevels, and miters (with miter limit), and square and rounded end caps.
 - Optional end cap insertion, using `position.w == 0.0` or alternatively `position.x` NaN to signal a line break (see: [docs/multiple.html](https://rreusser.github.io/regl-gpu-lines/docs/multiple.html)) 
 - Regl-compatible attribute specification with strides and offsets
