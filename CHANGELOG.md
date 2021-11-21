@@ -1,3 +1,11 @@
+## 2.0.0
+
+## Features
+
+- Moves `insertCaps` from a compile-time to a runtime configuration option.
+- Lazily instantiates the four potential draw command variations (endpoints vs. interior segments, and insert caps true vs. false).
+- Adds `reorder` as a compile-time option. When true (default: true), it internally reorders draw calls for arrays of line props (`drawLines([{...}, {...}, ...])`) to avoid repeatedly changing the shader program.
+
 ## 1.1.0
 
 ## Features

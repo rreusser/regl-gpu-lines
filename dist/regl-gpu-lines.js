@@ -16,16 +16,7 @@
   const ORIENTATION$2 = require$$5;
   var drawSegment = createDrawSegmentCommand;
 
-  function createDrawSegmentCommand(isRound, isEndpoints, {
-    regl,
-    meta,
-    frag,
-    segmentSpec,
-    endpointSpec,
-    indexAttributes,
-    insertCaps,
-    debug
-  }) {
+  function createDrawSegmentCommand(regl, isEndpoints, insertCaps, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug) {
     const spec = isEndpoints ? endpointSpec : segmentSpec;
     const verts = ['B', 'C', 'D'];
     if (!isEndpoints) verts.unshift('A');
@@ -46,10 +37,11 @@ ${spec.glsl}
 attribute float index;
 ${debug ? 'attribute float debugInstanceID;' : ''}
 
-uniform vec2 vertCnt2, capJoinRes2;
-uniform vec2 resolution, capScale;
-uniform float miterLimit;
-${meta.orientation || !isEndpoints ? '' : 'uniform float orientation;'}
+uniform bool _isRound;
+uniform vec2 _vertCnt2, _capJoinRes2;
+uniform vec2 resolution, _capScale;
+uniform float _miterLimit;
+${meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;'}
 
 varying vec3 lineCoord;
 ${debug ? 'varying vec2 triStripCoord;' : ''}
@@ -68,7 +60,6 @@ bool invalid(vec4 p) {
 void main() {
   const float pi = 3.141592653589793;
 
-  bool isRound = ${isRound ? 'true' : 'false'};
   ${debug ? 'vertexIndex = index;' : ''}
   lineCoord = vec3(0);
 
@@ -88,7 +79,7 @@ void main() {
   // Vertex count for each part (first half of join, second (mirrored) half). Note that not all of
   // these vertices may be used, for example if we have enough for a round cap but only draw a miter
   // join.
-  vec2 v = vertCnt2 + 3.0;
+  vec2 v = _vertCnt2 + 3.0;
 
   // Total vertex count
   float N = dot(v, vec2(1));
@@ -125,7 +116,7 @@ void main() {
   // degenerate (no turn) join, depending on whether we're inserting caps or just leaving ends hanging.
   if (aInvalid) { ${insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;'} }
   if (dInvalid) { ${insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;'} }
-  isRound = isRound || isCap;
+  bool roundOrCap = _isRound || isCap;
 
   // TODO: swap inputs rather than computing both and discarding one
   float width = mirror ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
@@ -170,11 +161,11 @@ void main() {
 
   // Decide the resolution of whichever feature we're drawing. n is twice the number of points used since
   // that's the only form in which we use this number.
-  float res = (isCap ? capJoinRes2.x : capJoinRes2.y);
+  float res = (isCap ? _capJoinRes2.x : _capJoinRes2.y);
 
   // Shift the index to send unused vertices to an index below zero, which will then just get clamped to
   // zero and result in repeated points, i.e. degenerate triangles.
-  i -= max(0.0, (mirror ? vertCnt2.y : vertCnt2.x) - res);
+  i -= max(0.0, (mirror ? _vertCnt2.y : _vertCnt2.x) - res);
 
   // Use the direction to offset the index by one. This has the effect of flipping the winding number so
   // that it's always consistent no matter which direction the join turns.
@@ -208,11 +199,11 @@ void main() {
     float lm = sqrt(m2);
     yBasis = miter / lm;
     xBasis = dirB * vec2(yBasis.y, -yBasis.x);
-    bool isBevel = 1.0 > miterLimit * m2;
+    bool isBevel = 1.0 > _miterLimit * m2;
 
     if (mod(i, 2.0) == 0.0) {
       // Outer joint points
-      if (isRound || i != 0.0) {
+      if (roundOrCap || i != 0.0) {
         // Round joins
         float theta = -0.5 * (acos(cosB) * (clamp(i, 0.0, res) / res) - pi) * (isCap ? 2.0 : 1.0);
         xy = vec2(cos(theta), sin(theta));
@@ -220,7 +211,7 @@ void main() {
         if (isCap) {
           // A special multiplier factor for turning 3-point rounds into square caps (but leave the
           // y == 0.0 point unaffected)
-          if (xy.y > 0.001) xy *= capScale;
+          if (xy.y > 0.001) xy *= _capScale;
           lineCoord.xy = xy.yx * lineCoord.y;
         }
       } else {
@@ -233,18 +224,18 @@ void main() {
       lineCoord.y = 0.0;
 
       // Offset the center vertex position to get bevel SDF correct
-      if (isBevel && !isRound) {
+      if (isBevel && !roundOrCap) {
         xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);
       }
     }
   }
 
-  ${isEndpoints ? `float orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(orientation,2.0)'};` : ''};
+  ${isEndpoints ? `float _orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(_orientation,2.0)'};` : ''};
 
   // Since we can't know the orientation of end caps without being told. This comes either from
   // input via the orientation property or from a uniform, assuming caps are interleaved (start,
   // end, start, end, etc.) and rendered in two passes: first starts, then ends.
-  ${isEndpoints ? `if (orientation == CAP_END) lineCoord.xy = -lineCoord.xy;` : ''}
+  ${isEndpoints ? `if (_orientation == CAP_END) lineCoord.xy = -lineCoord.xy;` : ''}
 
   // Point offset from main vertex position
   vec2 dP = mat2(xBasis, yBasis) * xy;
@@ -270,19 +261,21 @@ void main() {
       attributes: { ...indexAttributes,
         ...spec.attrs
       },
-      uniforms: {
-        vertCnt2: (ctx, props) => computeCount(props),
-        capJoinRes2: (ctx, props) => [props.capRes2, props.joinRes2],
-        miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
-        orientation: regl.prop('orientation'),
-        capScale: regl.prop('capScale')
+      uniforms: { ...forwardedUniforms,
+        _vertCnt2: (ctx, props) => computeCount(props),
+        _capJoinRes2: (ctx, props) => [props.capRes2, props.joinRes2],
+        _miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
+        _orientation: regl.prop('orientation'),
+        _capScale: regl.prop('capScale'),
+        _isRound: (ctx, props) => props.join === 'round'
       },
-      primitive: (ctx, props) => props.primitive || 'triangle strip',
+      primitive: 'triangle strip',
       instances: isEndpoints ? (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count : (ctx, props) => props.count - 3,
       count: (ctx, props) => {
         const count = computeCount(props);
         return 6 + (count[0] + count[1]);
-      }
+      },
+      ...forwardedCmdConfig
     });
   }
 
@@ -645,29 +638,38 @@ void main() {
   var src = reglLines;
   reglLines.CAP_START = ORIENTATION.CAP_START;
   reglLines.CAP_END = ORIENTATION.CAP_END;
-  const FORBIDDEN_REGL_PROPS = new Set(['count', 'instances', 'attributes', 'elements']);
+  const FORBIDDEN_REGL_PROPS = new Set(['attributes', 'elements']);
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
   const VALID_CAP_TYPES = ['round', 'square', 'none'];
   const ROUND_CAP_SCALE = [1, 1];
-  const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
-  const MAX_ROUND_JOIN_RESOLUTION = 30;
+  const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)]; // Max possible is 62, but we probably don't need that many
+
+  const MAX_ROUND_JOIN_RESOLUTION = 32;
   const MAX_DEBUG_VERTICES = 16384;
+  const DRAWCONFIG_IS_ENDPOINTS = 1 << 0;
+  const DRAWCONFIG_INSERT_CAPS = 1 << 1;
+
+  function getCacheKey(isEndpoints, insertCaps) {
+    return (isEndpoints ? DRAWCONFIG_IS_ENDPOINTS : 0) + (insertCaps ? DRAWCONFIG_INSERT_CAPS : 0);
+  }
 
   function reglLines(regl, opts = {}) {
     const {
       vert = null,
       frag = null,
       debug = false,
-      insertCaps = false
-    } = opts; // Forward all regl parameters except for vert and frag along to regl.
+      reorder = false
+    } = opts;
+    if (!regl._gpuLinesCache) regl._gpuLinesCache = {};
+    const cache = regl._gpuLinesCache; // Forward all regl parameters except for vert and frag and a couple forbidden parameters along to regl.
 
     const forwardedCmdConfig = { ...opts
     };
+    const forwardedUniforms = opts.uniforms || {};
 
-    for (const prop of ['vert', 'frag', 'debug', 'insertCaps']) delete forwardedCmdConfig[prop];
+    for (const prop of ['vert', 'frag', 'debug', 'reorder', 'uniforms']) delete forwardedCmdConfig[prop];
 
     const forwarded = Object.keys(forwardedCmdConfig);
-    const canReorder = forwarded.length === 0;
     forwarded.forEach(fwd => {
       if (FORBIDDEN_REGL_PROPS.has(fwd)) {
         throw new Error(`Invalid parameter '${fwd}'. Parameters ${[...FORBIDDEN_REGL_PROPS].map(p => `'${p}'`).join(', ')} may not be forwarded to regl.`);
@@ -683,126 +685,156 @@ void main() {
         resolution: ctx => [ctx.viewportWidth, ctx.viewportHeight]
       }
     });
-    const userConfig = canReorder ? (props, cb) => cb() : regl(forwardedCmdConfig);
     const indexAttributes = {};
 
     if (debug) {
       // TODO: Allocate/grow lazily to avoid an arbitrary limit
+      if (!cache.debugInstanceIDBuffer) {
+        cache.debugInstanceIDBuffer = regl.buffer(new Uint16Array([...Array(MAX_DEBUG_VERTICES).keys()]));
+      }
+
       indexAttributes.debugInstanceID = {
-        buffer: regl.buffer(new Uint16Array([...Array(MAX_DEBUG_VERTICES).keys()])),
+        buffer: cache.debugInstanceIDBuffer,
         divisor: 1
       };
     }
 
-    indexAttributes.index = {
-      buffer: regl.buffer(new Int8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 6 + 4).keys()])),
-      divisor: 0
-    }; // Instantiate commands
+    if (!cache.indexBuffer) {
+      cache.indexBuffer = regl.buffer(new Uint8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()]));
+    }
 
-    const config = {
-      regl,
-      meta,
-      segmentSpec,
-      endpointSpec,
-      frag,
-      indexAttributes,
-      debug,
-      insertCaps
+    indexAttributes.index = {
+      buffer: cache.indexBuffer,
+      divisor: 0
     };
-    const drawMiterSegment = createDrawSegment(false, false, config);
-    const drawRoundedSegment = createDrawSegment(true, false, config);
-    const drawMiterCap = createDrawSegment(false, true, config);
-    const drawRoundedCap = createDrawSegment(true, true, config);
     const sanitizeJoinType = sanitizeInclusionInList('join', VALID_JOIN_TYPES, 'miter');
     const sanitizeCapType = sanitizeInclusionInList('cap', VALID_CAP_TYPES, 'square');
-    const allRoundedSegments = [];
-    const allRoundedCaps = [];
-    const allMiterSegments = [];
-    const allMiterCaps = [];
+    const drawCommands = new Map();
 
-    function flush(props) {
-      userConfig(props, () => {
-        if (allRoundedSegments.length) drawRoundedSegment(allRoundedSegments);
-        if (allMiterSegments.length) drawMiterSegment(allMiterSegments);
-        if (allRoundedCaps.length) drawRoundedCap(allRoundedCaps);
-        if (allMiterCaps.length) drawMiterCap(allMiterCaps);
-        allRoundedSegments.length = 0;
-        allMiterSegments.length = 0;
-        allRoundedCaps.length = 0;
-        allMiterCaps.length = 0;
+    function getDrawCommand(key) {
+      if (!drawCommands.has(key)) {
+        drawCommands.set(key, createDrawSegment(regl, key & DRAWCONFIG_IS_ENDPOINTS, key & DRAWCONFIG_INSERT_CAPS, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug));
+      }
+
+      return drawCommands.get(key);
+    }
+
+    const drawQueue = [];
+
+    function queue(...propsList) {
+      drawQueue.push.apply(drawQueue, propsList);
+    }
+
+    function flushDrawQueue() {
+      // Sort by the identifier of the draw command so group together commands using the same shader
+      if (reorder) drawQueue.sort(function (a, b) {
+        return a.key - b.key;
       });
+      let pos = 0;
+      const groupedProps = []; // Iterate through the queue. Group props until the command changes, then draw and continue
+
+      while (pos < drawQueue.length) {
+        const {
+          key,
+          props
+        } = drawQueue[pos];
+        groupedProps.push(props);
+
+        while (++pos < drawQueue.length && drawQueue[pos].key === key) {
+          groupedProps.push(drawQueue[pos].props);
+        } // console.log('isEndpoints:', !!(DRAWCONFIG_IS_ENDPOINTS & key), 'insertCaps:', !!(DRAWCONFIG_INSERT_CAPS & key), 'batching:', groupedProps.length);
+
+
+        getDrawCommand(key)(groupedProps);
+        groupedProps.length = 0;
+      }
+
+      drawQueue.length = 0;
     }
 
     return function drawLines(props) {
       if (!props) return;
-      const isArrayProps = Array.isArray(props);
-      if (!isArrayProps) props = [props];
-      const reorder = canReorder && !isArrayProps;
+      if (!Array.isArray(props)) props = [props];
       setResolution(() => {
-        for (const lineProps of props) {
-          const joinType = sanitizeJoinType(lineProps.join);
-          const capType = sanitizeCapType(lineProps.cap);
-          let capRes2 = lineProps.capResolution === undefined ? 12 : lineProps.capResolution;
+        for (const userProps of props) {
+          const join = sanitizeJoinType(userProps.join);
+          const cap = sanitizeCapType(userProps.cap);
+          let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
 
-          if (capType === 'square') {
+          if (cap === 'square') {
             capRes2 = 3;
-          } else if (capType === 'none') {
+          } else if (cap === 'none') {
             capRes2 = 1;
           }
 
           let joinRes2 = 1;
-          if (joinType === 'round') joinRes2 = lineProps.joinResolution === undefined ? 8 : lineProps.joinResolution; // We only ever use these in doubled-up form
+
+          if (join === 'round') {
+            joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
+          } // We only ever use these in doubled-up form
+
 
           capRes2 *= 2;
           joinRes2 *= 2;
-          const miterLimit = joinType === 'bevel' ? 1 : lineProps.miterLimit === undefined ? 4 : lineProps.miterLimit;
-          const capScale = capType === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
-          const primitive = lineProps.primitive;
+          const miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
+          const capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
+          const insertCaps = !!userProps.insertCaps;
           const sharedProps = {
             joinRes2,
             capRes2,
             capScale,
-            capType,
+            join,
             miterLimit,
-            primitive
+            insertCaps
           };
 
-          if (lineProps.endpointAttributes && lineProps.endpointCount) {
+          if (userProps.endpointAttributes && userProps.endpointCount) {
             const endpointProps = {
-              buffers: sanitizeBufferInputs(meta, lineProps.endpointAttributes, true),
-              count: lineProps.endpointCount,
+              count: userProps.endpointCount,
+              ...userProps,
+              buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
               ...sharedProps
             };
-            const endpointDst = joinType === 'round' ? allRoundedCaps : allMiterCaps;
+            let key = getCacheKey(true, insertCaps);
 
             if (meta.orientation) {
-              endpointDst.push({ ...endpointProps,
-                splitCaps: false
+              queue({
+                key,
+                props: { ...endpointProps,
+                  splitCaps: false
+                }
               });
             } else {
-              endpointDst.push({ ...endpointProps,
-                orientation: ORIENTATION.CAP_START,
-                splitCaps: true
-              }, { ...endpointProps,
-                orientation: ORIENTATION.CAP_END,
-                splitCaps: true
+              queue({
+                key,
+                props: { ...endpointProps,
+                  orientation: ORIENTATION.CAP_START,
+                  splitCaps: true
+                }
+              }, {
+                key,
+                props: { ...endpointProps,
+                  orientation: ORIENTATION.CAP_END,
+                  splitCaps: true
+                }
               });
             }
           }
 
-          if (lineProps.vertexAttributes && lineProps.vertexCount) {
-            const segmentDst = joinType === 'round' ? allRoundedSegments : allMiterSegments;
-            segmentDst.push({
-              buffers: sanitizeBufferInputs(meta, lineProps.vertexAttributes, false),
-              count: lineProps.vertexCount,
-              ...sharedProps
+          if (userProps.vertexAttributes && userProps.vertexCount) {
+            queue({
+              key: getCacheKey(false, insertCaps),
+              props: {
+                count: userProps.vertexCount,
+                ...userProps,
+                buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false),
+                ...sharedProps
+              }
             });
           }
-
-          if (!reorder) flush(lineProps);
         }
 
-        if (reorder) flush(props);
+        flushDrawQueue();
       });
     };
   }
