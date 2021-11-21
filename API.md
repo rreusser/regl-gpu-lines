@@ -38,11 +38,12 @@ The vertex shader is parsed for GLSL `#pragma` directives which define data flow
 ---
 
 ### Vertex attributes *(at least one required)*
+
+Attributes represent per-vertex data. This module internally decides how many times to pass each attribute—between one and four times and each time with a different offset, and depending on its required usage in computing various properties.
+
 #### `#pragma lines: attribute <dataType> <attributeName>`
 - `dataType`: one of `float`, `vec2`, `vec3`, `vec4`
 - `attributeName`: name of attribute provided to draw command
-
-Attributes represent per-vertex data. This module internally decides how many times to pass each attribute—between one and four times—each time with a different offset, and depending on its required usage in computing various properties.
 
 #### Example
 
@@ -93,7 +94,9 @@ float computeWidth(float width) { return width; }
 #### `#pragma lines: orientation = <functionName>(<attributeList>)`
 - `functionName`: name of GLSL function which returns a `float`, `reglLines.START_CAP` (`0.0`) if the cap is a start cap and `reglLines.END_CAP` (`1.0`) if an end cap.
 - `attributeList`: command-separated list of vertex attributes passed to the function. Attributes consumed by a `orientation` function advance at a rate of one stride per instance.
-A fixed property which defines whether a given line cap is at the beginning or end of a line. If `orientation` is not provided, then end caps are rendered in two passes, first starting line caps, then ending line caps. If provided, then end caps are rendered in a single pass. (This complication results from the fact that there's no mechanism to tell which instance we're on, for example with `gl_InstanceID` which does not exist in GLSL ES 1.00.)
+A fixed property which defines whether a given line cap is at the beginning or end of a line.
+
+If `orientation` is not provided, then end caps are rendered in two passes, first starting line caps, then ending line caps. If provided, then all caps are rendered in a single pass. (This complication results from the fact that there's no mechanism to distinguish the direction of end caps and get the `lineCoord` varying oriented correctly since GLSL ES 1.00 does not support `gl_InstanceID`.)
 
 #### Example
 
@@ -116,14 +119,16 @@ float getOrientation(float orientation) { return orientation; }
 
 #### Example
 
+It may make sense to extrapolate distance along the line, for example, to continue dashes on extrapolated portions of end caps and joins, while it may not make sense to extrapolate colors in such regions.
+
 ```glsl
 #pragma lines: attribute vec3 color
-#pragma lines: attribute vec3 position
 #pragma lines: varying vec3 color = getColor(color)
-#pragma lines: extrapolate varying vec3 position = getPosition(position)
-
 vec3 getColor(vec3 color) { return color; }
-vec3 getPosition(vec3 position) { return position; }
+
+#pragma lines: attribute float distance
+#pragma lines: extrapolate varying float distance = getDistance(distance)
+float getDistance(float distance) { return distance; }
 ```
 
 ---
@@ -156,10 +161,10 @@ Drawing is invoked by passing an object with the following optional properties t
 #### Example
 
 ```js
+// Be careful not to instantiate buffers on every draw call
 const positions = [[-1, -1], [-0.5, 0.5], [0, -0.5], [0.5, 0.5], [1, -1]];
 const xy = regl.buffer(positions);
 const endpointXY = regl.buffer([positions.slice(0, 3), positions.slice(-3).reverse()])
-```
 
 drawLines({
   join: 'miter',
