@@ -220,13 +220,13 @@
     };
     return regl(_objectSpread2({
       // Insert user GLSL at the top
-      vert: "".concat(meta.glsl, "\nconst float CAP_START = ").concat(ORIENTATION$2.CAP_START, ".0;\nconst float CAP_END = ").concat(ORIENTATION$2.CAP_END, ".0;\n\n// Attribute specification\n").concat(spec.glsl, "\n\nattribute float index;\n").concat(debug ? 'attribute float debugInstanceID;' : '', "\n\nuniform bool _isRound;\nuniform vec2 _vertCnt2, _capJoinRes2;\nuniform vec2 resolution, _capScale;\nuniform float _miterLimit;\n").concat(meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;', "\n\nvarying vec3 lineCoord;\n").concat(debug ? 'varying vec2 triStripCoord;' : '', "\n").concat(debug ? 'varying float instanceID;' : '', "\n").concat(debug ? 'varying float vertexIndex;' : '', "\n\n// This turns out not to work very well\nbool isnan(float val) {\n  return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;\n}\n\nbool invalid(vec4 p) {\n  return p.w == 0.0 || isnan(p.x);\n}\n\nvoid main() {\n  const float pi = 3.141592653589793;\n\n  ").concat(debug ? 'vertexIndex = index;' : '', "\n  lineCoord = vec3(0);\n\n  ").concat(debug ? "instanceID = ".concat(isEndpoints ? '-1.0' : 'debugInstanceID', ";") : '', "\n  ").concat(debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : '', "\n\n  ").concat(verts.map(function (vert) {
+      vert: "".concat(meta.glsl, "\nconst float CAP_START = ").concat(ORIENTATION$2.CAP_START, ".0;\nconst float CAP_END = ").concat(ORIENTATION$2.CAP_END, ".0;\n\n// Attribute specification\n").concat(spec.glsl, "\n\nattribute float index;\n").concat(debug ? 'attribute float debugInstanceID;' : '', "\n\nuniform bool _isRound;\nuniform vec2 _vertCnt2, _capJoinRes2;\nuniform vec2 _resolution, _capScale;\nuniform float _miterLimit;\n").concat(meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;', "\n\nvarying vec3 lineCoord;\n").concat(debug ? 'varying vec2 triStripCoord;' : '', "\n").concat(debug ? 'varying float instanceID;' : '', "\n").concat(debug ? 'varying float vertexIndex;' : '', "\n\n// This turns out not to work very well\nbool isnan(float val) {\n  return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;\n}\n\nbool invalid(vec4 p) {\n  return p.w == 0.0 || isnan(p.x);\n}\n\nvoid main() {\n  const float pi = 3.141592653589793;\n\n  ").concat(debug ? 'vertexIndex = index;' : '', "\n  lineCoord = vec3(0);\n\n  ").concat(debug ? "instanceID = ".concat(isEndpoints ? '-1.0' : 'debugInstanceID', ";") : '', "\n  ").concat(debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : '', "\n\n  ").concat(verts.map(function (vert) {
         return "vec4 p".concat(vert, " = ").concat(meta.position.generate(vert), ";");
       }).join('\n'), "\n\n  // A sensible default for early returns\n  gl_Position = pB;\n\n  bool aInvalid = ").concat(isEndpoints ? 'false' : 'invalid(pA)', ";\n  bool bInvalid = invalid(pB);\n  bool cInvalid = invalid(pC);\n  bool dInvalid = invalid(pD);\n\n  // Vertex count for each part (first half of join, second (mirrored) half). Note that not all of\n  // these vertices may be used, for example if we have enough for a round cap but only draw a miter\n  // join.\n  vec2 v = _vertCnt2 + 3.0;\n\n  // Total vertex count\n  float N = dot(v, vec2(1));\n\n  // If we're past the first half-join and half of the segment, then we swap all vertices and start\n  // over from the opposite end.\n  bool mirror = index >= v.x;\n\n  // When rendering dedicated endoints, this allows us to insert an end cap *alone* (without the attached\n  // segment and join)\n  ").concat(isEndpoints ? "if (dInvalid && mirror) return;" : '', "\n\n  // Convert to screen-pixel coordinates\n  // Save w so we can perspective re-multiply at the end to get varyings depth-correct\n  float pw = mirror ? pC.w : pB.w;\n  ").concat(verts.map(function (v) {
-        return "p".concat(v, " = vec4(vec3(p").concat(v, ".xy * resolution, p").concat(v, ".z) / p").concat(v, ".w, 1);");
+        return "p".concat(v, " = vec4(vec3(p").concat(v, ".xy * _resolution, p").concat(v, ".z) / p").concat(v, ".w, 1);");
       }).join('\n'), "\n\n  // If it's a cap, mirror A back onto C to accomplish a round\n  ").concat(isEndpoints ? "vec4 pA = pC;" : '', "\n\n  // Reject if invalid or if outside viewing planes\n  if (bInvalid || cInvalid || max(abs(pB.z), abs(pC.z)) > 1.0) return;\n\n  // Swap everything computed so far if computing mirrored half\n  if (mirror) {\n    vec4 vTmp = pC; pC = pB; pB = vTmp;\n    vTmp = pD; pD = pA; pA = vTmp;\n    bool bTmp = dInvalid; dInvalid = aInvalid; aInvalid = bTmp;\n  }\n\n  ").concat(isEndpoints ? "bool isCap = !mirror;" : "".concat(insertCaps ? '' : 'const ', "bool isCap = false"), ";\n\n  // Either flip A onto C (and D onto B) to produce a 180 degree-turn cap, or extrapolate to produce a\n  // degenerate (no turn) join, depending on whether we're inserting caps or just leaving ends hanging.\n  if (aInvalid) { ").concat(insertCaps ? 'pA = pC; isCap = true;' : 'pA = 2.0 * pB - pC;', " }\n  if (dInvalid) { ").concat(insertCaps ? 'pD = pB;' : 'pD = 2.0 * pC - pB;', " }\n  bool roundOrCap = _isRound || isCap;\n\n  // TODO: swap inputs rather than computing both and discarding one\n  float width = mirror ? ").concat(meta.width.generate('C'), " : ").concat(meta.width.generate('B'), ";\n\n  // Tangent and normal vectors\n  vec2 tBC = pC.xy - pB.xy;\n  float lBC = length(tBC);\n  tBC /= lBC;\n  vec2 nBC = vec2(-tBC.y, tBC.x);\n\n  vec2 tAB = pB.xy - pA.xy;\n  float lAB = length(tAB);\n  if (lAB > 0.0) tAB /= lAB;\n  vec2 nAB = vec2(-tAB.y, tAB.x);\n\n  vec2 tCD = pD.xy - pC.xy;\n  float lCD = length(tCD);\n  if (lCD > 0.0) tCD /= lCD;\n  vec2 nCD = vec2(-tCD.y, tCD.x);\n\n  // Clamp for safety, since we take the arccos\n  float cosB = clamp(dot(tAB, tBC), -1.0, 1.0);\n\n  // This section is somewhat fragile. When lines are collinear, signs flip randomly and break orientation\n  // of the middle segment. The fix appears straightforward, but this took a few hours to get right.\n  const float tol = 1e-4;\n  float mirrorSign = mirror ? -1.0 : 1.0;\n  float dirB = -dot(tBC, nAB);\n  float dirC = dot(tBC, nCD);\n  bool bCollinear = abs(dirB) < tol;\n  bool cCollinear = abs(dirC) < tol;\n  bool bIsHairpin = bCollinear && cosB < 0.0;\n  // bool cIsHairpin = cCollinear && dot(tBC, tCD) < 0.0;\n  dirB = bCollinear ? -mirrorSign : sign(dirB);\n  dirC = cCollinear ? -mirrorSign : sign(dirC);\n\n  vec2 miter = bIsHairpin ? -tBC : 0.5 * (nAB + nBC) * dirB;\n\n  // Compute our primary \"join index\", that is, the index starting at the very first point of the join.\n  // The second half of the triangle strip instance is just the first, reversed, and with vertices swapped!\n  float i = mirror ? N - index : index;\n\n  // Decide the resolution of whichever feature we're drawing. n is twice the number of points used since\n  // that's the only form in which we use this number.\n  float res = (isCap ? _capJoinRes2.x : _capJoinRes2.y);\n\n  // Shift the index to send unused vertices to an index below zero, which will then just get clamped to\n  // zero and result in repeated points, i.e. degenerate triangles.\n  i -= max(0.0, (mirror ? _vertCnt2.y : _vertCnt2.x) - res);\n\n  // Use the direction to offset the index by one. This has the effect of flipping the winding number so\n  // that it's always consistent no matter which direction the join turns.\n  i += (dirB < 0.0 ? -1.0 : 0.0);\n\n  // Vertices of the second (mirrored) half of the join are offset by one to get it to connect correctly\n  // in the middle, where the mirrored and unmirrored halves meet.\n  i -= mirror ? 1.0 : 0.0;\n\n  // Clamp to zero and repeat unused excess vertices.\n  i = max(0.0, i);\n\n  // Start with a default basis pointing along the segment with normal vector outward\n  vec2 xBasis = tBC;\n  vec2 yBasis = nBC * dirB;\n\n  // Default point is 0 along the segment, 1 (width unit) normal to it\n  vec2 xy = vec2(0);\n\n  lineCoord.y = dirB * mirrorSign;\n\n  if (i == res + 1.0) {\n    // pick off this one specific index to be the interior miter point\n    // If not div-by-zero, then sinB / (1 + cosB)\n    float m = cosB > -0.9999 ? (tAB.x * tBC.y - tAB.y * tBC.x) / (1.0 + cosB) : 0.0;\n    xy = vec2(min(abs(m), min(lBC, lAB) / width), -1);\n    lineCoord.y = -lineCoord.y;\n  } else {\n    // Draw half of a join\n    float m2 = dot(miter, miter);\n    float lm = sqrt(m2);\n    yBasis = miter / lm;\n    xBasis = dirB * vec2(yBasis.y, -yBasis.x);\n    bool isBevel = 1.0 > _miterLimit * m2;\n\n    if (mod(i, 2.0) == 0.0) {\n      // Outer joint points\n      if (roundOrCap || i != 0.0) {\n        // Round joins\n        float theta = -0.5 * (acos(cosB) * (clamp(i, 0.0, res) / res) - pi) * (isCap ? 2.0 : 1.0);\n        xy = vec2(cos(theta), sin(theta));\n\n        if (isCap) {\n          // A special multiplier factor for turning 3-point rounds into square caps (but leave the\n          // y == 0.0 point unaffected)\n          if (xy.y > 0.001) xy *= _capScale;\n          lineCoord.xy = xy.yx * lineCoord.y;\n        }\n      } else {\n        // Miter joins\n        yBasis = bIsHairpin ? vec2(0) : miter;\n        xy.y = isBevel ? 1.0 : 1.0 / m2;\n      }\n    } else {\n      // Center of the fan\n      lineCoord.y = 0.0;\n\n      // Offset the center vertex position to get bevel SDF correct\n      if (isBevel && !roundOrCap) {\n        xy.y = -1.0 + sqrt((1.0 + cosB) * 0.5);\n      }\n    }\n  }\n\n  ").concat(isEndpoints ? "float _orientation = ".concat(meta.orientation ? meta.orientation.generate('') : 'mod(_orientation,2.0)', ";") : '', ";\n\n  // Since we can't know the orientation of end caps without being told. This comes either from\n  // input via the orientation property or from a uniform, assuming caps are interleaved (start,\n  // end, start, end, etc.) and rendered in two passes: first starts, then ends.\n  ").concat(isEndpoints ? "if (_orientation == CAP_END) lineCoord.xy = -lineCoord.xy;" : '', "\n\n  // Point offset from main vertex position\n  vec2 dP = mat2(xBasis, yBasis) * xy;\n\n  // Dot with the tangent to account for dashes. Note that by putting this in *one place*, dashes\n  // should always be correct without having to compute a unique correction for every point.\n  float dx = dot(dP, tBC) * mirrorSign;\n\n  // Interpolant: zero for using B, 1 for using C\n  float useC = (mirror ? 1.0 : 0.0) + dx * (width / lBC);\n\n  lineCoord.z = useC < 0.0 || useC > 1.0 ? 1.0 : 0.0;\n\n  // The varying generation code handles clamping, if needed\n  ").concat(_toConsumableArray(meta.varyings.values()).map(function (varying) {
         return varying.generate('useC', 'B', 'C');
-      }).join('\n'), "\n\n  gl_Position = pB;\n  gl_Position.xy += width * dP;\n  gl_Position.xy /= resolution;\n  gl_Position *= pw;\n}"),
+      }).join('\n'), "\n\n  gl_Position = pB;\n  gl_Position.xy += width * dP;\n  gl_Position.xy /= _resolution;\n  gl_Position *= pw;\n  ").concat(meta.postproject ? "gl_Position = ".concat(meta.postproject, "(gl_Position);") : '', "\n}"),
       frag: frag,
       attributes: _objectSpread2(_objectSpread2({}, indexAttributes), spec.attrs),
       uniforms: _objectSpread2(_objectSpread2({}, forwardedUniforms), {}, {
@@ -243,6 +243,9 @@
         _capScale: regl.prop('capScale'),
         _isRound: function _isRound(ctx, props) {
           return props.join === 'round';
+        },
+        _resolution: function _resolution(ctx, props) {
+          return props.viewportSize || [ctx.viewportWidth, ctx.viewportHeight];
         }
       }),
       primitive: 'triangle strip',
@@ -271,6 +274,7 @@
   var ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
   var PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
   var VARYING_REGEX = /^\s*(?:(extrapolate)?)\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
+  var POSTPROJECT_REGEX = /^\s*postproject\s+=\s+([\w\d_]+)\s*$/i;
   var DIMENSION_GLSL_TYPES = {
     "float": 1,
     "vec2": 2,
@@ -361,12 +365,19 @@
         inputs: _inputs,
         generate: _generate
       };
+    } else if (match = pragma.match(POSTPROJECT_REGEX)) {
+      var _name3 = match[1];
+      return {
+        type: 'postproject',
+        name: _name3
+      };
     } else {
       throw new Error("Unrecognized lines pragma: \"".concat(pragma, "\""));
     }
   }
 
   function analyzePragmas(pragmas) {
+    var postproject;
     var attrs = new Map();
     var varyings = new Map();
 
@@ -383,6 +394,8 @@
           pragma.endpointUsage = ATTR_USAGE$1.NONE;
         } else if (pragma.type === 'varying') {
           varyings.set(pragma.name, pragma);
+        } else if (pragma.type === 'postproject') {
+          postproject = pragma.name;
         }
       }
     } catch (err) {
@@ -486,7 +499,8 @@
       attrs: attrs,
       width: width,
       position: position,
-      orientation: orientation
+      orientation: orientation,
+      postproject: postproject
     };
   }
 
@@ -757,13 +771,6 @@
     var meta = parseShaderPragmas(vert);
     var segmentSpec = createAttrSpec(meta, regl, false);
     var endpointSpec = createAttrSpec(meta, regl, true);
-    var setResolution = regl({
-      uniforms: {
-        resolution: function resolution(ctx) {
-          return [ctx.viewportWidth, ctx.viewportHeight];
-        }
-      }
-    });
     var indexAttributes = {};
 
     if (debug) {
@@ -837,96 +844,95 @@
     return function drawLines(props) {
       if (!props) return;
       if (!Array.isArray(props)) props = [props];
-      setResolution(function () {
-        var _iterator = _createForOfIteratorHelper(props),
-            _step;
 
-        try {
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            var userProps = _step.value;
-            var join = sanitizeJoinType(userProps.join);
-            var cap = sanitizeCapType(userProps.cap);
-            var capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
+      var _iterator = _createForOfIteratorHelper(props),
+          _step;
 
-            if (cap === 'square') {
-              capRes2 = 3;
-            } else if (cap === 'none') {
-              capRes2 = 1;
-            }
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var userProps = _step.value;
+          var join = sanitizeJoinType(userProps.join);
+          var cap = sanitizeCapType(userProps.cap);
+          var capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
 
-            var joinRes2 = 1;
+          if (cap === 'square') {
+            capRes2 = 3;
+          } else if (cap === 'none') {
+            capRes2 = 1;
+          }
 
-            if (join === 'round') {
-              joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
-            } // We only ever use these in doubled-up form
+          var joinRes2 = 1;
+
+          if (join === 'round') {
+            joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
+          } // We only ever use these in doubled-up form
 
 
-            capRes2 *= 2;
-            joinRes2 *= 2;
-            var miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
-            var capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
-            var insertCaps = !!userProps.insertCaps;
-            var sharedProps = {
-              joinRes2: joinRes2,
-              capRes2: capRes2,
-              capScale: capScale,
-              join: join,
-              miterLimit: miterLimit,
-              insertCaps: insertCaps
-            };
+          capRes2 *= 2;
+          joinRes2 *= 2;
+          var miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
+          var capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
+          var insertCaps = !!userProps.insertCaps;
+          var sharedProps = {
+            joinRes2: joinRes2,
+            capRes2: capRes2,
+            capScale: capScale,
+            join: join,
+            miterLimit: miterLimit,
+            insertCaps: insertCaps
+          };
 
-            if (userProps.endpointAttributes && userProps.endpointCount) {
-              var endpointProps = _objectSpread2(_objectSpread2({
-                count: userProps.endpointCount
-              }, userProps), {}, {
-                buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true)
-              }, sharedProps);
+          if (userProps.endpointAttributes && userProps.endpointCount) {
+            var endpointProps = _objectSpread2(_objectSpread2({
+              count: userProps.endpointCount
+            }, userProps), {}, {
+              buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true)
+            }, sharedProps);
 
-              var key = getCacheKey(true, insertCaps);
+            var key = getCacheKey(true, insertCaps);
 
-              if (meta.orientation) {
-                queue({
-                  key: key,
-                  props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
-                    splitCaps: false
-                  })
-                });
-              } else {
-                queue({
-                  key: key,
-                  props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
-                    orientation: ORIENTATION.CAP_START,
-                    splitCaps: true
-                  })
-                }, {
-                  key: key,
-                  props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
-                    orientation: ORIENTATION.CAP_END,
-                    splitCaps: true
-                  })
-                });
-              }
-            }
-
-            if (userProps.vertexAttributes && userProps.vertexCount) {
+            if (meta.orientation) {
               queue({
-                key: getCacheKey(false, insertCaps),
-                props: _objectSpread2(_objectSpread2({
-                  count: userProps.vertexCount
-                }, userProps), {}, {
-                  buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false)
-                }, sharedProps)
+                key: key,
+                props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
+                  splitCaps: false
+                })
+              });
+            } else {
+              queue({
+                key: key,
+                props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
+                  orientation: ORIENTATION.CAP_START,
+                  splitCaps: true
+                })
+              }, {
+                key: key,
+                props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
+                  orientation: ORIENTATION.CAP_END,
+                  splitCaps: true
+                })
               });
             }
           }
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
-        }
 
-        flushDrawQueue();
-      });
+          if (userProps.vertexAttributes && userProps.vertexCount) {
+            queue({
+              key: getCacheKey(false, insertCaps),
+              props: _objectSpread2(_objectSpread2({
+                count: userProps.vertexCount
+              }, userProps), {}, {
+                buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false)
+              }, sharedProps)
+            });
+          }
+
+          flushDrawQueue();
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
     };
   }
 

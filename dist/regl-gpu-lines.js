@@ -39,7 +39,7 @@ ${debug ? 'attribute float debugInstanceID;' : ''}
 
 uniform bool _isRound;
 uniform vec2 _vertCnt2, _capJoinRes2;
-uniform vec2 resolution, _capScale;
+uniform vec2 _resolution, _capScale;
 uniform float _miterLimit;
 ${meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;'}
 
@@ -95,7 +95,7 @@ void main() {
   // Convert to screen-pixel coordinates
   // Save w so we can perspective re-multiply at the end to get varyings depth-correct
   float pw = mirror ? pC.w : pB.w;
-  ${verts.map(v => `p${v} = vec4(vec3(p${v}.xy * resolution, p${v}.z) / p${v}.w, 1);`).join('\n')}
+  ${verts.map(v => `p${v} = vec4(vec3(p${v}.xy * _resolution, p${v}.z) / p${v}.w, 1);`).join('\n')}
 
   // If it's a cap, mirror A back onto C to accomplish a round
   ${isEndpoints ? `vec4 pA = pC;` : ''}
@@ -254,8 +254,9 @@ void main() {
 
   gl_Position = pB;
   gl_Position.xy += width * dP;
-  gl_Position.xy /= resolution;
+  gl_Position.xy /= _resolution;
   gl_Position *= pw;
+  ${meta.postproject ? `gl_Position = ${meta.postproject}(gl_Position);` : ''}
 }`,
       frag,
       attributes: { ...indexAttributes,
@@ -267,7 +268,8 @@ void main() {
         _miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
         _orientation: regl.prop('orientation'),
         _capScale: regl.prop('capScale'),
-        _isRound: (ctx, props) => props.join === 'round'
+        _isRound: (ctx, props) => props.join === 'round',
+        _resolution: (ctx, props) => props.viewportSize || [ctx.viewportWidth, ctx.viewportHeight]
       },
       primitive: 'triangle strip',
       instances: isEndpoints ? (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count : (ctx, props) => props.count - 3,
@@ -292,6 +294,7 @@ void main() {
   const ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
   const PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
   const VARYING_REGEX = /^\s*(?:(extrapolate)?)\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
+  const POSTPROJECT_REGEX = /^\s*postproject\s+=\s+([\w\d_]+)\s*$/i;
   const DIMENSION_GLSL_TYPES = {
     "float": 1,
     "vec2": 2,
@@ -368,12 +371,19 @@ void main() {
         inputs,
         generate
       };
+    } else if (match = pragma.match(POSTPROJECT_REGEX)) {
+      const name = match[1];
+      return {
+        type: 'postproject',
+        name
+      };
     } else {
       throw new Error(`Unrecognized lines pragma: "${pragma}"`);
     }
   }
 
   function analyzePragmas(pragmas) {
+    let postproject;
     const attrs = new Map();
     const varyings = new Map();
 
@@ -384,6 +394,8 @@ void main() {
         pragma.endpointUsage = ATTR_USAGE$1.NONE;
       } else if (pragma.type === 'varying') {
         varyings.set(pragma.name, pragma);
+      } else if (pragma.type === 'postproject') {
+        postproject = pragma.name;
       }
     }
 
@@ -442,7 +454,8 @@ void main() {
       attrs,
       width,
       position,
-      orientation
+      orientation,
+      postproject
     };
   }
 
@@ -680,11 +693,6 @@ void main() {
     const meta = parseShaderPragmas(vert);
     const segmentSpec = createAttrSpec(meta, regl, false);
     const endpointSpec = createAttrSpec(meta, regl, true);
-    const setResolution = regl({
-      uniforms: {
-        resolution: ctx => [ctx.viewportWidth, ctx.viewportHeight]
-      }
-    });
     const indexAttributes = {};
 
     if (debug) {
@@ -755,87 +763,86 @@ void main() {
     return function drawLines(props) {
       if (!props) return;
       if (!Array.isArray(props)) props = [props];
-      setResolution(() => {
-        for (const userProps of props) {
-          const join = sanitizeJoinType(userProps.join);
-          const cap = sanitizeCapType(userProps.cap);
-          let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
 
-          if (cap === 'square') {
-            capRes2 = 3;
-          } else if (cap === 'none') {
-            capRes2 = 1;
-          }
+      for (const userProps of props) {
+        const join = sanitizeJoinType(userProps.join);
+        const cap = sanitizeCapType(userProps.cap);
+        let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
 
-          let joinRes2 = 1;
+        if (cap === 'square') {
+          capRes2 = 3;
+        } else if (cap === 'none') {
+          capRes2 = 1;
+        }
 
-          if (join === 'round') {
-            joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
-          } // We only ever use these in doubled-up form
+        let joinRes2 = 1;
+
+        if (join === 'round') {
+          joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
+        } // We only ever use these in doubled-up form
 
 
-          capRes2 *= 2;
-          joinRes2 *= 2;
-          const miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
-          const capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
-          const insertCaps = !!userProps.insertCaps;
-          const sharedProps = {
-            joinRes2,
-            capRes2,
-            capScale,
-            join,
-            miterLimit,
-            insertCaps
+        capRes2 *= 2;
+        joinRes2 *= 2;
+        const miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
+        const capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
+        const insertCaps = !!userProps.insertCaps;
+        const sharedProps = {
+          joinRes2,
+          capRes2,
+          capScale,
+          join,
+          miterLimit,
+          insertCaps
+        };
+
+        if (userProps.endpointAttributes && userProps.endpointCount) {
+          const endpointProps = {
+            count: userProps.endpointCount,
+            ...userProps,
+            buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
+            ...sharedProps
           };
+          let key = getCacheKey(true, insertCaps);
 
-          if (userProps.endpointAttributes && userProps.endpointCount) {
-            const endpointProps = {
-              count: userProps.endpointCount,
-              ...userProps,
-              buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
-              ...sharedProps
-            };
-            let key = getCacheKey(true, insertCaps);
-
-            if (meta.orientation) {
-              queue({
-                key,
-                props: { ...endpointProps,
-                  splitCaps: false
-                }
-              });
-            } else {
-              queue({
-                key,
-                props: { ...endpointProps,
-                  orientation: ORIENTATION.CAP_START,
-                  splitCaps: true
-                }
-              }, {
-                key,
-                props: { ...endpointProps,
-                  orientation: ORIENTATION.CAP_END,
-                  splitCaps: true
-                }
-              });
-            }
-          }
-
-          if (userProps.vertexAttributes && userProps.vertexCount) {
+          if (meta.orientation) {
             queue({
-              key: getCacheKey(false, insertCaps),
-              props: {
-                count: userProps.vertexCount,
-                ...userProps,
-                buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false),
-                ...sharedProps
+              key,
+              props: { ...endpointProps,
+                splitCaps: false
+              }
+            });
+          } else {
+            queue({
+              key,
+              props: { ...endpointProps,
+                orientation: ORIENTATION.CAP_START,
+                splitCaps: true
+              }
+            }, {
+              key,
+              props: { ...endpointProps,
+                orientation: ORIENTATION.CAP_END,
+                splitCaps: true
               }
             });
           }
         }
 
+        if (userProps.vertexAttributes && userProps.vertexCount) {
+          queue({
+            key: getCacheKey(false, insertCaps),
+            props: {
+              count: userProps.vertexCount,
+              ...userProps,
+              buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false),
+              ...sharedProps
+            }
+          });
+        }
+
         flushDrawQueue();
-      });
+      }
     };
   }
 
