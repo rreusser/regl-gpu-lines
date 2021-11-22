@@ -25,7 +25,7 @@ function createAttrSpecs (meta, regl, isEndpoints) {
         attrSpecList.push({
           name: attrOutName,
           spec: {
-            buffer: regl.prop(`buffers.${attrName}.buffer`),
+            buffer: (ctx, props) => props.buffers[attrName].buffer,
             offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps)? 0 : 3) + index),
             stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
             divisor: (ctx, props) => props.buffers[attrName].divisor,
@@ -35,7 +35,7 @@ function createAttrSpecs (meta, regl, isEndpoints) {
         attrSpecList.push({
           name: attrOutName,
           spec: {
-            buffer: regl.prop(`buffers.${attrName}.buffer`),
+            buffer: (ctx, props) => props.buffers[attrName].buffer,
             offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
             stride: (ctx, props) => props.buffers[attrName].stride,
             divisor: (ctx, props) => props.buffers[attrName].divisor,

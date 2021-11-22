@@ -10,6 +10,7 @@
 - [Fragment shader](#fragment-shader)
   - [lineCoord](#fragment-shader)
 - [Drawing lines](#drawing-lines)
+  - [Vertex Array Objects](#vertex-array-objects)
 
 ## Draw command constructor
 
@@ -176,6 +177,7 @@ Drawing is invoked by passing an object with the following optional properties t
 | `vertexAttribues` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
 | `endpointAttributes` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
 | `viewportSize` | `Array[number]` | `[viewportSize, viewportWidth]` | Size of screen-projection viewport |
+| `vao` | `object` | null | Predefined [Vertex Array Object](#vertex-array-objects) |
 
 #### Example
 
@@ -199,3 +201,37 @@ drawLines({
 - If either `endpointAttributes` or `vertexAttributes` is excluded, the corresponding geometry will not be rendered
 - You must at least provide regl buffer objects, but in the style of regl, you may either just provide a buffer, or you may provide an object of the form `{buffer, stride, offset, divisor, type}`.
 - `insertCaps` automatically inserts a cap wherever a break is encountered, signaled by a position with `w = 0` or first component `NaN`. Allows drawing lines and caps with a single draw call. *Use this option with care.* To avoid wasting vertices on degenerate triangles when caps are not drawn, use `capResolution ≤ joinResolution`.
+
+### Vertex Array Objects
+
+Drawing lines involves repeated computation of strides and offsets on every frame. [Vertex Array Objects](https://github.com/regl-project/regl/blob/master/API.md#vertex-array-objects) (VAOs) exist to optimize this pathway. To use VAOs, simply extract `vertexAttributes` and `endpointAttributes` from render-time line data and move it to a call to `drawLines.vao()` instead. Then pass the resulting object in the draw call properties as the `vao` property. Call `vao.destroy()` to free resources.
+
+#### `drawLines.vao({ [endpointAttributes], [vertexAttributes] })`
+
+Allocate a Vertex Array Object for the specified draw command. The resulting object may be passed to this command via the `vao` property. 
+
+#### Example
+
+```
+const drawLines = reglLines(...);
+
+// Once, outside of draw loop
+const vao = drawLines.vao({
+  endpointAttributes: { ... },
+  vertexAttributes: { ... }
+});
+
+// Within draw loop
+drawLines({
+  join: 'miter',
+  count: n,
+  vao
+});
+
+// Clean up, later
+vao.destroy();
+```
+
+#### Notes
+
+To use vertex array objects, the `OES_vertex_array_object` extension must be enabled. If it is not available, then vertex array objects will be emulated.

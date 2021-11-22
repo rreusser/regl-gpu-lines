@@ -1,3 +1,9 @@
+## 2.2.0
+
+### Features
+
+- Adds support for Vertex Array Objects (VAOs). To use, move `vertexAttributes` and `endpointAttributes` out of per-frame draw call properties to the `drawLines.vao({vertexAttributes, endpointAttributes})` constructor, then pass the resulting object to the draw call as the `vao` property.
+
 ## 2.1.0
 
 ### Features

@@ -8,6 +8,7 @@ function createDrawSegmentCommand(
   regl,
   isEndpoints,
   insertCaps,
+  isVAO,
   meta,
   frag,
   segmentSpec,
@@ -21,10 +22,18 @@ function createDrawSegmentCommand(
   const verts = ['B', 'C', 'D'];
   if (!isEndpoints) verts.unshift('A');
 
-  const attrList = indexAttributes.concat(spec.attrs);
   const attributes = {};
-  for (const attr of attrList) {
-    attributes[attr.name] = attr.spec;
+  const vaoProps = {};
+  const attrList = indexAttributes.concat(spec.attrs);
+  if (isVAO) {
+    vaoProps.vao = regl.prop('vao');
+    for (let i = 0; i < attrList.length; i++) {
+      attributes[attrList[i].name] = i;
+    }
+  } else {
+    for (const attr of attrList) {
+      attributes[attr.name] = attr.spec;
+    }
   }
 
   const computeCount = insertCaps
@@ -292,6 +301,7 @@ void main() {
       const count = computeCount(props);
       return 6 + (count[0] + count[1]);
     },
-    ...forwardedCmdConfig
+    ...forwardedCmdConfig,
+    ...vaoProps
   });
 }

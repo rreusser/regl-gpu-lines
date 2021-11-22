@@ -85,12 +85,13 @@ function reglLines(
   const sanitizeCapType = sanitizeInclusionInList('cap', VALID_CAP_TYPES, 'square');
 
   const drawCommands = new Map();
-  function getDrawCommand(key) {
-    if (!drawCommands.has(key)) {
-      drawCommands.set(key, createDrawSegment(
+  function getDrawCommand(featureMask) {
+    if (!drawCommands.has(featureMask)) {
+      drawCommands.set(featureMask, createDrawSegment(
         regl,
-        key & FEATUREMASK_IS_ENDPOINTS,
-        key & FEATUREMASK_INSERT_CAPS,
+        featureMask & FEATUREMASK_IS_ENDPOINTS,
+        featureMask & FEATUREMASK_INSERT_CAPS,
+        featureMask & FEATUREMASK_VAO,
         meta,
         frag,
         segmentSpec,
@@ -101,7 +102,7 @@ function reglLines(
         debug
       ));
     }
-    return drawCommands.get(key);
+    return drawCommands.get(featureMask);
   }
 
   const drawQueue = [];
@@ -110,31 +111,33 @@ function reglLines(
   }
   function flushDrawQueue () {
     // Sort by the identifier of the draw command so group together commands using the same shader
-    if (reorder) drawQueue.sort(function (a, b) { return a.key - b.key; });
+    if (reorder) drawQueue.sort(function (a, b) { return a.featureMask - b.featureMask; });
     let pos = 0;
     const groupedProps = [];
 
     // Iterate through the queue. Group props until the command changes, then draw and continue
     while(pos < drawQueue.length) {
-      const {key, props} = drawQueue[pos];
+      const {featureMask, props} = drawQueue[pos];
       groupedProps.push(props);
-      while (++pos < drawQueue.length && drawQueue[pos].key === key) {
+      while (++pos < drawQueue.length && drawQueue[pos].featureMask === featureMask) {
         groupedProps.push(drawQueue[pos].props);
       }
-      // console.log('isEndpoints:', !!(FEATUREMASK_IS_ENDPOINTS & key), 'insertCaps:', !!(FEATUREMASK_INSERT_CAPS & key), 'batching:', groupedProps.length);
-      getDrawCommand(key)(groupedProps);
+      // console.log('isEndpoints:', !!(FEATUREMASK_IS_ENDPOINTS & featureMask), 'insertCaps:', !!(FEATUREMASK_INSERT_CAPS & featureMask), 'batching:', groupedProps.length);
+      getDrawCommand(featureMask)(groupedProps);
       groupedProps.length = 0;
     }
     drawQueue.length = 0;
   }
 
-  return function drawLines(props) {
+  const returnValue = function drawLines(props) {
     if (!props) return;
     if (!Array.isArray(props)) props = [props];
 
     for (const userProps of props) {
       const join = sanitizeJoinType(userProps.join);
       const cap = sanitizeCapType(userProps.cap);
+
+      const isVAO = !!userProps.vao;
 
       let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
       if (cap === 'square') {
@@ -155,40 +158,100 @@ function reglLines(
       const miterLimit = join === 'bevel' ? 1 : (userProps.miterLimit === undefined ? 4 : userProps.miterLimit);
       const capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
       const insertCaps = !!userProps.insertCaps;
-
       const sharedProps = {joinRes2, capRes2, capScale, join, miterLimit, insertCaps};
 
-      if (userProps.endpointAttributes && userProps.endpointCount) {
+      if (userProps.endpointCount) {
         const endpointProps = {
           count: userProps.endpointCount,
           ...userProps,
-          buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
           ...sharedProps
         };
-        let key = getCacheKey(true, insertCaps, false);
-        if (meta.orientation) {
-          queue({key, props: {...endpointProps, splitCaps: false}});
+        let featureMask = getCacheKey(true, insertCaps, isVAO);
+        if (isVAO) {
+          if (meta.orientation) {
+            const vao = {vao: endpointProps.vao.endpoints};
+            queue({featureMask, props: {...endpointProps, ...vao}});
+          } else {
+            const startVao = {vao: endpointProps.vao.startCaps};
+            const endVao = {vao: endpointProps.vao.endCaps};
+            queue(
+              {featureMask, props: {...endpointProps, ...startVao, orientation: ORIENTATION.CAP_START, splitCaps: true}},
+              {featureMask, props: {...endpointProps, ...endVao, orientation: ORIENTATION.CAP_END, splitCaps: true}},
+            );
+          }
         } else {
-          queue(
-            {key, props: {...endpointProps, orientation: ORIENTATION.CAP_START, splitCaps: true}},
-            {key, props: {...endpointProps, orientation: ORIENTATION.CAP_END, splitCaps: true}}
-          );
+          endpointProps.buffers = sanitizeBufferInputs(meta, userProps.endpointAttributes, true);
+          if (meta.orientation) {
+            queue({featureMask, props: {...endpointProps, splitCaps: false}});
+          } else {
+            queue(
+              {featureMask, props: {...endpointProps, orientation: ORIENTATION.CAP_START, splitCaps: true}},
+              {featureMask, props: {...endpointProps, orientation: ORIENTATION.CAP_END, splitCaps: true}}
+            );
+          }
         }
       }
 
-      if (userProps.vertexAttributes && userProps.vertexCount) {
-        queue({
-          key: getCacheKey(false, insertCaps, false),
-          props: {
-            count: userProps.vertexCount,
-            ...userProps,
-            buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false),
-            ...sharedProps
-          }
-        });
+      if (userProps.vertexCount) {
+        const featureMask = getCacheKey(false, insertCaps, isVAO);
+        const props = {
+          count: userProps.vertexCount,
+          ...userProps,
+          ...sharedProps
+        };
+        if (isVAO) {
+          props.vao = userProps.vao.vertices;
+        } else {
+          props.buffers = sanitizeBufferInputs(meta, userProps.vertexAttributes, false);
+        }
+        queue({featureMask, props});
       }
 
       flushDrawQueue();
     }
   };
+
+  returnValue.vao = function (props) {
+    let vertices, endpoints;
+    const outputs = {};
+    const cases = [['vertices', segmentSpec.attrs, props.vertexAttributes, false]];
+    if (meta.orientation) {
+      cases.push(['endpoints', endpointSpec.attrs, props.endpointAttributes, true, false, null]);
+    } else {
+      cases.push(
+        ['startCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_START],
+        ['endCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_END]
+      );
+    }
+    for (const [outputName, specAttrs, attrs, isEndpoints, splitCaps, orientation] of cases) {
+      if (!attrs) continue;
+      const fakeProps = {
+        buffers: sanitizeBufferInputs(meta, attrs, isEndpoints),
+        splitCaps,
+        orientation
+      };
+      const vaoData = [];
+      for(const attr of indexAttributes.concat(specAttrs)) {
+        const vaoEntry = {};
+        const spec = attr.spec;
+        for (const item of ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']) {
+          let value = attr.spec[item];
+          if (typeof value === 'function') value = attr.spec[item]({}, fakeProps);
+          if (value !== undefined) vaoEntry[item] = value;
+        }
+        vaoData.push(vaoEntry);
+      }
+      outputs[outputName] = regl.vao(vaoData);
+    }
+    outputs.destroy = function destroy () {
+      for (const [outputName] of cases) {
+        if (!outputs[outputName]) continue;
+        outputs[outputName].destroy();
+        delete outputs[outputName];
+      }
+    }
+    return outputs;
+  };
+
+  return returnValue;
 }

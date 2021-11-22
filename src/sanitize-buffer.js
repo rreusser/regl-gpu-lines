@@ -11,6 +11,9 @@ function has(obj, prop) {
 
 // This function is run on every draw call in order to sanitize and configure the data layout
 function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
+  //console.log('metadata:', metadata);
+  //console.log('buffersObj:', buffersObj);
+  //console.log('isEndpoints:', isEndpoints);
   const outputs = {};
 
   if (!buffersObj) return outputs;
