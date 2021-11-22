@@ -9,7 +9,7 @@ const ORIENTATION = require('./constants/orientation.json');
 function createAttrSpecs (meta, regl, isEndpoints) {
   const suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
   const attrLines = [];
-  const attrSpecs = {};
+  const attrSpecList = [];
 
   meta.attrs.forEach((attr, attrName) => {
     const usage = isEndpoints ? attr.endpointUsage : attr.vertexUsage;
@@ -22,19 +22,25 @@ function createAttrSpecs (meta, regl, isEndpoints) {
 
       if (isEndpoints) {
         const instanceStride = usage & ATTR_USAGE.PER_INSTANCE ? 1 : 3;
-        attrSpecs[attrOutName] = {
-          buffer: regl.prop(`buffers.${attrName}.buffer`),
-          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps)? 0 : 3) + index),
-          stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
-          divisor: (ctx, props) => props.buffers[attrName].divisor,
-        };
+        attrSpecList.push({
+          name: attrOutName,
+          spec: {
+            buffer: regl.prop(`buffers.${attrName}.buffer`),
+            offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps)? 0 : 3) + index),
+            stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
+            divisor: (ctx, props) => props.buffers[attrName].divisor,
+          }
+        });
       } else {
-        attrSpecs[attrOutName] = {
-          buffer: regl.prop(`buffers.${attrName}.buffer`),
-          offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
-          stride: (ctx, props) => props.buffers[attrName].stride,
-          divisor: (ctx, props) => props.buffers[attrName].divisor,
-        };
+        attrSpecList.push({
+          name: attrOutName,
+          spec: {
+            buffer: regl.prop(`buffers.${attrName}.buffer`),
+            offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
+            stride: (ctx, props) => props.buffers[attrName].stride,
+            divisor: (ctx, props) => props.buffers[attrName].divisor,
+          }
+        });
       }
     }
 
@@ -57,6 +63,6 @@ function createAttrSpecs (meta, regl, isEndpoints) {
 
   return {
     glsl: attrLines.join('\n'),
-    attrs: attrSpecs
+    attrs: attrSpecList
   };
 }

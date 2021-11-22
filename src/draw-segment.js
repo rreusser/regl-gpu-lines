@@ -21,6 +21,12 @@ function createDrawSegmentCommand(
   const verts = ['B', 'C', 'D'];
   if (!isEndpoints) verts.unshift('A');
 
+  const attrList = indexAttributes.concat(spec.attrs);
+  const attributes = {};
+  for (const attr of attrList) {
+    attributes[attr.name] = attr.spec;
+  }
+
   const computeCount = insertCaps
     ? isEndpoints
       // Cap has fixed number, join could either be a cap or a join
@@ -267,10 +273,7 @@ void main() {
   ${meta.postproject ? `gl_Position = ${meta.postproject}(gl_Position);` : ''}
 }`,
     frag,
-    attributes: {
-      ...indexAttributes,
-      ...spec.attrs
-    },
+    attributes,
     uniforms: {
       ...forwardedUniforms,
       _vertCnt2: (ctx, props) => computeCount(props),

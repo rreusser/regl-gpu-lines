@@ -21,11 +21,13 @@ const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
 const MAX_ROUND_JOIN_RESOLUTION = 32;
 const MAX_DEBUG_VERTICES = 16384;
 
-const DRAWCONFIG_IS_ENDPOINTS = 1 << 0;
-const DRAWCONFIG_INSERT_CAPS = 1 << 1;
-function getCacheKey (isEndpoints, insertCaps) {
-  return (isEndpoints ? DRAWCONFIG_IS_ENDPOINTS : 0)
-    + (insertCaps ? DRAWCONFIG_INSERT_CAPS : 0);
+const FEATUREMASK_IS_ENDPOINTS = 1 << 0;
+const FEATUREMASK_INSERT_CAPS = 1 << 1;
+const FEATUREMASK_VAO = 1 << 2;
+function getCacheKey (isEndpoints, insertCaps, isVAO) {
+  return (isEndpoints ? FEATUREMASK_IS_ENDPOINTS : 0)
+    + (insertCaps ? FEATUREMASK_INSERT_CAPS : 0)
+    + (isVAO ? FEATUREMASK_VAO : 0);
 }
 
 function reglLines(
@@ -60,18 +62,24 @@ function reglLines(
   const segmentSpec = createAttrSpec(meta, regl, false);
   const endpointSpec = createAttrSpec(meta, regl, true);
 
-  const indexAttributes = {};
+  const indexAttributes = [];
   if (debug) {
     // TODO: Allocate/grow lazily to avoid an arbitrary limit
     if (!cache.debugInstanceIDBuffer) {
       cache.debugInstanceIDBuffer = regl.buffer(new Uint16Array([...Array(MAX_DEBUG_VERTICES).keys()]));
     }
-    indexAttributes.debugInstanceID = { buffer: cache.debugInstanceIDBuffer, divisor: 1 };
+    indexAttributes.push({
+      name: 'debugInstanceID',
+      spec: { buffer: cache.debugInstanceIDBuffer, divisor: 1 }
+    });
   }
   if (!cache.indexBuffer) {
     cache.indexBuffer = regl.buffer(new Uint8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()]));
   }
-  indexAttributes.index = { buffer: cache.indexBuffer, divisor: 0 };
+  indexAttributes.push({
+    name: 'index',
+    spec: { buffer: cache.indexBuffer, divisor: 0 }
+  });
 
   const sanitizeJoinType = sanitizeInclusionInList('join', VALID_JOIN_TYPES, 'miter');
   const sanitizeCapType = sanitizeInclusionInList('cap', VALID_CAP_TYPES, 'square');
@@ -81,8 +89,8 @@ function reglLines(
     if (!drawCommands.has(key)) {
       drawCommands.set(key, createDrawSegment(
         regl,
-        key & DRAWCONFIG_IS_ENDPOINTS,
-        key & DRAWCONFIG_INSERT_CAPS,
+        key & FEATUREMASK_IS_ENDPOINTS,
+        key & FEATUREMASK_INSERT_CAPS,
         meta,
         frag,
         segmentSpec,
@@ -113,7 +121,7 @@ function reglLines(
       while (++pos < drawQueue.length && drawQueue[pos].key === key) {
         groupedProps.push(drawQueue[pos].props);
       }
-      // console.log('isEndpoints:', !!(DRAWCONFIG_IS_ENDPOINTS & key), 'insertCaps:', !!(DRAWCONFIG_INSERT_CAPS & key), 'batching:', groupedProps.length);
+      // console.log('isEndpoints:', !!(FEATUREMASK_IS_ENDPOINTS & key), 'insertCaps:', !!(FEATUREMASK_INSERT_CAPS & key), 'batching:', groupedProps.length);
       getDrawCommand(key)(groupedProps);
       groupedProps.length = 0;
     }
@@ -157,7 +165,7 @@ function reglLines(
           buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
           ...sharedProps
         };
-        let key = getCacheKey(true, insertCaps);
+        let key = getCacheKey(true, insertCaps, false);
         if (meta.orientation) {
           queue({key, props: {...endpointProps, splitCaps: false}});
         } else {
@@ -170,7 +178,7 @@ function reglLines(
 
       if (userProps.vertexAttributes && userProps.vertexCount) {
         queue({
-          key: getCacheKey(false, insertCaps),
+          key: getCacheKey(false, insertCaps, false),
           props: {
             count: userProps.vertexCount,
             ...userProps,

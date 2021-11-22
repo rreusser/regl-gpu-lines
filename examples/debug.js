@@ -44,8 +44,8 @@ const reglProxy = createREGLProxy(regl, function (args) {
   if (!args.vert) return {};
   return {
     vert: args.vert.slice(0, args.vert.length - 1) + `
-    float theta = (2.0 * pi) * (0.5 + index / 8.0);
-      gl_Position.xy += vec2(cos(theta), sin(theta)) * numberOffset / resolution;
+    float theta = (2.0 * pi) * (0.5 + index / 8.428);
+      gl_Position.xy += vec2(cos(theta), sin(theta)) * numberOffset * pixelRatio / _resolution;
     }`
   }
 });
@@ -80,7 +80,7 @@ const state = wrapGUI(State({
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
     depth: false,
     colorInstances: true,
-    labelPoints: false
+    labelPoints: true
   }, {
     expanded: false
   })
@@ -146,7 +146,7 @@ const lineData = {
 };
 
 let numTex = regl.texture([[0, 0, 0, 0]]);
-createNumberCanvas(50).then(img => {
+createNumberCanvas(30).then(img => {
   numTex = numTex({data: img, min: 'linear', mag: 'linear'})
   draw();
 });
@@ -173,6 +173,7 @@ function getDrawLines(config) {
         #pragma lines: extrapolate varying float dist = getProgress(dist);
 
         uniform float stretch, flip, lineWidth, borderWidth, numberOffset;
+        uniform float pixelRatio;
 
         float getProgress(float p) { return p; }
         float getPointIndex(float p) { return p; }
@@ -183,7 +184,7 @@ function getDrawLines(config) {
         }
 
         float getWidth () {
-          gl_PointSize = 30.0; // Oops; has to be anywhere within main func
+          gl_PointSize = 10.0 * pixelRatio; // Oops; has to be anywhere within main func
           return lineWidth;
         }`,
       frag: `
@@ -316,7 +317,8 @@ function getDrawLines(config) {
       },
       depth: {
         enable: (ctx, props) => !!props.rendering.depth
-      }
+      },
+      primitive
     });
   }
   return commandCache[cacheKey];
@@ -356,7 +358,7 @@ function draw () {
       borderColor: [0, 0, 0, state.border.opacity],
       dashColor: [0, 0, 0, state.dash.opacity],
       primitive: 'points',
-      numberOffset: 40
+      numberOffset: 15
     });
   }
 }
