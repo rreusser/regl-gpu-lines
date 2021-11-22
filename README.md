@@ -29,7 +29,7 @@ Features:
 - Regl-compatible attribute specification with strides and offsets
 - Forward additional regl configuration to the draw command
 - Seamlessly permits substitution of Vertex Array Objects (VAOs)
-- 11.8 KB minified, 4.8 KB gzipped. No dependencies (although it is expected to be used together with regl, which requirement I'd like to [consider removing](https://github.com/rreusser/regl-gpu-lines/issues/7))
+- 13.4 KB minified, 5.3 KB gzipped. No dependencies (although it is expected to be used together with regl, which requirement I'd like to [consider removing](https://github.com/rreusser/regl-gpu-lines/issues/7))
 
 Limitations:
 

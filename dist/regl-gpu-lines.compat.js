@@ -201,10 +201,36 @@
   var ORIENTATION$2 = require$$5;
   var drawSegment = createDrawSegmentCommand;
 
-  function createDrawSegmentCommand(regl, isEndpoints, insertCaps, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug) {
+  function createDrawSegmentCommand(regl, isEndpoints, insertCaps, isVAO, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug) {
     var spec = isEndpoints ? endpointSpec : segmentSpec;
     var verts = ['B', 'C', 'D'];
     if (!isEndpoints) verts.unshift('A');
+    var attributes = {};
+    var vaoProps = {};
+    var attrList = indexAttributes.concat(spec.attrs);
+
+    if (isVAO) {
+      vaoProps.vao = regl.prop('vao');
+
+      for (var i = 0; i < attrList.length; i++) {
+        attributes[attrList[i].name] = i;
+      }
+    } else {
+      var _iterator = _createForOfIteratorHelper(attrList),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var attr = _step.value;
+          attributes[attr.name] = attr.spec;
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    }
+
     var computeCount = insertCaps ? isEndpoints // Cap has fixed number, join could either be a cap or a join
     ? function (props) {
       return [props.capRes2, Math.max(props.capRes2, props.joinRes2)];
@@ -218,7 +244,7 @@
     : function (props) {
       return [props.joinRes2, props.joinRes2];
     };
-    return regl(_objectSpread2({
+    return regl(_objectSpread2(_objectSpread2({
       // Insert user GLSL at the top
       vert: "".concat(meta.glsl, "\nconst float CAP_START = ").concat(ORIENTATION$2.CAP_START, ".0;\nconst float CAP_END = ").concat(ORIENTATION$2.CAP_END, ".0;\n\n// Attribute specification\n").concat(spec.glsl, "\n\nattribute float index;\n").concat(debug ? 'attribute float debugInstanceID;' : '', "\n\nuniform bool _isRound;\nuniform vec2 _vertCnt2, _capJoinRes2;\nuniform vec2 _resolution, _capScale;\nuniform float _miterLimit;\n").concat(meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;', "\n\nvarying vec3 lineCoord;\n").concat(debug ? 'varying vec2 triStripCoord;' : '', "\n").concat(debug ? 'varying float instanceID;' : '', "\n").concat(debug ? 'varying float vertexIndex;' : '', "\n\n// This turns out not to work very well\nbool isnan(float val) {\n  return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;\n}\n\nbool invalid(vec4 p) {\n  return p.w == 0.0 || isnan(p.x);\n}\n\nvoid main() {\n  const float pi = 3.141592653589793;\n\n  ").concat(debug ? 'vertexIndex = index;' : '', "\n  lineCoord = vec3(0);\n\n  ").concat(debug ? "instanceID = ".concat(isEndpoints ? '-1.0' : 'debugInstanceID', ";") : '', "\n  ").concat(debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : '', "\n\n  ").concat(verts.map(function (vert) {
         return "vec4 p".concat(vert, " = ").concat(meta.position.generate(vert), ";");
@@ -228,7 +254,7 @@
         return varying.generate('useC', 'B', 'C');
       }).join('\n'), "\n\n  gl_Position = pB;\n  gl_Position.xy += width * dP;\n  gl_Position.xy /= _resolution;\n  gl_Position *= pw;\n  ").concat(meta.postproject ? "gl_Position = ".concat(meta.postproject, "(gl_Position);") : '', "\n}"),
       frag: frag,
-      attributes: _objectSpread2(_objectSpread2({}, indexAttributes), spec.attrs),
+      attributes: attributes,
       uniforms: _objectSpread2(_objectSpread2({}, forwardedUniforms), {}, {
         _vertCnt2: function _vertCnt2(ctx, props) {
           return computeCount(props);
@@ -258,7 +284,7 @@
         var count = computeCount(props);
         return 6 + (count[0] + count[1]);
       }
-    }, forwardedCmdConfig));
+    }, forwardedCmdConfig), vaoProps));
   }
 
   var attrUsage = {
@@ -550,6 +576,9 @@
 
 
   function sanitizeBufferInput(metadata, buffersObj, isEndpoints) {
+    //console.log('metadata:', metadata);
+    //console.log('buffersObj:', buffersObj);
+    //console.log('isEndpoints:', isEndpoints);
     var outputs = {};
     if (!buffersObj) return outputs;
 
@@ -637,7 +666,7 @@
   function createAttrSpecs(meta, regl, isEndpoints) {
     var suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
     var attrLines = [];
-    var attrSpecs = {};
+    var attrSpecList = [];
     meta.attrs.forEach(function (attr, attrName) {
       var usage = isEndpoints ? attr.endpointUsage : attr.vertexUsage;
       if (!usage) return;
@@ -649,31 +678,41 @@
 
         if (isEndpoints) {
           var instanceStride = usage & ATTR_USAGE.PER_INSTANCE ? 1 : 3;
-          attrSpecs[attrOutName] = {
-            buffer: regl.prop("buffers.".concat(attrName, ".buffer")),
-            offset: function offset(ctx, props) {
-              return props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.orientation === ORIENTATION$1.CAP_START || !props.splitCaps ? 0 : 3) + index);
-            },
-            stride: function stride(ctx, props) {
-              return props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1);
-            },
-            divisor: function divisor(ctx, props) {
-              return props.buffers[attrName].divisor;
+          attrSpecList.push({
+            name: attrOutName,
+            spec: {
+              buffer: function buffer(ctx, props) {
+                return props.buffers[attrName].buffer;
+              },
+              offset: function offset(ctx, props) {
+                return props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.orientation === ORIENTATION$1.CAP_START || !props.splitCaps ? 0 : 3) + index);
+              },
+              stride: function stride(ctx, props) {
+                return props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1);
+              },
+              divisor: function divisor(ctx, props) {
+                return props.buffers[attrName].divisor;
+              }
             }
-          };
+          });
         } else {
-          attrSpecs[attrOutName] = {
-            buffer: regl.prop("buffers.".concat(attrName, ".buffer")),
-            offset: function offset(ctx, props) {
-              return props.buffers[attrName].offset + props.buffers[attrName].stride * index;
-            },
-            stride: function stride(ctx, props) {
-              return props.buffers[attrName].stride;
-            },
-            divisor: function divisor(ctx, props) {
-              return props.buffers[attrName].divisor;
+          attrSpecList.push({
+            name: attrOutName,
+            spec: {
+              buffer: function buffer(ctx, props) {
+                return props.buffers[attrName].buffer;
+              },
+              offset: function offset(ctx, props) {
+                return props.buffers[attrName].offset + props.buffers[attrName].stride * index;
+              },
+              stride: function stride(ctx, props) {
+                return props.buffers[attrName].stride;
+              },
+              divisor: function divisor(ctx, props) {
+                return props.buffers[attrName].divisor;
+              }
             }
-          };
+          });
         }
       }
 
@@ -696,7 +735,7 @@
     });
     return {
       glsl: attrLines.join('\n'),
-      attrs: attrSpecs
+      attrs: attrSpecList
     };
   }
 
@@ -729,11 +768,12 @@
 
   var MAX_ROUND_JOIN_RESOLUTION = 32;
   var MAX_DEBUG_VERTICES = 16384;
-  var DRAWCONFIG_IS_ENDPOINTS = 1 << 0;
-  var DRAWCONFIG_INSERT_CAPS = 1 << 1;
+  var FEATUREMASK_IS_ENDPOINTS = 1 << 0;
+  var FEATUREMASK_INSERT_CAPS = 1 << 1;
+  var FEATUREMASK_VAO = 1 << 2;
 
-  function getCacheKey(isEndpoints, insertCaps) {
-    return (isEndpoints ? DRAWCONFIG_IS_ENDPOINTS : 0) + (insertCaps ? DRAWCONFIG_INSERT_CAPS : 0);
+  function getCacheKey(isEndpoints, insertCaps, isVAO) {
+    return (isEndpoints ? FEATUREMASK_IS_ENDPOINTS : 0) + (insertCaps ? FEATUREMASK_INSERT_CAPS : 0) + (isVAO ? FEATUREMASK_VAO : 0);
   }
 
   function reglLines(regl) {
@@ -771,7 +811,7 @@
     var meta = parseShaderPragmas(vert);
     var segmentSpec = createAttrSpec(meta, regl, false);
     var endpointSpec = createAttrSpec(meta, regl, true);
-    var indexAttributes = {};
+    var indexAttributes = [];
 
     if (debug) {
       // TODO: Allocate/grow lazily to avoid an arbitrary limit
@@ -779,30 +819,36 @@
         cache.debugInstanceIDBuffer = regl.buffer(new Uint16Array(_toConsumableArray(Array(MAX_DEBUG_VERTICES).keys())));
       }
 
-      indexAttributes.debugInstanceID = {
-        buffer: cache.debugInstanceIDBuffer,
-        divisor: 1
-      };
+      indexAttributes.push({
+        name: 'debugInstanceID',
+        spec: {
+          buffer: cache.debugInstanceIDBuffer,
+          divisor: 1
+        }
+      });
     }
 
     if (!cache.indexBuffer) {
       cache.indexBuffer = regl.buffer(new Uint8Array(_toConsumableArray(Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys())));
     }
 
-    indexAttributes.index = {
-      buffer: cache.indexBuffer,
-      divisor: 0
-    };
+    indexAttributes.push({
+      name: 'index',
+      spec: {
+        buffer: cache.indexBuffer,
+        divisor: 0
+      }
+    });
     var sanitizeJoinType = sanitizeInclusionInList('join', VALID_JOIN_TYPES, 'miter');
     var sanitizeCapType = sanitizeInclusionInList('cap', VALID_CAP_TYPES, 'square');
     var drawCommands = new Map();
 
-    function getDrawCommand(key) {
-      if (!drawCommands.has(key)) {
-        drawCommands.set(key, createDrawSegment(regl, key & DRAWCONFIG_IS_ENDPOINTS, key & DRAWCONFIG_INSERT_CAPS, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug));
+    function getDrawCommand(featureMask) {
+      if (!drawCommands.has(featureMask)) {
+        drawCommands.set(featureMask, createDrawSegment(regl, featureMask & FEATUREMASK_IS_ENDPOINTS, featureMask & FEATUREMASK_INSERT_CAPS, featureMask & FEATUREMASK_VAO, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug));
       }
 
-      return drawCommands.get(key);
+      return drawCommands.get(featureMask);
     }
 
     var drawQueue = [];
@@ -818,30 +864,30 @@
     function flushDrawQueue() {
       // Sort by the identifier of the draw command so group together commands using the same shader
       if (reorder) drawQueue.sort(function (a, b) {
-        return a.key - b.key;
+        return a.featureMask - b.featureMask;
       });
       var pos = 0;
       var groupedProps = []; // Iterate through the queue. Group props until the command changes, then draw and continue
 
       while (pos < drawQueue.length) {
         var _drawQueue$pos = drawQueue[pos],
-            key = _drawQueue$pos.key,
+            featureMask = _drawQueue$pos.featureMask,
             props = _drawQueue$pos.props;
         groupedProps.push(props);
 
-        while (++pos < drawQueue.length && drawQueue[pos].key === key) {
+        while (++pos < drawQueue.length && drawQueue[pos].featureMask === featureMask) {
           groupedProps.push(drawQueue[pos].props);
-        } // console.log('isEndpoints:', !!(DRAWCONFIG_IS_ENDPOINTS & key), 'insertCaps:', !!(DRAWCONFIG_INSERT_CAPS & key), 'batching:', groupedProps.length);
+        } // console.log('isEndpoints:', !!(FEATUREMASK_IS_ENDPOINTS & featureMask), 'insertCaps:', !!(FEATUREMASK_INSERT_CAPS & featureMask), 'batching:', groupedProps.length);
 
 
-        getDrawCommand(key)(groupedProps);
+        getDrawCommand(featureMask)(groupedProps);
         groupedProps.length = 0;
       }
 
       drawQueue.length = 0;
     }
 
-    return function drawLines(props) {
+    var returnValue = function drawLines(props) {
       if (!props) return;
       if (!Array.isArray(props)) props = [props];
 
@@ -853,6 +899,7 @@
           var userProps = _step.value;
           var join = sanitizeJoinType(userProps.join);
           var cap = sanitizeCapType(userProps.cap);
+          var isVAO = !!userProps.vao;
           var capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
 
           if (cap === 'square') {
@@ -882,47 +929,87 @@
             insertCaps: insertCaps
           };
 
-          if (userProps.endpointAttributes && userProps.endpointCount) {
+          if (userProps.endpointCount) {
             var endpointProps = _objectSpread2(_objectSpread2({
               count: userProps.endpointCount
-            }, userProps), {}, {
-              buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true)
-            }, sharedProps);
+            }, userProps), sharedProps);
 
-            var key = getCacheKey(true, insertCaps);
+            var featureMask = getCacheKey(true, insertCaps, isVAO);
 
-            if (meta.orientation) {
-              queue({
-                key: key,
-                props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
-                  splitCaps: false
-                })
-              });
+            if (isVAO) {
+              if (meta.orientation) {
+                var vao = {
+                  vao: endpointProps.vao.endpoints
+                };
+                queue({
+                  featureMask: featureMask,
+                  props: _objectSpread2(_objectSpread2({}, endpointProps), vao)
+                });
+              } else {
+                var startVao = {
+                  vao: endpointProps.vao.startCaps
+                };
+                var endVao = {
+                  vao: endpointProps.vao.endCaps
+                };
+                queue({
+                  featureMask: featureMask,
+                  props: _objectSpread2(_objectSpread2(_objectSpread2({}, endpointProps), startVao), {}, {
+                    orientation: ORIENTATION.CAP_START,
+                    splitCaps: true
+                  })
+                }, {
+                  featureMask: featureMask,
+                  props: _objectSpread2(_objectSpread2(_objectSpread2({}, endpointProps), endVao), {}, {
+                    orientation: ORIENTATION.CAP_END,
+                    splitCaps: true
+                  })
+                });
+              }
             } else {
-              queue({
-                key: key,
-                props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
-                  orientation: ORIENTATION.CAP_START,
-                  splitCaps: true
-                })
-              }, {
-                key: key,
-                props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
-                  orientation: ORIENTATION.CAP_END,
-                  splitCaps: true
-                })
-              });
+              endpointProps.buffers = sanitizeBufferInputs(meta, userProps.endpointAttributes, true);
+
+              if (meta.orientation) {
+                queue({
+                  featureMask: featureMask,
+                  props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
+                    splitCaps: false
+                  })
+                });
+              } else {
+                queue({
+                  featureMask: featureMask,
+                  props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
+                    orientation: ORIENTATION.CAP_START,
+                    splitCaps: true
+                  })
+                }, {
+                  featureMask: featureMask,
+                  props: _objectSpread2(_objectSpread2({}, endpointProps), {}, {
+                    orientation: ORIENTATION.CAP_END,
+                    splitCaps: true
+                  })
+                });
+              }
             }
           }
 
-          if (userProps.vertexAttributes && userProps.vertexCount) {
+          if (userProps.vertexCount) {
+            var _featureMask = getCacheKey(false, insertCaps, isVAO);
+
+            var _props = _objectSpread2(_objectSpread2({
+              count: userProps.vertexCount
+            }, userProps), sharedProps);
+
+            if (isVAO) {
+              _props.vao = userProps.vao.vertices;
+            } else {
+              _props.buffers = sanitizeBufferInputs(meta, userProps.vertexAttributes, false);
+            }
+
             queue({
-              key: getCacheKey(false, insertCaps),
-              props: _objectSpread2(_objectSpread2({
-                count: userProps.vertexCount
-              }, userProps), {}, {
-                buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false)
-              }, sharedProps)
+              featureMask: _featureMask,
+              props: _props
             });
           }
 
@@ -934,6 +1021,86 @@
         _iterator.f();
       }
     };
+
+    returnValue.vao = function (props) {
+      var outputs = {};
+      var cases = [['vertices', segmentSpec.attrs, props.vertexAttributes, false]];
+
+      if (meta.orientation) {
+        cases.push(['endpoints', endpointSpec.attrs, props.endpointAttributes, true, false, null]);
+      } else {
+        cases.push(['startCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_START], ['endCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_END]);
+      }
+
+      for (var _i2 = 0, _cases = cases; _i2 < _cases.length; _i2++) {
+        var _cases$_i = _slicedToArray(_cases[_i2], 6),
+            outputName = _cases$_i[0],
+            specAttrs = _cases$_i[1],
+            attrs = _cases$_i[2],
+            isEndpoints = _cases$_i[3],
+            splitCaps = _cases$_i[4],
+            orientation = _cases$_i[5];
+
+        if (!attrs) continue;
+        var fakeProps = {
+          buffers: sanitizeBufferInputs(meta, attrs, isEndpoints),
+          splitCaps: splitCaps,
+          orientation: orientation
+        };
+        var vaoData = [];
+
+        var _iterator2 = _createForOfIteratorHelper(indexAttributes.concat(specAttrs)),
+            _step2;
+
+        try {
+          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+            var attr = _step2.value;
+            var vaoEntry = {};
+
+            for (var _i3 = 0, _arr2 = ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']; _i3 < _arr2.length; _i3++) {
+              var item = _arr2[_i3];
+              var value = attr.spec[item];
+              if (typeof value === 'function') value = attr.spec[item]({}, fakeProps);
+              if (value !== undefined) vaoEntry[item] = value;
+            }
+
+            vaoData.push(vaoEntry);
+          }
+        } catch (err) {
+          _iterator2.e(err);
+        } finally {
+          _iterator2.f();
+        }
+
+        outputs[outputName] = regl.vao(vaoData);
+      }
+
+      outputs.destroy = function destroy() {
+        var _iterator3 = _createForOfIteratorHelper(cases),
+            _step3;
+
+        try {
+          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+            var _step3$value = _slicedToArray(_step3.value, 1),
+                _outputName = _step3$value[0];
+
+            if (!outputs[_outputName]) continue;
+
+            outputs[_outputName].destroy();
+
+            delete outputs[_outputName];
+          }
+        } catch (err) {
+          _iterator3.e(err);
+        } finally {
+          _iterator3.f();
+        }
+      };
+
+      return outputs;
+    };
+
+    return returnValue;
   }
 
   return src;

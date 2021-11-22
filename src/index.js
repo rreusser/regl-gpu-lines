@@ -212,7 +212,6 @@ function reglLines(
   };
 
   returnValue.vao = function (props) {
-    let vertices, endpoints;
     const outputs = {};
     const cases = [['vertices', segmentSpec.attrs, props.vertexAttributes, false]];
     if (meta.orientation) {
@@ -233,7 +232,6 @@ function reglLines(
       const vaoData = [];
       for(const attr of indexAttributes.concat(specAttrs)) {
         const vaoEntry = {};
-        const spec = attr.spec;
         for (const item of ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']) {
           let value = attr.spec[item];
           if (typeof value === 'function') value = attr.spec[item]({}, fakeProps);
@@ -249,7 +247,7 @@ function reglLines(
         outputs[outputName].destroy();
         delete outputs[outputName];
       }
-    }
+    };
     return outputs;
   };
 
