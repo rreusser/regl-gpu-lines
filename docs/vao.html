@@ -30,8 +30,8 @@ if (!regl.hasExtension('OES_vertex_array_object')) {
 // and over.
 //
 // In the context of regl-gpu-lines, it means that you move vertexAttributes and endpointAttributes
-// to a separate call to `reglLines.vao()`, then simply proceed exactly as you would otherwise.
-
+// to a separate call to `drawLines.vao()`, then simply pass the resulting object when drawing lines
+// instead of vertexAttributes and endpointAttributes.
 const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
@@ -140,8 +140,8 @@ if (!regl.hasExtension('OES_vertex_array_object')) {
 // and over.
 //
 // In the context of regl-gpu-lines, it means that you move vertexAttributes and endpointAttributes
-// to a separate call to `reglLines.vao()`, then simply proceed exactly as you would otherwise.
-
+// to a separate call to `drawLines.vao()`, then simply pass the resulting object when drawing lines
+// instead of vertexAttributes and endpointAttributes.
 const drawLines = reglLines(regl, {
   vert: `
     precision highp float;
