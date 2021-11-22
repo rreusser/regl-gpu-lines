@@ -47,7 +47,7 @@ ${debug ? 'attribute float debugInstanceID;' : ''}
 
 uniform bool _isRound;
 uniform vec2 _vertCnt2, _capJoinRes2;
-uniform vec2 resolution, _capScale;
+uniform vec2 _resolution, _capScale;
 uniform float _miterLimit;
 ${meta.orientation || !isEndpoints ? '' : 'uniform float _orientation;'}
 
@@ -103,7 +103,7 @@ void main() {
   // Convert to screen-pixel coordinates
   // Save w so we can perspective re-multiply at the end to get varyings depth-correct
   float pw = mirror ? pC.w : pB.w;
-  ${verts.map(v => `p${v} = vec4(vec3(p${v}.xy * resolution, p${v}.z) / p${v}.w, 1);`).join('\n')}
+  ${verts.map(v => `p${v} = vec4(vec3(p${v}.xy * _resolution, p${v}.z) / p${v}.w, 1);`).join('\n')}
 
   // If it's a cap, mirror A back onto C to accomplish a round
   ${isEndpoints ? `vec4 pA = pC;` : ''}
@@ -262,8 +262,9 @@ void main() {
 
   gl_Position = pB;
   gl_Position.xy += width * dP;
-  gl_Position.xy /= resolution;
+  gl_Position.xy /= _resolution;
   gl_Position *= pw;
+  ${meta.postproject ? `gl_Position = ${meta.postproject}(gl_Position);` : ''}
 }`,
     frag,
     attributes: {
@@ -278,6 +279,7 @@ void main() {
       _orientation: regl.prop('orientation'),
       _capScale: regl.prop('capScale'),
       _isRound: (ctx, props) => props.join === 'round',
+      _resolution: (ctx, props) => props.viewportSize || [ctx.viewportWidth, ctx.viewportHeight],
     },
     primitive: 'triangle strip',
     instances: isEndpoints

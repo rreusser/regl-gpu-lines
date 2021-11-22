@@ -1,6 +1,13 @@
+## 2.1.0
+
+### Features
+
+- Adds `postproject` pragma to apply an additional transformation to lines after screen-projection.
+- Adds `viewportSize` render-time option in case you wish to project lines to some other shape than the viewport size. May be used in conjunction with `postproject`, for example to render to the unit square and then view that square from some other angle.
+
 ## 2.0.0
 
-## Features
+### Features
 
 - Moves `insertCaps` from a compile-time to a runtime configuration option.
 - Lazily instantiates the four potential draw command variations (endpoints vs. interior segments, and insert caps true vs. false).
@@ -8,7 +15,7 @@
 
 ## 1.1.0
 
-## Features
+### Features
 
 - Reenable NaN to signal line breaks. It seems to work now. [Confirm here](https://rreusser.github.io/regl-gpu-lines/docs/tests.html#miter/insert-caps/nan).
 

@@ -60,12 +60,6 @@ function reglLines(
   const segmentSpec = createAttrSpec(meta, regl, false);
   const endpointSpec = createAttrSpec(meta, regl, true);
 
-  const setResolution = regl({
-    uniforms: {
-      resolution: ctx => [ctx.viewportWidth, ctx.viewportHeight],
-    }
-  });
-
   const indexAttributes = {};
   if (debug) {
     // TODO: Allocate/grow lazily to avoid an arbitrary limit
@@ -130,65 +124,63 @@ function reglLines(
     if (!props) return;
     if (!Array.isArray(props)) props = [props];
 
-    setResolution(() => {
-      for (const userProps of props) {
-        const join = sanitizeJoinType(userProps.join);
-        const cap = sanitizeCapType(userProps.cap);
+    for (const userProps of props) {
+      const join = sanitizeJoinType(userProps.join);
+      const cap = sanitizeCapType(userProps.cap);
 
-        let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
-        if (cap === 'square') {
-          capRes2 = 3;
-        } else if (cap === 'none') {
-          capRes2 = 1;
-        }
+      let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
+      if (cap === 'square') {
+        capRes2 = 3;
+      } else if (cap === 'none') {
+        capRes2 = 1;
+      }
 
-        let joinRes2 = 1;
-        if (join === 'round') {
-          joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
-        }
+      let joinRes2 = 1;
+      if (join === 'round') {
+        joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
+      }
 
-        // We only ever use these in doubled-up form
-        capRes2 *= 2;
-        joinRes2 *= 2;
+      // We only ever use these in doubled-up form
+      capRes2 *= 2;
+      joinRes2 *= 2;
 
-        const miterLimit = join === 'bevel' ? 1 : (userProps.miterLimit === undefined ? 4 : userProps.miterLimit);
-        const capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
-        const insertCaps = !!userProps.insertCaps;
+      const miterLimit = join === 'bevel' ? 1 : (userProps.miterLimit === undefined ? 4 : userProps.miterLimit);
+      const capScale = cap === 'square' ? SQUARE_CAP_SCALE : ROUND_CAP_SCALE;
+      const insertCaps = !!userProps.insertCaps;
 
-        const sharedProps = {joinRes2, capRes2, capScale, join, miterLimit, insertCaps};
+      const sharedProps = {joinRes2, capRes2, capScale, join, miterLimit, insertCaps};
 
-        if (userProps.endpointAttributes && userProps.endpointCount) {
-          const endpointProps = {
-            count: userProps.endpointCount,
-            ...userProps,
-            buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
-            ...sharedProps
-          };
-          let key = getCacheKey(true, insertCaps);
-          if (meta.orientation) {
-            queue({key, props: {...endpointProps, splitCaps: false}});
-          } else {
-            queue(
-              {key, props: {...endpointProps, orientation: ORIENTATION.CAP_START, splitCaps: true}},
-              {key, props: {...endpointProps, orientation: ORIENTATION.CAP_END, splitCaps: true}}
-            );
-          }
-        }
-
-        if (userProps.vertexAttributes && userProps.vertexCount) {
-          queue({
-            key: getCacheKey(false, insertCaps),
-            props: {
-              count: userProps.vertexCount,
-              ...userProps,
-              buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false),
-              ...sharedProps
-            }
-          });
+      if (userProps.endpointAttributes && userProps.endpointCount) {
+        const endpointProps = {
+          count: userProps.endpointCount,
+          ...userProps,
+          buffers: sanitizeBufferInputs(meta, userProps.endpointAttributes, true),
+          ...sharedProps
+        };
+        let key = getCacheKey(true, insertCaps);
+        if (meta.orientation) {
+          queue({key, props: {...endpointProps, splitCaps: false}});
+        } else {
+          queue(
+            {key, props: {...endpointProps, orientation: ORIENTATION.CAP_START, splitCaps: true}},
+            {key, props: {...endpointProps, orientation: ORIENTATION.CAP_END, splitCaps: true}}
+          );
         }
       }
 
+      if (userProps.vertexAttributes && userProps.vertexCount) {
+        queue({
+          key: getCacheKey(false, insertCaps),
+          props: {
+            count: userProps.vertexCount,
+            ...userProps,
+            buffers: sanitizeBufferInputs(meta, userProps.vertexAttributes, false),
+            ...sharedProps
+          }
+        });
+      }
+
       flushDrawQueue();
-    });
+    }
   };
 }

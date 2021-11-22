@@ -8,6 +8,7 @@ const PRAGMA_REGEX = /^\s*#pragma\s+lines\s*:\s*([^;]*);?$/i;
 const ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
 const PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
 const VARYING_REGEX = /^\s*(?:(extrapolate)?)\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
+const POSTPROJECT_REGEX = /^\s*postproject\s+=\s+([\w\d_]+)\s*$/i;
 
 const DIMENSION_GLSL_TYPES = {
   "float": 1,
@@ -56,12 +57,16 @@ function parsePragma (pragma) {
       return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${clamped})`).join(', ')});`;
     };
     return {type: 'varying', returnType, name, getter, inputs, generate};
+  } else if ((match = pragma.match(POSTPROJECT_REGEX))) {
+    const name = match[1];
+    return {type: 'postproject', name};
   } else {
     throw new Error(`Unrecognized lines pragma: "${pragma}"`);
   }
 }
 
 function analyzePragmas (pragmas) {
+  let postproject;
   const attrs = new Map();
   const varyings = new Map();
   for (const pragma of pragmas) {
@@ -71,6 +76,9 @@ function analyzePragmas (pragmas) {
       pragma.endpointUsage = ATTR_USAGE.NONE;
     } else if (pragma.type === 'varying') {
       varyings.set(pragma.name, pragma);
+    } else if (pragma.type === 'postproject') {
+      postproject = pragma.name;
+
     }
   }
 
@@ -115,6 +123,6 @@ function analyzePragmas (pragmas) {
       }
     }
   }
-  return {varyings, attrs, width, position, orientation};
+  return {varyings, attrs, width, position, orientation, postproject};
 }
 

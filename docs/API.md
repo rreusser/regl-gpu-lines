@@ -133,6 +133,24 @@ float getDistance(float distance) { return distance; }
 
 ---
 
+#### Post-projection
+
+In some cases, you may want to draw lines projected onto a surface rather than the screen. In this case, you may specify a function which receives the outgoing `vec4` `gl_Position` and returns a reprojected `vec4` position. In order to accomplish the correct width scale and aspect ratio, you may set `viewportSize` as a [draw property](#drawing-lines). This size is divided out before post-projection, leaving coordinates in clip space ([-1, 1] &times; [-1, 1] &times; [-1, 1]).
+#### `#pragma lines: postproject = <functionName>`
+- `functionName`: name of GLSL function which receives the screen-projected `gl_Position` vector and returns a reprojected `vec4` position.
+
+#### Example
+
+The following example receives the final `gl_Position` and applies one more transformation before return—in this case a camera projection-view matrix.
+
+```glsl
+#pragma lines: postproject = project
+uniform mat4 projectionView;
+vec4 project(vec4 position) {
+  return projectionView * position;
+}
+```
+
 ## Fragment shader
 
 You may define the fragment shader as you desire. The only builtin parameter is a `varying vec3` called `lineCoord`, which assists in rendering end caps and variation across the width of the line. `lineCoord.xy` lives in the square [-1, 1] &times; [-1, 1]. Starting caps lie in the left half-plane, [-1, 0] &times; [-1, 1]. The full length of the line lies along a vertical slice [0] &times; [-1, 1]. End caps lie in the right half-plane, [0, 1] &times; [-1, 1]. `lineCoord.z` is zero on line segments and is non-zero on caps and joins. This can help to render caps and joins differently, for example so that caps and joins would not entirely disappear when rendering dashed lines.
@@ -157,6 +175,7 @@ Drawing is invoked by passing an object with the following optional properties t
 | `endpointCount` | `number` | 0 | Number end caps drawn (number of endpoint vertices divided by three) |
 | `vertexAttribues` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
 | `endpointAttributes` | `object` | `{}` | Object of named attributes corresponding to those defined the vertex shader |
+| `viewportSize` | `Array[number]` | `[viewportSize, viewportWidth]` | Size of screen-projection viewport |
 
 #### Example
 

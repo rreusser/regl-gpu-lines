@@ -49,6 +49,7 @@
     "eslint": "^8.2.0",
     "get-pixels": "^3.3.3",
     "gl": "^4.9.2",
+    "gl-matrix": "^3.4.3",
     "glob": "^7.2.0",
     "hyperstream": "^1.2.2",
     "insert-css": "^2.0.0",

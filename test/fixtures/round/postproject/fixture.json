@@ -1,0 +1,53 @@
+{
+  "width": 256,
+  "height": 128,
+  "command": {
+    "vert": [
+      "precision highp float;",
+      "#pragma lines: attribute vec2 xy",
+      "#pragma lines: position = getPosition(xy)",
+      "#pragma lines: width = getWidth()",
+      "#pragma lines: postproject = postprojectPosition",
+      "uniform float width;",
+      "uniform mat4 projectionView;",
+      "float getWidth() { return width; }",
+      "vec4 getPosition(vec2 xy) { return vec4(xy, 0, 1); }",
+      "vec4 postprojectPosition(vec4 position) { return projectionView * position; }"
+    ],
+    "frag": [
+      "precision lowp float;",
+      "void main () {",
+      "  gl_FragColor = vec4(0,0,0,1);",
+      "}"
+    ],
+    "depth": { "enable": true },
+    "uniforms": {
+      "width": 0.10,
+      "projectionView": [
+        -0.022149166092276573, -0.646040678024292, -0.9652843475341797, -0.9633557200431824,
+        1.2069035768508911, -0.011856176890432835, -0.017714954912662506, -0.01767956092953682,
+        0, 2.3261380195617676, -0.26817968487739563, -0.26764386892318726,
+        0, 0, 1.8518742322921753, 1.8681541681289673
+      ]
+    }
+  },
+  "vertexAttributes": {
+    "xy": [
+      [1, 0],
+      [-0.22252093395631434, 0.9749279121818236],
+      [-0.9009688679024191, -0.433883739117558],
+      [0.6234898018587334, -0.7818314824680299],
+      [0.6234898018587337, 0.7818314824680297],
+      [-0.9009688679024189, 0.43388373911755845],
+      [-0.2225209339563148, -0.9749279121818235],
+      [1, 0],
+      [-0.22252093395631387, 0.9749279121818237],
+      [-0.9009688679024194, -0.43388373911755757]
+    ]
+  },
+  "data": {
+    "join": "round",
+    "cap": "round",
+    "viewportSize": [1, 1]
+  }
+}

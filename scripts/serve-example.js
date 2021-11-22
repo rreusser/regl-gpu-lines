@@ -15,6 +15,7 @@ const preface = `
   window.wrapGUI = require('controls-gui');
   window.State = require('controls-state');
   window.createREGL = require('regl');
+  window.glMatrix = require('gl-matrix');
   window.reglLines = require('./src/index.js');
 `;
 
