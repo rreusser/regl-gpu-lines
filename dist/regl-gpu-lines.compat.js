@@ -1060,7 +1060,8 @@
             for (var _i3 = 0, _arr2 = ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']; _i3 < _arr2.length; _i3++) {
               var item = _arr2[_i3];
               var value = attr.spec[item];
-              if (typeof value === 'function') value = attr.spec[item]({}, fakeProps);
+              if (value && value.data) value = value.data;
+              if (typeof value === 'function') value = value({}, fakeProps);
               if (value !== undefined) vaoEntry[item] = value;
             }
 

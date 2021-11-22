@@ -1,3 +1,9 @@
+## 2.2.1
+
+### Bugfixes
+
+- Try hot-fixing an issue with VAO setup.
+
 ## 2.2.0
 
 ### Features

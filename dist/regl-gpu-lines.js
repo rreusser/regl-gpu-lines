@@ -946,7 +946,8 @@ void main() {
 
           for (const item of ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']) {
             let value = attr.spec[item];
-            if (typeof value === 'function') value = attr.spec[item]({}, fakeProps);
+            if (value && value.data) value = value.data;
+            if (typeof value === 'function') value = value({}, fakeProps);
             if (value !== undefined) vaoEntry[item] = value;
           }
 
