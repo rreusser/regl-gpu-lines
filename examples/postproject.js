@@ -63,10 +63,13 @@ const drawLines = reglLines(regl, {
 });
 
 // Construct an array of xy pairs
-const n = 7;
+const n = 501;
 const position = [...Array(n + 3).keys()]
-  .map(i => i / n * Math.PI * 2 * 2)
-  .map(t => [Math.cos(t), Math.sin(t)]);
+  .map(i => i / n * Math.PI * 2)
+  .map(t => {
+    const r = 0.6 + 0.4 * Math.cos(t * 7.0);
+    return [r * Math.cos(t), r * Math.sin(t)]
+  });
 
 // Set up the data to be drawn. Note that we preallocate buffers and don't create
 // them on every draw call.
