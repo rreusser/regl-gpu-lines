@@ -80,7 +80,7 @@ const state = wrapGUI(State({
     cull: State.Select('none', {options: ['none', 'front', 'back']}),
     depth: false,
     colorInstances: true,
-    labelPoints: true
+    labelPoints: false
   }, {
     expanded: false
   })
