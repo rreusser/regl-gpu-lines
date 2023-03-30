@@ -11,9 +11,9 @@ function has(obj, prop) {
 
 // This function is run on every draw call in order to sanitize and configure the data layout
 function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
-  //console.log('metadata:', metadata);
-  //console.log('buffersObj:', buffersObj);
-  //console.log('isEndpoints:', isEndpoints);
+  // console.log('metadata:', metadata);
+  // console.log('buffersObj:', buffersObj);
+  // console.log('isEndpoints:', isEndpoints);
   const outputs = {};
 
   if (!buffersObj) return outputs;
@@ -39,7 +39,7 @@ function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
     } else if (input._reglType === 'buffer') {
       output.buffer = input;
       output.type = output.buffer._buffer.dtype;
-    } else if (input.buffer._reglType === 'buffer') {
+    } else if (input.buffer && input.buffer._reglType === 'buffer') {
       output.buffer = input.buffer;
 
       if (has(input, 'dimension') && input.dimension !== output.dimension) {
@@ -56,7 +56,7 @@ function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
       }
       if (has(input, 'stride')) output.stride = input.stride;
     } else {
-      throw new Error(`Invalid buffer for attribute '${attrName}'`);
+      throw new Error(`Invalid buffer for attribute '${attrName}'. Be sure to wrap in regl.buffer().`);
     }
 
     output.bytesPerElement = DTYPE_SIZES[output.type];

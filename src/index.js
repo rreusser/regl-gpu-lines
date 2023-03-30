@@ -34,6 +34,10 @@ function reglLines(
   regl,
   opts = {}
 ) {
+  if (!regl.hasExtension('ANGLE_instanced_arrays')) {
+    throw new Error('regl-gpu-lines requries the ANGLE_instanced_arrays extension');
+  }
+
   const {
     vert = null,
     frag = null,
@@ -70,7 +74,7 @@ function reglLines(
     }
     indexAttributes.push({
       name: 'debugInstanceID',
-      spec: { buffer: cache.debugInstanceIDBuffer, divisor: 1 }
+      spec: { buffer: cache.debugInstanceIDBuffer, divisor: (ctx, props) => props.instances }
     });
   }
   if (!cache.indexBuffer) {
@@ -122,7 +126,6 @@ function reglLines(
       while (++pos < drawQueue.length && drawQueue[pos].featureMask === featureMask) {
         groupedProps.push(drawQueue[pos].props);
       }
-      // console.log('isEndpoints:', !!(FEATUREMASK_IS_ENDPOINTS & featureMask), 'insertCaps:', !!(FEATUREMASK_INSERT_CAPS & featureMask), 'batching:', groupedProps.length);
       getDrawCommand(featureMask)(groupedProps);
       groupedProps.length = 0;
     }
@@ -162,6 +165,7 @@ function reglLines(
 
       if (userProps.endpointCount) {
         const endpointProps = {
+          instances: 1,
           count: userProps.endpointCount,
           ...userProps,
           ...sharedProps
@@ -190,6 +194,10 @@ function reglLines(
             );
           }
         }
+      }
+
+      if (userProps.instances === undefined) {
+        userProps.instances = 1;
       }
 
       if (userProps.vertexCount) {

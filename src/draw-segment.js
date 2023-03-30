@@ -89,7 +89,7 @@ void main() {
   ${debug ? `instanceID = ${isEndpoints ? '-1.0' : 'debugInstanceID'};` : ''}
   ${debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
 
-  ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
+  ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(meta, vert)};`).join('\n')}
 
   // A sensible default for early returns
   gl_Position = pB;
@@ -142,7 +142,7 @@ void main() {
   bool roundOrCap = _isRound || isCap;
 
   // TODO: swap inputs rather than computing both and discarding one
-  float width = mirror ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
+  float width = mirror ? ${meta.width.generate(meta, 'C')} : ${meta.width.generate(meta, 'B')};
 
   // Tangent and normal vectors
   vec2 tBC = pC.xy - pB.xy;
@@ -253,7 +253,7 @@ void main() {
     }
   }
 
-  ${isEndpoints ? `float _orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(_orientation,2.0)'};` : ''};
+  ${isEndpoints ? `float _orientation = ${meta.orientation ? meta.orientation.generate(meta, '') : 'mod(_orientation,2.0)'};` : ''};
 
   // Since we can't know the orientation of end caps without being told. This comes either from
   // input via the orientation property or from a uniform, assuming caps are interleaved (start,
@@ -273,7 +273,7 @@ void main() {
   lineCoord.z = useC < 0.0 || useC > 1.0 ? 1.0 : 0.0;
 
   // The varying generation code handles clamping, if needed
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
+  ${[...meta.varyings.values()].map(varying => varying.generate(meta, 'useC', 'B', 'C')).join('\n')}
 
   gl_Position = pB;
   gl_Position.xy += width * dP;
@@ -295,8 +295,8 @@ void main() {
     },
     primitive: 'triangle strip',
     instances: isEndpoints
-      ? (ctx, props) => props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count
-      : (ctx, props) => props.count - 3,
+      ? (ctx, props) => props.instances * (props.splitCaps ? (props.orientation === ORIENTATION.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2)) : props.count)
+      : (ctx, props) => props.instances * (props.count - 3),
     count: (ctx, props) => {
       const count = computeCount(props);
       return 6 + (count[0] + count[1]);

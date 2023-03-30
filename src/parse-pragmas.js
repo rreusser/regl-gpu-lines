@@ -5,7 +5,7 @@ const ATTR_USAGE = require('./constants/attr-usage.js');
 module.exports = parseShaderPragmas;
 
 const PRAGMA_REGEX = /^\s*#pragma\s+lines\s*:\s*([^;]*);?$/i;
-const ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
+const ATTRIBUTE_REGEX = /^\s*(?:(instance)?)\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
 const PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
 const VARYING_REGEX = /^\s*(?:(extrapolate)?)\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
 const POSTPROJECT_REGEX = /^\s*postproject\s+=\s+([\w\d_]+)\s*$/i;
@@ -36,15 +36,22 @@ function parsePragma (pragma) {
   pragma = pragma.trim();
   let match;
   if ((match = pragma.match(ATTRIBUTE_REGEX))) {
-    const dimension = DIMENSION_GLSL_TYPES[match[1]];
-    const name = match[2];
-    return {type: 'attribute', dimension, name};
+    const isInstanceAttr = !!match[1];
+    const dimension = DIMENSION_GLSL_TYPES[match[2]];
+    const name = match[3];
+    return {type: 'attribute', dimension, name, isInstanceAttr};
   } else if ((match = pragma.match(PROPERTY_REGEX))) {
     const property = match[1];
     const returnType = {width: 'float', position: 'vec4', orientation: 'bool'}[property];
     const name = match[2];
     const inputs = match[3].split(',').map(str => str.trim()).filter(x => !!x);
-    const generate = (label, prefix) => `${name}(${inputs.map(input => (prefix || '') + input + label).join(', ')})`;
+    const generate = (meta, label, prefix) => {
+      return `${name}(${inputs.map(input => {
+        const attrMeta = meta.attrs.get(input);
+        if (attrMeta.isInstanceAttr) return input;
+        return (prefix || '') + input + label;
+      }).join(', ')})`
+    };
     return {type: 'property', property, returnType, name, inputs, generate};
   } else if ((match = pragma.match(VARYING_REGEX))) {
     const extrapolate = match[1] === 'extrapolate';
@@ -52,7 +59,7 @@ function parsePragma (pragma) {
     const name = match[3];
     const getter = match[4];
     const inputs = match[5].split(',').map(str => str.trim()).filter(x => !!x);
-    const generate = (interp, a, b) => {
+    const generate = (meta, interp, a, b) => {
       const clamped = extrapolate ? interp : `clamp(${interp},0.0,1.0)`;
       return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${clamped})`).join(', ')});`;
     };
@@ -110,19 +117,25 @@ function analyzePragmas (pragmas) {
     if (!pragma.inputs) continue;
     for (const input of pragma.inputs) {
       const inputAttr = attrs.get(input);
-      if (pragma.type === 'property' || pragma.type === 'varying') {
-        if (pragma.property === 'position') {
-          inputAttr.vertexUsage |= ATTR_USAGE.EXTENDED;
-          inputAttr.endpointUsage |= ATTR_USAGE.EXTENDED;
-        } else if (pragma.property === 'orientation') {
-          inputAttr.endpointUsage |= ATTR_USAGE.PER_INSTANCE;
-        } else {
-          inputAttr.endpointUsage|= ATTR_USAGE.REGULAR;
-          inputAttr.vertexUsage|= ATTR_USAGE.REGULAR;
+      if (inputAttr.isInstanceAttr) {
+        inputAttr.vertexUsage = ATTR_USAGE.PER_INSTANCE;
+        inputAttr.endpointUsage = ATTR_USAGE.PER_INSTANCE;
+      } else {
+        if (pragma.type === 'property' || pragma.type === 'varying') {
+          if (pragma.property === 'position') {
+            inputAttr.vertexUsage |= ATTR_USAGE.EXTENDED;
+            inputAttr.endpointUsage |= ATTR_USAGE.EXTENDED;
+          } else if (pragma.property === 'orientation') {
+            inputAttr.endpointUsage |= ATTR_USAGE.PER_INSTANCE;
+          } else {
+            inputAttr.endpointUsage|= ATTR_USAGE.REGULAR;
+            inputAttr.vertexUsage|= ATTR_USAGE.REGULAR;
+          }
         }
       }
     }
   }
+
   return {varyings, attrs, width, position, orientation, postproject};
 }
 

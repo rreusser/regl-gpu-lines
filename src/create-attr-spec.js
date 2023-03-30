@@ -26,9 +26,11 @@ function createAttrSpecs (meta, regl, isEndpoints) {
           name: attrOutName,
           spec: {
             buffer: (ctx, props) => props.buffers[attrName].buffer,
-            offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps)? 0 : 3) + index),
+            offset: attr.isInstanceAttr
+              ? (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index
+              : (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps) ? 0 : 3) + index),
             stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
-            divisor: (ctx, props) => props.buffers[attrName].divisor,
+            divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor,
           }
         });
       } else {
@@ -38,7 +40,7 @@ function createAttrSpecs (meta, regl, isEndpoints) {
             buffer: (ctx, props) => props.buffers[attrName].buffer,
             offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
             stride: (ctx, props) => props.buffers[attrName].stride,
-            divisor: (ctx, props) => props.buffers[attrName].divisor,
+            divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor,
           }
         });
       }
