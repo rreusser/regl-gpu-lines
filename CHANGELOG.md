@@ -1,3 +1,13 @@
+## 2.3.0
+
+### Bugfixes
+
+- Throw an error if missing the `ANGLE_instanced_arrays` extension instead of just rendering incorrectly.
+
+### Features
+
+- Includes sort of hacky "instanced" rendering (undocumented). Requires duplicating instanced geometry N times in order to draw N line segments, then sort of draws the first segment of all instances, then the second, etc. So it's not ideal, but it's better than issuing N draw calls. See `examples/instanced.js`.
+
 ## 2.2.1
 
 ### Bugfixes

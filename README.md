@@ -65,6 +65,7 @@ See [API documentation](./docs/API.md).
 - [Batched rendering](https://rreusser.github.io/regl-gpu-lines/docs/batching.html): Illustrates how to take advantage of `reorder: true` to reduce shader program changes from, in this example, thirty to four.
 - [Post-projection](https://rreusser.github.io/regl-gpu-lines/docs/postproject.html): Illustrates post-project to draw lines projected onto a plane from some other angle.
 - [Vertex Array Object (VAO)](https://rreusser.github.io/regl-gpu-lines/docs/vao.html): Illustrates seamless swapping of VAO for vertex and endpoint attributes.
+- [Fake instancing](https://rreusser.github.io/regl-gpu-lines/docs/instanced.html): Sort of allows you to mimic instanced rendering on top of instanced rendering, albeit with some duplication of data.
 - [Debug page](https://rreusser.github.io/regl-gpu-lines/docs/debug-view.html): Shows how to use `instanceID` and `triStripCoord` varyings to draw a wireframe
 - [Full debug view](https://rreusser.github.io/regl-gpu-lines/docs/debug.html): A page for exploring all the bells and whistles
 - [GPGPU Strange Attractors](https://observablehq.com/d/ab6cd8bb0137889c): Feed a GPU particle simulation from texture data directly into line rendering

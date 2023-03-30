@@ -82,7 +82,7 @@ void main() {
   ${debug ? `instanceID = ${isEndpoints ? '-1.0' : 'debugInstanceID'};` : ''}
   ${debug ? 'triStripCoord = vec2(floor(index / 2.0), mod(index, 2.0));' : ''}
 
-  ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(vert)};`).join('\n')}
+  ${verts.map(vert => `vec4 p${vert} = ${meta.position.generate(meta, vert)};`).join('\n')}
 
   // A sensible default for early returns
   gl_Position = pB;
@@ -135,7 +135,7 @@ void main() {
   bool roundOrCap = _isRound || isCap;
 
   // TODO: swap inputs rather than computing both and discarding one
-  float width = mirror ? ${meta.width.generate('C')} : ${meta.width.generate('B')};
+  float width = mirror ? ${meta.width.generate(meta, 'C')} : ${meta.width.generate(meta, 'B')};
 
   // Tangent and normal vectors
   vec2 tBC = pC.xy - pB.xy;
@@ -246,7 +246,7 @@ void main() {
     }
   }
 
-  ${isEndpoints ? `float _orientation = ${meta.orientation ? meta.orientation.generate('') : 'mod(_orientation,2.0)'};` : ''};
+  ${isEndpoints ? `float _orientation = ${meta.orientation ? meta.orientation.generate(meta, '') : 'mod(_orientation,2.0)'};` : ''};
 
   // Since we can't know the orientation of end caps without being told. This comes either from
   // input via the orientation property or from a uniform, assuming caps are interleaved (start,
@@ -266,7 +266,7 @@ void main() {
   lineCoord.z = useC < 0.0 || useC > 1.0 ? 1.0 : 0.0;
 
   // The varying generation code handles clamping, if needed
-  ${[...meta.varyings.values()].map(varying => varying.generate('useC', 'B', 'C')).join('\n')}
+  ${[...meta.varyings.values()].map(varying => varying.generate(meta, 'useC', 'B', 'C')).join('\n')}
 
   gl_Position = pB;
   gl_Position.xy += width * dP;
@@ -286,7 +286,7 @@ void main() {
         _resolution: (ctx, props) => props.viewportSize || [ctx.viewportWidth, ctx.viewportHeight]
       },
       primitive: 'triangle strip',
-      instances: isEndpoints ? (ctx, props) => props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count : (ctx, props) => props.count - 3,
+      instances: isEndpoints ? (ctx, props) => props.instances * (props.splitCaps ? props.orientation === ORIENTATION$2.CAP_START ? Math.ceil(props.count / 2) : Math.floor(props.count / 2) : props.count) : (ctx, props) => props.instances * (props.count - 3),
       count: (ctx, props) => {
         const count = computeCount(props);
         return 6 + (count[0] + count[1]);
@@ -306,7 +306,7 @@ void main() {
   const ATTR_USAGE$1 = attrUsage;
   var parsePragmas = parseShaderPragmas$1;
   const PRAGMA_REGEX = /^\s*#pragma\s+lines\s*:\s*([^;]*);?$/i;
-  const ATTRIBUTE_REGEX = /^\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
+  const ATTRIBUTE_REGEX = /^\s*(?:(instance)?)\s*attribute\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*$/i;
   const PROPERTY_REGEX = /^\s*(position|width|orientation)\s+=\s+([\w\d_]+)\s*\(([^)]*)\)\s*$/i;
   const VARYING_REGEX = /^\s*(?:(extrapolate)?)\s*varying\s+(float|vec2|vec3|vec4)\s+([\w\d_]+)\s*=\s*([\w\d_]+)\(([^)]*)\)\s*$/;
   const POSTPROJECT_REGEX = /^\s*postproject\s+=\s+([\w\d_]+)\s*$/i;
@@ -339,12 +339,14 @@ void main() {
     let match;
 
     if (match = pragma.match(ATTRIBUTE_REGEX)) {
-      const dimension = DIMENSION_GLSL_TYPES[match[1]];
-      const name = match[2];
+      const isInstanceAttr = !!match[1];
+      const dimension = DIMENSION_GLSL_TYPES[match[2]];
+      const name = match[3];
       return {
         type: 'attribute',
         dimension,
-        name
+        name,
+        isInstanceAttr
       };
     } else if (match = pragma.match(PROPERTY_REGEX)) {
       const property = match[1];
@@ -356,7 +358,13 @@ void main() {
       const name = match[2];
       const inputs = match[3].split(',').map(str => str.trim()).filter(x => !!x);
 
-      const generate = (label, prefix) => `${name}(${inputs.map(input => (prefix || '') + input + label).join(', ')})`;
+      const generate = (meta, label, prefix) => {
+        return `${name}(${inputs.map(input => {
+        const attrMeta = meta.attrs.get(input);
+        if (attrMeta.isInstanceAttr) return input;
+        return (prefix || '') + input + label;
+      }).join(', ')})`;
+      };
 
       return {
         type: 'property',
@@ -373,7 +381,7 @@ void main() {
       const getter = match[4];
       const inputs = match[5].split(',').map(str => str.trim()).filter(x => !!x);
 
-      const generate = (interp, a, b) => {
+      const generate = (meta, interp, a, b) => {
         const clamped = extrapolate ? interp : `clamp(${interp},0.0,1.0)`;
         return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${clamped})`).join(', ')});`;
       };
@@ -450,15 +458,20 @@ void main() {
       for (const input of pragma.inputs) {
         const inputAttr = attrs.get(input);
 
-        if (pragma.type === 'property' || pragma.type === 'varying') {
-          if (pragma.property === 'position') {
-            inputAttr.vertexUsage |= ATTR_USAGE$1.EXTENDED;
-            inputAttr.endpointUsage |= ATTR_USAGE$1.EXTENDED;
-          } else if (pragma.property === 'orientation') {
-            inputAttr.endpointUsage |= ATTR_USAGE$1.PER_INSTANCE;
-          } else {
-            inputAttr.endpointUsage |= ATTR_USAGE$1.REGULAR;
-            inputAttr.vertexUsage |= ATTR_USAGE$1.REGULAR;
+        if (inputAttr.isInstanceAttr) {
+          inputAttr.vertexUsage = ATTR_USAGE$1.PER_INSTANCE;
+          inputAttr.endpointUsage = ATTR_USAGE$1.PER_INSTANCE;
+        } else {
+          if (pragma.type === 'property' || pragma.type === 'varying') {
+            if (pragma.property === 'position') {
+              inputAttr.vertexUsage |= ATTR_USAGE$1.EXTENDED;
+              inputAttr.endpointUsage |= ATTR_USAGE$1.EXTENDED;
+            } else if (pragma.property === 'orientation') {
+              inputAttr.endpointUsage |= ATTR_USAGE$1.PER_INSTANCE;
+            } else {
+              inputAttr.endpointUsage |= ATTR_USAGE$1.REGULAR;
+              inputAttr.vertexUsage |= ATTR_USAGE$1.REGULAR;
+            }
           }
         }
       }
@@ -520,9 +533,9 @@ void main() {
 
 
   function sanitizeBufferInput(metadata, buffersObj, isEndpoints) {
-    //console.log('metadata:', metadata);
-    //console.log('buffersObj:', buffersObj);
-    //console.log('isEndpoints:', isEndpoints);
+    // console.log('metadata:', metadata);
+    // console.log('buffersObj:', buffersObj);
+    // console.log('isEndpoints:', isEndpoints);
     const outputs = {};
     if (!buffersObj) return outputs;
 
@@ -545,7 +558,7 @@ void main() {
       } else if (input._reglType === 'buffer') {
         output.buffer = input;
         output.type = output.buffer._buffer.dtype;
-      } else if (input.buffer._reglType === 'buffer') {
+      } else if (input.buffer && input.buffer._reglType === 'buffer') {
         output.buffer = input.buffer;
 
         if (has(input, 'dimension') && input.dimension !== output.dimension) {
@@ -566,7 +579,7 @@ void main() {
 
         if (has(input, 'stride')) output.stride = input.stride;
       } else {
-        throw new Error(`Invalid buffer for attribute '${attrName}'`);
+        throw new Error(`Invalid buffer for attribute '${attrName}'. Be sure to wrap in regl.buffer().`);
       }
 
       output.bytesPerElement = DTYPE_SIZES[output.type];
@@ -613,9 +626,9 @@ void main() {
             name: attrOutName,
             spec: {
               buffer: (ctx, props) => props.buffers[attrName].buffer,
-              offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.orientation === ORIENTATION$1.CAP_START || !props.splitCaps ? 0 : 3) + index),
+              offset: attr.isInstanceAttr ? (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index : (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.orientation === ORIENTATION$1.CAP_START || !props.splitCaps ? 0 : 3) + index),
               stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
-              divisor: (ctx, props) => props.buffers[attrName].divisor
+              divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor
             }
           });
         } else {
@@ -625,7 +638,7 @@ void main() {
               buffer: (ctx, props) => props.buffers[attrName].buffer,
               offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
               stride: (ctx, props) => props.buffers[attrName].stride,
-              divisor: (ctx, props) => props.buffers[attrName].divisor
+              divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor
             }
           });
         }
@@ -692,6 +705,10 @@ void main() {
   }
 
   function reglLines(regl, opts = {}) {
+    if (!regl.hasExtension('ANGLE_instanced_arrays')) {
+      throw new Error('regl-gpu-lines requries the ANGLE_instanced_arrays extension');
+    }
+
     const {
       vert = null,
       frag = null,
@@ -730,7 +747,7 @@ void main() {
         name: 'debugInstanceID',
         spec: {
           buffer: cache.debugInstanceIDBuffer,
-          divisor: 1
+          divisor: (ctx, props) => props.instances
         }
       });
     }
@@ -781,8 +798,7 @@ void main() {
 
         while (++pos < drawQueue.length && drawQueue[pos].featureMask === featureMask) {
           groupedProps.push(drawQueue[pos].props);
-        } // console.log('isEndpoints:', !!(FEATUREMASK_IS_ENDPOINTS & featureMask), 'insertCaps:', !!(FEATUREMASK_INSERT_CAPS & featureMask), 'batching:', groupedProps.length);
-
+        }
 
         getDrawCommand(featureMask)(groupedProps);
         groupedProps.length = 0;
@@ -830,6 +846,7 @@ void main() {
 
         if (userProps.endpointCount) {
           const endpointProps = {
+            instances: 1,
             count: userProps.endpointCount,
             ...userProps,
             ...sharedProps
@@ -896,6 +913,10 @@ void main() {
               });
             }
           }
+        }
+
+        if (userProps.instances === undefined) {
+          userProps.instances = 1;
         }
 
         if (userProps.vertexCount) {
