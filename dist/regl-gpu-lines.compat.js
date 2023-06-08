@@ -4,45 +4,56 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.reglLines = factory());
 })(this, (function () { 'use strict';
 
+  function _iterableToArrayLimit(arr, i) {
+    var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
+    if (null != _i) {
+      var _s,
+        _e,
+        _x,
+        _r,
+        _arr = [],
+        _n = !0,
+        _d = !1;
+      try {
+        if (_x = (_i = _i.call(arr)).next, 0 === i) {
+          if (Object(_i) !== _i) return;
+          _n = !1;
+        } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
+      } catch (err) {
+        _d = !0, _e = err;
+      } finally {
+        try {
+          if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
+        } finally {
+          if (_d) throw _e;
+        }
+      }
+      return _arr;
+    }
+  }
   function ownKeys(object, enumerableOnly) {
     var keys = Object.keys(object);
-
     if (Object.getOwnPropertySymbols) {
       var symbols = Object.getOwnPropertySymbols(object);
-
-      if (enumerableOnly) {
-        symbols = symbols.filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-        });
-      }
-
-      keys.push.apply(keys, symbols);
+      enumerableOnly && (symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      })), keys.push.apply(keys, symbols);
     }
-
     return keys;
   }
-
   function _objectSpread2(target) {
     for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
+      var source = null != arguments[i] ? arguments[i] : {};
+      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
     }
-
     return target;
   }
-
   function _defineProperty(obj, key, value) {
+    key = _toPropertyKey(key);
     if (key in obj) {
       Object.defineProperty(obj, key, {
         value: value,
@@ -53,60 +64,23 @@
     } else {
       obj[key] = value;
     }
-
     return obj;
   }
-
   function _slicedToArray(arr, i) {
     return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
   }
-
   function _toConsumableArray(arr) {
     return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
-
   function _arrayWithoutHoles(arr) {
     if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
-
   function _arrayWithHoles(arr) {
     if (Array.isArray(arr)) return arr;
   }
-
   function _iterableToArray(iter) {
     if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
   }
-
-  function _iterableToArrayLimit(arr, i) {
-    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
-
-    if (_i == null) return;
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-
-    var _s, _e;
-
-    try {
-      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"] != null) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
-    }
-
-    return _arr;
-  }
-
   function _unsupportedIterableToArray(o, minLen) {
     if (!o) return;
     if (typeof o === "string") return _arrayLikeToArray(o, minLen);
@@ -115,33 +89,24 @@
     if (n === "Map" || n === "Set") return Array.from(o);
     if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
   }
-
   function _arrayLikeToArray(arr, len) {
     if (len == null || len > arr.length) len = arr.length;
-
     for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-
     return arr2;
   }
-
   function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
-
   function _nonIterableRest() {
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
-
   function _createForOfIteratorHelper(o, allowArrayLike) {
     var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-
     if (!it) {
       if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
         if (it) o = it;
         var i = 0;
-
         var F = function () {};
-
         return {
           s: F,
           n: function () {
@@ -159,13 +124,11 @@
           f: F
         };
       }
-
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
-
     var normalCompletion = true,
-        didErr = false,
-        err;
+      didErr = false,
+      err;
     return {
       s: function () {
         it = it.call(o);
@@ -188,6 +151,20 @@
       }
     };
   }
+  function _toPrimitive(input, hint) {
+    if (typeof input !== "object" || input === null) return input;
+    var prim = input[Symbol.toPrimitive];
+    if (prim !== undefined) {
+      var res = prim.call(input, hint || "default");
+      if (typeof res !== "object") return res;
+      throw new TypeError("@@toPrimitive must return a primitive value.");
+    }
+    return (hint === "string" ? String : Number)(input);
+  }
+  function _toPropertyKey(arg) {
+    var key = _toPrimitive(arg, "string");
+    return typeof key === "symbol" ? key : String(key);
+  }
 
   var CAP_START = 0;
   var CAP_END = 1;
@@ -200,7 +177,6 @@
 
   var ORIENTATION$2 = require$$5;
   var drawSegment = createDrawSegmentCommand;
-
   function createDrawSegmentCommand(regl, isEndpoints, insertCaps, isVAO, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug) {
     var spec = isEndpoints ? endpointSpec : segmentSpec;
     var verts = ['B', 'C', 'D'];
@@ -208,17 +184,14 @@
     var attributes = {};
     var vaoProps = {};
     var attrList = indexAttributes.concat(spec.attrs);
-
     if (isVAO) {
       vaoProps.vao = regl.prop('vao');
-
       for (var i = 0; i < attrList.length; i++) {
         attributes[attrList[i].name] = i;
       }
     } else {
       var _iterator = _createForOfIteratorHelper(attrList),
-          _step;
-
+        _step;
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var attr = _step.value;
@@ -230,17 +203,20 @@
         _iterator.f();
       }
     }
-
-    var computeCount = insertCaps ? isEndpoints // Cap has fixed number, join could either be a cap or a join
+    var computeCount = insertCaps ? isEndpoints
+    // Cap has fixed number, join could either be a cap or a join
     ? function (props) {
       return [props.capRes2, Math.max(props.capRes2, props.joinRes2)];
-    } // Both could be either a cap or a join
+    }
+    // Both could be either a cap or a join
     : function (props) {
       return [Math.max(props.capRes2, props.joinRes2), Math.max(props.capRes2, props.joinRes2)];
-    } : isEndpoints // Draw a cap
+    } : isEndpoints
+    // Draw a cap
     ? function (props) {
       return [props.capRes2, props.joinRes2];
-    } // Draw two joins
+    }
+    // Draw two joins
     : function (props) {
       return [props.joinRes2, props.joinRes2];
     };
@@ -307,27 +283,22 @@
     "vec3": 3,
     "vec4": 4
   };
-
   function parseShaderPragmas$1(glsl) {
     var pragmas = [];
     var lines = glsl.split('\n');
-
     for (var i = 0; i < lines.length; i++) {
       lines[i] = lines[i].replace(PRAGMA_REGEX, function (match, pragma) {
         pragmas.push(parsePragma(pragma));
         return '';
       });
     }
-
     return _objectSpread2({
       glsl: lines.join('\n').trim()
     }, analyzePragmas(pragmas));
   }
-
   function parsePragma(pragma) {
     pragma = pragma.trim();
     var match;
-
     if (match = pragma.match(ATTRIBUTE_REGEX)) {
       var isInstanceAttr = !!match[1];
       var dimension = DIMENSION_GLSL_TYPES[match[2]];
@@ -351,7 +322,6 @@
       }).filter(function (x) {
         return !!x;
       });
-
       var generate = function generate(meta, label, prefix) {
         return "".concat(_name, "(").concat(inputs.map(function (input) {
           var attrMeta = meta.attrs.get(input);
@@ -359,7 +329,6 @@
           return (prefix || '') + input + label;
         }).join(', '), ")");
       };
-
       return {
         type: 'property',
         property: property,
@@ -373,20 +342,17 @@
       var _returnType = match[2];
       var _name2 = match[3];
       var getter = match[4];
-
       var _inputs = match[5].split(',').map(function (str) {
         return str.trim();
       }).filter(function (x) {
         return !!x;
       });
-
       var _generate = function _generate(meta, interp, a, b) {
         var clamped = extrapolate ? interp : "clamp(".concat(interp, ",0.0,1.0)");
         return "".concat(_name2, " = ").concat(getter, "(").concat(_inputs.map(function (input) {
           return "mix(".concat(input + a, ", ").concat(input + b, ", ").concat(clamped, ")");
         }).join(', '), ");");
       };
-
       return {
         type: 'varying',
         returnType: _returnType,
@@ -405,19 +371,15 @@
       throw new Error("Unrecognized lines pragma: \"".concat(pragma, "\""));
     }
   }
-
   function analyzePragmas(pragmas) {
     var postproject;
     var attrs = new Map();
     var varyings = new Map();
-
     var _iterator = _createForOfIteratorHelper(pragmas),
-        _step;
-
+      _step;
     try {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var pragma = _step.value;
-
         if (pragma.type === 'attribute') {
           attrs.set(pragma.name, pragma);
           pragma.vertexUsage = ATTR_USAGE$1.NONE;
@@ -433,40 +395,31 @@
     } finally {
       _iterator.f();
     }
-
     var width, position, orientation;
-
     var _iterator2 = _createForOfIteratorHelper(pragmas),
-        _step2;
-
+      _step2;
     try {
       for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
         var _pragma = _step2.value;
         if (_pragma.type !== 'property') continue;
-
         switch (_pragma.property) {
           case 'width':
             if (width) throw new Error("Unexpected duplicate pragma for property \"".concat(_pragma.property, "\""));
             width = _pragma;
             break;
-
           case 'position':
             if (position) throw new Error("Unexpected duplicate pragma for property \"".concat(_pragma.property, "\""));
             position = _pragma;
             break;
-
           case 'orientation':
             if (orientation) throw new Error("Unexpected duplicate pragma for property \"".concat(_pragma.property, "\""));
             orientation = _pragma;
             break;
-
           default:
             throw new Error("Invalid pragma property \"".concat(_pragma.property, "\""));
         }
-
         var _iterator4 = _createForOfIteratorHelper(_pragma.inputs),
-            _step4;
-
+          _step4;
         try {
           for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
             var input = _step4.value;
@@ -483,23 +436,18 @@
     } finally {
       _iterator2.f();
     }
-
     var _iterator3 = _createForOfIteratorHelper(pragmas),
-        _step3;
-
+      _step3;
     try {
       for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
         var _pragma2 = _step3.value;
         if (!_pragma2.inputs) continue;
-
         var _iterator5 = _createForOfIteratorHelper(_pragma2.inputs),
-            _step5;
-
+          _step5;
         try {
           for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
             var _input = _step5.value;
             var inputAttr = attrs.get(_input);
-
             if (inputAttr.isInstanceAttr) {
               inputAttr.vertexUsage = ATTR_USAGE$1.PER_INSTANCE;
               inputAttr.endpointUsage = ATTR_USAGE$1.PER_INSTANCE;
@@ -528,7 +476,6 @@
     } finally {
       _iterator3.f();
     }
-
     return {
       varyings: varyings,
       attrs: attrs,
@@ -541,35 +488,29 @@
 
   var DTYPES_SIZES = [];
   DTYPES_SIZES[5120] = 1; // int8
-
   DTYPES_SIZES[5122] = 2; // int16
-
   DTYPES_SIZES[5124] = 4; // int32
-
   DTYPES_SIZES[5121] = 1; // uint8
-
   DTYPES_SIZES[5123] = 2; // uint16
-
   DTYPES_SIZES[5125] = 4; // uint32
-
   DTYPES_SIZES[5126] = 4; // float32
 
   var dtypesizes = DTYPES_SIZES;
 
   var int8 = 5120;
-  var int16 = 5122;
-  var int32 = 5124;
   var uint8 = 5121;
+  var int16 = 5122;
   var uint16 = 5123;
+  var int32 = 5124;
   var uint32 = 5125;
   var float = 5126;
   var float32 = 5126;
   var require$$1 = {
   	int8: int8,
-  	int16: int16,
-  	int32: int32,
   	uint8: uint8,
+  	int16: int16,
   	uint16: uint16,
+  	int32: int32,
   	uint32: uint32,
   	float: float,
   	float32: float32
@@ -577,29 +518,25 @@
 
   var sanitizeBuffer = sanitizeBufferInput;
   var DTYPE_SIZES = dtypesizes;
-  var DTYPES = require$$1;
-
+  var DTYPES$1 = require$$1;
   function has(obj, prop) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
-  } // This function is run on every draw call in order to sanitize and configure the data layout
+  }
 
-
+  // This function is run on every draw call in order to sanitize and configure the data layout
   function sanitizeBufferInput(metadata, buffersObj, isEndpoints) {
     // console.log('metadata:', metadata);
     // console.log('buffersObj:', buffersObj);
     // console.log('isEndpoints:', isEndpoints);
     var outputs = {};
     if (!buffersObj) return outputs;
-
     var _iterator = _createForOfIteratorHelper(metadata.attrs),
-        _step;
-
+      _step;
     try {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var _step$value = _slicedToArray(_step.value, 2),
-            attrName = _step$value[0],
-            attrMeta = _step$value[1];
-
+          attrName = _step$value[0],
+          attrMeta = _step$value[1];
         var input = buffersObj[attrName];
         var usage = isEndpoints ? attrMeta.endpointUsage : attrMeta.vertexUsage;
         if (!usage) continue;
@@ -610,9 +547,9 @@
           type: NaN,
           stride: NaN,
           divisor: 1,
+          normalized: false,
           bytesPerElement: NaN
         };
-
         if (!input) {
           throw new Error("Missing buffer for ".concat(isEndpoints ? 'endpoint' : 'vertex', " attribute '").concat(attrName, "'"));
         } else if (input._reglType === 'buffer') {
@@ -620,34 +557,29 @@
           output.type = output.buffer._buffer.dtype;
         } else if (input.buffer && input.buffer._reglType === 'buffer') {
           output.buffer = input.buffer;
-
           if (has(input, 'dimension') && input.dimension !== output.dimension) {
             throw new Error("Size of attribute (".concat(input.dimension, ") does not match dimension specified in shader pragma (").concat(attrMeta.dimension, ")"));
           }
-
           if (has(input, 'offset')) output.offset = input.offset;
-
           if (has(input, 'type')) {
-            output.type = DTYPES[input.type];
+            output.type = DTYPES$1[input.type];
           } else {
             output.type = output.buffer._buffer.dtype;
           }
-
           if (has(input, 'divisor')) {
             output.divisor = input.divisor;
           }
-
+          if (has(input, 'normalized')) {
+            output.normalized = !!input.normalized;
+          }
           if (has(input, 'stride')) output.stride = input.stride;
         } else {
           throw new Error("Invalid buffer for attribute '".concat(attrName, "'. Be sure to wrap in regl.buffer()."));
         }
-
         output.bytesPerElement = DTYPE_SIZES[output.type];
-
         if (Number.isNaN(output.stride)) {
           output.stride = output.bytesPerElement * attrMeta.dimension;
         }
-
         outputs[attrName] = output;
       }
     } catch (err) {
@@ -655,7 +587,6 @@
     } finally {
       _iterator.f();
     }
-
     return outputs;
   }
 
@@ -668,10 +599,15 @@
 
   var createAttrSpec$1 = createAttrSpecs;
   var ATTR_USAGE = attrUsage;
+  var DTYPES = require$$1;
   var GLSL_TYPES = glsltypes;
-  var ORIENTATION$1 = require$$5; // This function returns regl props, used for constructing the attribute layout regl accessors
-  // and corresponding GLSL up front.
+  var ORIENTATION$1 = require$$5;
+  var DTYPE_BY_CODE = new Map(Object.entries(DTYPES).map(function (a) {
+    return a.reverse();
+  }));
 
+  // This function returns regl props, used for constructing the attribute layout regl accessors
+  // and corresponding GLSL up front.
   function createAttrSpecs(meta, regl, isEndpoints) {
     var suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
     var attrLines = [];
@@ -680,11 +616,9 @@
       var usage = isEndpoints ? attr.endpointUsage : attr.vertexUsage;
       if (!usage) return;
       var attrList = [];
-
       function emitAttr(index, suffix) {
         var attrOutName = attrName + suffix;
         attrList.push(attrOutName);
-
         if (isEndpoints) {
           var instanceStride = usage & ATTR_USAGE.PER_INSTANCE ? 1 : 3;
           attrSpecList.push({
@@ -703,6 +637,13 @@
               },
               divisor: function divisor(ctx, props) {
                 return (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor;
+              },
+              normalized: function normalized(ctx, props) {
+                return props.buffers[attrName].normalized === undefined ? false : props.buffers[attrName].normalized;
+              },
+              type: function type(ctx, props) {
+                var attr = props.buffers[attrName];
+                return DTYPE_BY_CODE.get(attr.type === undefined ? attr.buffer._buffer.dtype : attr.type);
               }
             }
           });
@@ -721,16 +662,21 @@
               },
               divisor: function divisor(ctx, props) {
                 return (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor;
+              },
+              normalized: function normalized(ctx, props) {
+                return props.buffers[attrName].normalized === undefined ? false : props.buffers[attrName].normalized;
+              },
+              type: function type(ctx, props) {
+                var attr = props.buffers[attrName];
+                return DTYPE_BY_CODE.get(attr.type === undefined ? attr.buffer._buffer.dtype : attr.type);
               }
             }
           });
         }
       }
-
       if (usage & ATTR_USAGE.PER_INSTANCE) {
         emitAttr(0, '');
       }
-
       if (usage & ATTR_USAGE.REGULAR || usage & ATTR_USAGE.EXTENDED) {
         for (var i = 0; i < suffixes.length; i++) {
           var suffix = suffixes[i];
@@ -738,7 +684,6 @@
           emitAttr(i, suffix);
         }
       }
-
       attrLines.push("attribute ".concat(GLSL_TYPES[attr.dimension], " ").concat(attrList.join(', '), ";"));
     });
     meta.varyings.forEach(function (varying, varyingName) {
@@ -753,11 +698,9 @@
   var sanitizeInList = function createSanitizer(label, list, dflt) {
     return function sanitizeValue(value) {
       if (!value) return dflt;
-
       if (list.indexOf(value) === -1) {
         throw new Error("Invalid ".concat(label, " type. Valid options are: ").concat(list.join(', '), "."));
       }
-
       return value;
     };
   };
@@ -775,45 +718,39 @@
   var VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
   var VALID_CAP_TYPES = ['round', 'square', 'none'];
   var ROUND_CAP_SCALE = [1, 1];
-  var SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)]; // Max possible is 62, but we probably don't need that many
-
+  var SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
+  // Max possible is 62, but we probably don't need that many
   var MAX_ROUND_JOIN_RESOLUTION = 32;
   var MAX_DEBUG_VERTICES = 16384;
   var FEATUREMASK_IS_ENDPOINTS = 1 << 0;
   var FEATUREMASK_INSERT_CAPS = 1 << 1;
   var FEATUREMASK_VAO = 1 << 2;
-
   function getCacheKey(isEndpoints, insertCaps, isVAO) {
     return (isEndpoints ? FEATUREMASK_IS_ENDPOINTS : 0) + (insertCaps ? FEATUREMASK_INSERT_CAPS : 0) + (isVAO ? FEATUREMASK_VAO : 0);
   }
-
   function reglLines(regl) {
     var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
     if (!regl.hasExtension('ANGLE_instanced_arrays')) {
       throw new Error('regl-gpu-lines requries the ANGLE_instanced_arrays extension');
     }
-
     var _opts$vert = opts.vert,
-        vert = _opts$vert === void 0 ? null : _opts$vert,
-        _opts$frag = opts.frag,
-        frag = _opts$frag === void 0 ? null : _opts$frag,
-        _opts$debug = opts.debug,
-        debug = _opts$debug === void 0 ? false : _opts$debug,
-        _opts$reorder = opts.reorder,
-        reorder = _opts$reorder === void 0 ? false : _opts$reorder;
+      vert = _opts$vert === void 0 ? null : _opts$vert,
+      _opts$frag = opts.frag,
+      frag = _opts$frag === void 0 ? null : _opts$frag,
+      _opts$debug = opts.debug,
+      debug = _opts$debug === void 0 ? false : _opts$debug,
+      _opts$reorder = opts.reorder,
+      reorder = _opts$reorder === void 0 ? false : _opts$reorder;
     if (!regl._gpuLinesCache) regl._gpuLinesCache = {};
-    var cache = regl._gpuLinesCache; // Forward all regl parameters except for vert and frag and a couple forbidden parameters along to regl.
+    var cache = regl._gpuLinesCache;
 
+    // Forward all regl parameters except for vert and frag and a couple forbidden parameters along to regl.
     var forwardedCmdConfig = _objectSpread2({}, opts);
-
     var forwardedUniforms = opts.uniforms || {};
-
     for (var _i = 0, _arr = ['vert', 'frag', 'debug', 'reorder', 'uniforms']; _i < _arr.length; _i++) {
       var prop = _arr[_i];
       delete forwardedCmdConfig[prop];
     }
-
     var forwarded = Object.keys(forwardedCmdConfig);
     forwarded.forEach(function (fwd) {
       if (FORBIDDEN_REGL_PROPS.has(fwd)) {
@@ -828,13 +765,11 @@
     var segmentSpec = createAttrSpec(meta, regl, false);
     var endpointSpec = createAttrSpec(meta, regl, true);
     var indexAttributes = [];
-
     if (debug) {
       // TODO: Allocate/grow lazily to avoid an arbitrary limit
       if (!cache.debugInstanceIDBuffer) {
         cache.debugInstanceIDBuffer = regl.buffer(new Uint16Array(_toConsumableArray(Array(MAX_DEBUG_VERTICES).keys())));
       }
-
       indexAttributes.push({
         name: 'debugInstanceID',
         spec: {
@@ -845,11 +780,9 @@
         }
       });
     }
-
     if (!cache.indexBuffer) {
       cache.indexBuffer = regl.buffer(new Uint8Array(_toConsumableArray(Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys())));
     }
-
     indexAttributes.push({
       name: 'index',
       spec: {
@@ -860,57 +793,46 @@
     var sanitizeJoinType = sanitizeInclusionInList('join', VALID_JOIN_TYPES, 'miter');
     var sanitizeCapType = sanitizeInclusionInList('cap', VALID_CAP_TYPES, 'square');
     var drawCommands = new Map();
-
     function getDrawCommand(featureMask) {
       if (!drawCommands.has(featureMask)) {
         drawCommands.set(featureMask, createDrawSegment(regl, featureMask & FEATUREMASK_IS_ENDPOINTS, featureMask & FEATUREMASK_INSERT_CAPS, featureMask & FEATUREMASK_VAO, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug));
       }
-
       return drawCommands.get(featureMask);
     }
-
     var drawQueue = [];
-
     function queue() {
       for (var _len = arguments.length, propsList = new Array(_len), _key = 0; _key < _len; _key++) {
         propsList[_key] = arguments[_key];
       }
-
       drawQueue.push.apply(drawQueue, propsList);
     }
-
     function flushDrawQueue() {
       // Sort by the identifier of the draw command so group together commands using the same shader
       if (reorder) drawQueue.sort(function (a, b) {
         return a.featureMask - b.featureMask;
       });
       var pos = 0;
-      var groupedProps = []; // Iterate through the queue. Group props until the command changes, then draw and continue
+      var groupedProps = [];
 
+      // Iterate through the queue. Group props until the command changes, then draw and continue
       while (pos < drawQueue.length) {
         var _drawQueue$pos = drawQueue[pos],
-            featureMask = _drawQueue$pos.featureMask,
-            props = _drawQueue$pos.props;
+          featureMask = _drawQueue$pos.featureMask,
+          props = _drawQueue$pos.props;
         groupedProps.push(props);
-
         while (++pos < drawQueue.length && drawQueue[pos].featureMask === featureMask) {
           groupedProps.push(drawQueue[pos].props);
         }
-
         getDrawCommand(featureMask)(groupedProps);
         groupedProps.length = 0;
       }
-
       drawQueue.length = 0;
     }
-
     var returnValue = function drawLines(props) {
       if (!props) return;
       if (!Array.isArray(props)) props = [props];
-
       var _iterator = _createForOfIteratorHelper(props),
-          _step;
-
+        _step;
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var userProps = _step.value;
@@ -918,20 +840,17 @@
           var cap = sanitizeCapType(userProps.cap);
           var isVAO = !!userProps.vao;
           var capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
-
           if (cap === 'square') {
             capRes2 = 3;
           } else if (cap === 'none') {
             capRes2 = 1;
           }
-
           var joinRes2 = 1;
-
           if (join === 'round') {
             joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
-          } // We only ever use these in doubled-up form
+          }
 
-
+          // We only ever use these in doubled-up form
           capRes2 *= 2;
           joinRes2 *= 2;
           var miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
@@ -945,15 +864,12 @@
             miterLimit: miterLimit,
             insertCaps: insertCaps
           };
-
           if (userProps.endpointCount) {
             var endpointProps = _objectSpread2(_objectSpread2({
               instances: 1,
               count: userProps.endpointCount
             }, userProps), sharedProps);
-
             var featureMask = getCacheKey(true, insertCaps, isVAO);
-
             if (isVAO) {
               if (meta.orientation) {
                 var vao = {
@@ -986,7 +902,6 @@
               }
             } else {
               endpointProps.buffers = sanitizeBufferInputs(meta, userProps.endpointAttributes, true);
-
               if (meta.orientation) {
                 queue({
                   featureMask: featureMask,
@@ -1011,30 +926,24 @@
               }
             }
           }
-
           if (userProps.instances === undefined) {
             userProps.instances = 1;
           }
-
           if (userProps.vertexCount) {
             var _featureMask = getCacheKey(false, insertCaps, isVAO);
-
             var _props = _objectSpread2(_objectSpread2({
               count: userProps.vertexCount
             }, userProps), sharedProps);
-
             if (isVAO) {
               _props.vao = userProps.vao.vertices;
             } else {
               _props.buffers = sanitizeBufferInputs(meta, userProps.vertexAttributes, false);
             }
-
             queue({
               featureMask: _featureMask,
               props: _props
             });
           }
-
           flushDrawQueue();
         }
       } catch (err) {
@@ -1043,26 +952,22 @@
         _iterator.f();
       }
     };
-
     returnValue.vao = function (props) {
       var outputs = {};
       var cases = [['vertices', segmentSpec.attrs, props.vertexAttributes, false]];
-
       if (meta.orientation) {
         cases.push(['endpoints', endpointSpec.attrs, props.endpointAttributes, true, false, null]);
       } else {
         cases.push(['startCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_START], ['endCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_END]);
       }
-
       for (var _i2 = 0, _cases = cases; _i2 < _cases.length; _i2++) {
         var _cases$_i = _slicedToArray(_cases[_i2], 6),
-            outputName = _cases$_i[0],
-            specAttrs = _cases$_i[1],
-            attrs = _cases$_i[2],
-            isEndpoints = _cases$_i[3],
-            splitCaps = _cases$_i[4],
-            orientation = _cases$_i[5];
-
+          outputName = _cases$_i[0],
+          specAttrs = _cases$_i[1],
+          attrs = _cases$_i[2],
+          isEndpoints = _cases$_i[3],
+          splitCaps = _cases$_i[4],
+          orientation = _cases$_i[5];
         if (!attrs) continue;
         var fakeProps = {
           buffers: sanitizeBufferInputs(meta, attrs, isEndpoints),
@@ -1070,15 +975,12 @@
           orientation: orientation
         };
         var vaoData = [];
-
         var _iterator2 = _createForOfIteratorHelper(indexAttributes.concat(specAttrs)),
-            _step2;
-
+          _step2;
         try {
           for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
             var attr = _step2.value;
             var vaoEntry = {};
-
             for (var _i3 = 0, _arr2 = ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']; _i3 < _arr2.length; _i3++) {
               var item = _arr2[_i3];
               var value = attr.spec[item];
@@ -1086,7 +988,6 @@
               if (typeof value === 'function') value = value({}, fakeProps);
               if (value !== undefined) vaoEntry[item] = value;
             }
-
             vaoData.push(vaoEntry);
           }
         } catch (err) {
@@ -1094,35 +995,19 @@
         } finally {
           _iterator2.f();
         }
-
         outputs[outputName] = regl.vao(vaoData);
       }
-
       outputs.destroy = function destroy() {
-        var _iterator3 = _createForOfIteratorHelper(cases),
-            _step3;
-
-        try {
-          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-            var _step3$value = _slicedToArray(_step3.value, 1),
-                _outputName = _step3$value[0];
-
-            if (!outputs[_outputName]) continue;
-
-            outputs[_outputName].destroy();
-
-            delete outputs[_outputName];
-          }
-        } catch (err) {
-          _iterator3.e(err);
-        } finally {
-          _iterator3.f();
+        for (var _i4 = 0, _cases2 = cases; _i4 < _cases2.length; _i4++) {
+          var _cases2$_i = _slicedToArray(_cases2[_i4], 1),
+            _outputName = _cases2$_i[0];
+          if (!outputs[_outputName]) continue;
+          outputs[_outputName].destroy();
+          delete outputs[_outputName];
         }
       };
-
       return outputs;
     };
-
     return returnValue;
   }
 

@@ -15,7 +15,6 @@
 
   const ORIENTATION$2 = require$$5;
   var drawSegment = createDrawSegmentCommand;
-
   function createDrawSegmentCommand(regl, isEndpoints, insertCaps, isVAO, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug) {
     const spec = isEndpoints ? endpointSpec : segmentSpec;
     const verts = ['B', 'C', 'D'];
@@ -23,10 +22,8 @@
     const attributes = {};
     const vaoProps = {};
     const attrList = indexAttributes.concat(spec.attrs);
-
     if (isVAO) {
       vaoProps.vao = regl.prop('vao');
-
       for (let i = 0; i < attrList.length; i++) {
         attributes[attrList[i].name] = i;
       }
@@ -35,11 +32,14 @@
         attributes[attr.name] = attr.spec;
       }
     }
-
-    const computeCount = insertCaps ? isEndpoints // Cap has fixed number, join could either be a cap or a join
-    ? props => [props.capRes2, Math.max(props.capRes2, props.joinRes2)] // Both could be either a cap or a join
-    : props => [Math.max(props.capRes2, props.joinRes2), Math.max(props.capRes2, props.joinRes2)] : isEndpoints // Draw a cap
-    ? props => [props.capRes2, props.joinRes2] // Draw two joins
+    const computeCount = insertCaps ? isEndpoints
+    // Cap has fixed number, join could either be a cap or a join
+    ? props => [props.capRes2, Math.max(props.capRes2, props.joinRes2)]
+    // Both could be either a cap or a join
+    : props => [Math.max(props.capRes2, props.joinRes2), Math.max(props.capRes2, props.joinRes2)] : isEndpoints
+    // Draw a cap
+    ? props => [props.capRes2, props.joinRes2]
+    // Draw two joins
     : props => [props.joinRes2, props.joinRes2];
     return regl({
       // Insert user GLSL at the top
@@ -276,7 +276,8 @@ void main() {
 }`,
       frag,
       attributes,
-      uniforms: { ...forwardedUniforms,
+      uniforms: {
+        ...forwardedUniforms,
         _vertCnt2: (ctx, props) => computeCount(props),
         _capJoinRes2: (ctx, props) => [props.capRes2, props.joinRes2],
         _miterLimit: (ctx, props) => props.miterLimit * props.miterLimit,
@@ -316,28 +317,23 @@ void main() {
     "vec3": 3,
     "vec4": 4
   };
-
   function parseShaderPragmas$1(glsl) {
     const pragmas = [];
     const lines = glsl.split('\n');
-
     for (let i = 0; i < lines.length; i++) {
       lines[i] = lines[i].replace(PRAGMA_REGEX, function (match, pragma) {
         pragmas.push(parsePragma(pragma));
         return '';
       });
     }
-
     return {
       glsl: lines.join('\n').trim(),
       ...analyzePragmas(pragmas)
     };
   }
-
   function parsePragma(pragma) {
     pragma = pragma.trim();
     let match;
-
     if (match = pragma.match(ATTRIBUTE_REGEX)) {
       const isInstanceAttr = !!match[1];
       const dimension = DIMENSION_GLSL_TYPES[match[2]];
@@ -357,7 +353,6 @@ void main() {
       }[property];
       const name = match[2];
       const inputs = match[3].split(',').map(str => str.trim()).filter(x => !!x);
-
       const generate = (meta, label, prefix) => {
         return `${name}(${inputs.map(input => {
         const attrMeta = meta.attrs.get(input);
@@ -365,7 +360,6 @@ void main() {
         return (prefix || '') + input + label;
       }).join(', ')})`;
       };
-
       return {
         type: 'property',
         property,
@@ -380,12 +374,10 @@ void main() {
       const name = match[3];
       const getter = match[4];
       const inputs = match[5].split(',').map(str => str.trim()).filter(x => !!x);
-
       const generate = (meta, interp, a, b) => {
         const clamped = extrapolate ? interp : `clamp(${interp},0.0,1.0)`;
         return `${name} = ${getter}(${inputs.map(input => `mix(${input + a}, ${input + b}, ${clamped})`).join(', ')});`;
       };
-
       return {
         type: 'varying',
         returnType,
@@ -404,12 +396,10 @@ void main() {
       throw new Error(`Unrecognized lines pragma: "${pragma}"`);
     }
   }
-
   function analyzePragmas(pragmas) {
     let postproject;
     const attrs = new Map();
     const varyings = new Map();
-
     for (const pragma of pragmas) {
       if (pragma.type === 'attribute') {
         attrs.set(pragma.name, pragma);
@@ -421,43 +411,33 @@ void main() {
         postproject = pragma.name;
       }
     }
-
     let width, position, orientation;
-
     for (const pragma of pragmas) {
       if (pragma.type !== 'property') continue;
-
       switch (pragma.property) {
         case 'width':
           if (width) throw new Error(`Unexpected duplicate pragma for property "${pragma.property}"`);
           width = pragma;
           break;
-
         case 'position':
           if (position) throw new Error(`Unexpected duplicate pragma for property "${pragma.property}"`);
           position = pragma;
           break;
-
         case 'orientation':
           if (orientation) throw new Error(`Unexpected duplicate pragma for property "${pragma.property}"`);
           orientation = pragma;
           break;
-
         default:
           throw new Error(`Invalid pragma property "${pragma.property}"`);
       }
-
       for (const input of pragma.inputs) {
         if (!attrs.has(input)) throw new Error(`Missing attribute ${input} of property ${pragma.property}`);
       }
     }
-
     for (const pragma of pragmas) {
       if (!pragma.inputs) continue;
-
       for (const input of pragma.inputs) {
         const inputAttr = attrs.get(input);
-
         if (inputAttr.isInstanceAttr) {
           inputAttr.vertexUsage = ATTR_USAGE$1.PER_INSTANCE;
           inputAttr.endpointUsage = ATTR_USAGE$1.PER_INSTANCE;
@@ -476,7 +456,6 @@ void main() {
         }
       }
     }
-
     return {
       varyings,
       attrs,
@@ -489,35 +468,29 @@ void main() {
 
   const DTYPES_SIZES = [];
   DTYPES_SIZES[5120] = 1; // int8
-
   DTYPES_SIZES[5122] = 2; // int16
-
   DTYPES_SIZES[5124] = 4; // int32
-
   DTYPES_SIZES[5121] = 1; // uint8
-
   DTYPES_SIZES[5123] = 2; // uint16
-
   DTYPES_SIZES[5125] = 4; // uint32
-
   DTYPES_SIZES[5126] = 4; // float32
 
   var dtypesizes = DTYPES_SIZES;
 
   var int8 = 5120;
-  var int16 = 5122;
-  var int32 = 5124;
   var uint8 = 5121;
+  var int16 = 5122;
   var uint16 = 5123;
+  var int32 = 5124;
   var uint32 = 5125;
   var float = 5126;
   var float32 = 5126;
   var require$$1 = {
   	int8: int8,
-  	int16: int16,
-  	int32: int32,
   	uint8: uint8,
+  	int16: int16,
   	uint16: uint16,
+  	int32: int32,
   	uint32: uint32,
   	float: float,
   	float32: float32
@@ -525,20 +498,18 @@ void main() {
 
   var sanitizeBuffer = sanitizeBufferInput;
   const DTYPE_SIZES = dtypesizes;
-  const DTYPES = require$$1;
-
+  const DTYPES$1 = require$$1;
   function has(obj, prop) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
-  } // This function is run on every draw call in order to sanitize and configure the data layout
+  }
 
-
+  // This function is run on every draw call in order to sanitize and configure the data layout
   function sanitizeBufferInput(metadata, buffersObj, isEndpoints) {
     // console.log('metadata:', metadata);
     // console.log('buffersObj:', buffersObj);
     // console.log('isEndpoints:', isEndpoints);
     const outputs = {};
     if (!buffersObj) return outputs;
-
     for (let [attrName, attrMeta] of metadata.attrs) {
       const input = buffersObj[attrName];
       const usage = isEndpoints ? attrMeta.endpointUsage : attrMeta.vertexUsage;
@@ -550,9 +521,9 @@ void main() {
         type: NaN,
         stride: NaN,
         divisor: 1,
+        normalized: false,
         bytesPerElement: NaN
       };
-
       if (!input) {
         throw new Error(`Missing buffer for ${isEndpoints ? 'endpoint' : 'vertex'} attribute '${attrName}'`);
       } else if (input._reglType === 'buffer') {
@@ -560,37 +531,31 @@ void main() {
         output.type = output.buffer._buffer.dtype;
       } else if (input.buffer && input.buffer._reglType === 'buffer') {
         output.buffer = input.buffer;
-
         if (has(input, 'dimension') && input.dimension !== output.dimension) {
           throw new Error(`Size of attribute (${input.dimension}) does not match dimension specified in shader pragma (${attrMeta.dimension})`);
         }
-
         if (has(input, 'offset')) output.offset = input.offset;
-
         if (has(input, 'type')) {
-          output.type = DTYPES[input.type];
+          output.type = DTYPES$1[input.type];
         } else {
           output.type = output.buffer._buffer.dtype;
         }
-
         if (has(input, 'divisor')) {
           output.divisor = input.divisor;
         }
-
+        if (has(input, 'normalized')) {
+          output.normalized = !!input.normalized;
+        }
         if (has(input, 'stride')) output.stride = input.stride;
       } else {
         throw new Error(`Invalid buffer for attribute '${attrName}'. Be sure to wrap in regl.buffer().`);
       }
-
       output.bytesPerElement = DTYPE_SIZES[output.type];
-
       if (Number.isNaN(output.stride)) {
         output.stride = output.bytesPerElement * attrMeta.dimension;
       }
-
       outputs[attrName] = output;
     }
-
     return outputs;
   }
 
@@ -603,10 +568,13 @@ void main() {
 
   var createAttrSpec$1 = createAttrSpecs;
   const ATTR_USAGE = attrUsage;
+  const DTYPES = require$$1;
   const GLSL_TYPES = glsltypes;
-  const ORIENTATION$1 = require$$5; // This function returns regl props, used for constructing the attribute layout regl accessors
-  // and corresponding GLSL up front.
+  const ORIENTATION$1 = require$$5;
+  const DTYPE_BY_CODE = new Map(Object.entries(DTYPES).map(a => a.reverse()));
 
+  // This function returns regl props, used for constructing the attribute layout regl accessors
+  // and corresponding GLSL up front.
   function createAttrSpecs(meta, regl, isEndpoints) {
     const suffixes = isEndpoints ? ['B', 'C', 'D'] : ['A', 'B', 'C', 'D'];
     const attrLines = [];
@@ -615,11 +583,9 @@ void main() {
       const usage = isEndpoints ? attr.endpointUsage : attr.vertexUsage;
       if (!usage) return;
       const attrList = [];
-
       function emitAttr(index, suffix) {
         const attrOutName = attrName + suffix;
         attrList.push(attrOutName);
-
         if (isEndpoints) {
           const instanceStride = usage & ATTR_USAGE.PER_INSTANCE ? 1 : 3;
           attrSpecList.push({
@@ -628,7 +594,12 @@ void main() {
               buffer: (ctx, props) => props.buffers[attrName].buffer,
               offset: attr.isInstanceAttr ? (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index : (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * ((props.orientation === ORIENTATION$1.CAP_START || !props.splitCaps ? 0 : 3) + index),
               stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
-              divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor
+              divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor,
+              normalized: (ctx, props) => props.buffers[attrName].normalized === undefined ? false : props.buffers[attrName].normalized,
+              type: (ctx, props) => {
+                const attr = props.buffers[attrName];
+                return DTYPE_BY_CODE.get(attr.type === undefined ? attr.buffer._buffer.dtype : attr.type);
+              }
             }
           });
         } else {
@@ -638,16 +609,19 @@ void main() {
               buffer: (ctx, props) => props.buffers[attrName].buffer,
               offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
               stride: (ctx, props) => props.buffers[attrName].stride,
-              divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor
+              divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor,
+              normalized: (ctx, props) => props.buffers[attrName].normalized === undefined ? false : props.buffers[attrName].normalized,
+              type: (ctx, props) => {
+                const attr = props.buffers[attrName];
+                return DTYPE_BY_CODE.get(attr.type === undefined ? attr.buffer._buffer.dtype : attr.type);
+              }
             }
           });
         }
       }
-
       if (usage & ATTR_USAGE.PER_INSTANCE) {
         emitAttr(0, '');
       }
-
       if (usage & ATTR_USAGE.REGULAR || usage & ATTR_USAGE.EXTENDED) {
         for (let i = 0; i < suffixes.length; i++) {
           const suffix = suffixes[i];
@@ -655,7 +629,6 @@ void main() {
           emitAttr(i, suffix);
         }
       }
-
       attrLines.push(`attribute ${GLSL_TYPES[attr.dimension]} ${attrList.join(', ')};`);
     });
     meta.varyings.forEach((varying, varyingName) => {
@@ -670,11 +643,9 @@ void main() {
   var sanitizeInList = function createSanitizer(label, list, dflt) {
     return function sanitizeValue(value) {
       if (!value) return dflt;
-
       if (list.indexOf(value) === -1) {
         throw new Error(`Invalid ${label} type. Valid options are: ${list.join(', ')}.`);
       }
-
       return value;
     };
   };
@@ -692,23 +663,20 @@ void main() {
   const VALID_JOIN_TYPES = ['round', 'bevel', 'miter'];
   const VALID_CAP_TYPES = ['round', 'square', 'none'];
   const ROUND_CAP_SCALE = [1, 1];
-  const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)]; // Max possible is 62, but we probably don't need that many
-
+  const SQUARE_CAP_SCALE = [2, 2 / Math.sqrt(3)];
+  // Max possible is 62, but we probably don't need that many
   const MAX_ROUND_JOIN_RESOLUTION = 32;
   const MAX_DEBUG_VERTICES = 16384;
   const FEATUREMASK_IS_ENDPOINTS = 1 << 0;
   const FEATUREMASK_INSERT_CAPS = 1 << 1;
   const FEATUREMASK_VAO = 1 << 2;
-
   function getCacheKey(isEndpoints, insertCaps, isVAO) {
     return (isEndpoints ? FEATUREMASK_IS_ENDPOINTS : 0) + (insertCaps ? FEATUREMASK_INSERT_CAPS : 0) + (isVAO ? FEATUREMASK_VAO : 0);
   }
-
   function reglLines(regl, opts = {}) {
     if (!regl.hasExtension('ANGLE_instanced_arrays')) {
       throw new Error('regl-gpu-lines requries the ANGLE_instanced_arrays extension');
     }
-
     const {
       vert = null,
       frag = null,
@@ -716,14 +684,14 @@ void main() {
       reorder = false
     } = opts;
     if (!regl._gpuLinesCache) regl._gpuLinesCache = {};
-    const cache = regl._gpuLinesCache; // Forward all regl parameters except for vert and frag and a couple forbidden parameters along to regl.
+    const cache = regl._gpuLinesCache;
 
-    const forwardedCmdConfig = { ...opts
+    // Forward all regl parameters except for vert and frag and a couple forbidden parameters along to regl.
+    const forwardedCmdConfig = {
+      ...opts
     };
     const forwardedUniforms = opts.uniforms || {};
-
     for (const prop of ['vert', 'frag', 'debug', 'reorder', 'uniforms']) delete forwardedCmdConfig[prop];
-
     const forwarded = Object.keys(forwardedCmdConfig);
     forwarded.forEach(fwd => {
       if (FORBIDDEN_REGL_PROPS.has(fwd)) {
@@ -736,13 +704,11 @@ void main() {
     const segmentSpec = createAttrSpec(meta, regl, false);
     const endpointSpec = createAttrSpec(meta, regl, true);
     const indexAttributes = [];
-
     if (debug) {
       // TODO: Allocate/grow lazily to avoid an arbitrary limit
       if (!cache.debugInstanceIDBuffer) {
         cache.debugInstanceIDBuffer = regl.buffer(new Uint16Array([...Array(MAX_DEBUG_VERTICES).keys()]));
       }
-
       indexAttributes.push({
         name: 'debugInstanceID',
         spec: {
@@ -751,11 +717,9 @@ void main() {
         }
       });
     }
-
     if (!cache.indexBuffer) {
       cache.indexBuffer = regl.buffer(new Uint8Array([...Array(MAX_ROUND_JOIN_RESOLUTION * 4 + 6).keys()]));
     }
-
     indexAttributes.push({
       name: 'index',
       spec: {
@@ -766,70 +730,58 @@ void main() {
     const sanitizeJoinType = sanitizeInclusionInList('join', VALID_JOIN_TYPES, 'miter');
     const sanitizeCapType = sanitizeInclusionInList('cap', VALID_CAP_TYPES, 'square');
     const drawCommands = new Map();
-
     function getDrawCommand(featureMask) {
       if (!drawCommands.has(featureMask)) {
         drawCommands.set(featureMask, createDrawSegment(regl, featureMask & FEATUREMASK_IS_ENDPOINTS, featureMask & FEATUREMASK_INSERT_CAPS, featureMask & FEATUREMASK_VAO, meta, frag, segmentSpec, endpointSpec, indexAttributes, forwardedCmdConfig, forwardedUniforms, debug));
       }
-
       return drawCommands.get(featureMask);
     }
-
     const drawQueue = [];
-
     function queue(...propsList) {
       drawQueue.push.apply(drawQueue, propsList);
     }
-
     function flushDrawQueue() {
       // Sort by the identifier of the draw command so group together commands using the same shader
       if (reorder) drawQueue.sort(function (a, b) {
         return a.featureMask - b.featureMask;
       });
       let pos = 0;
-      const groupedProps = []; // Iterate through the queue. Group props until the command changes, then draw and continue
+      const groupedProps = [];
 
+      // Iterate through the queue. Group props until the command changes, then draw and continue
       while (pos < drawQueue.length) {
         const {
           featureMask,
           props
         } = drawQueue[pos];
         groupedProps.push(props);
-
         while (++pos < drawQueue.length && drawQueue[pos].featureMask === featureMask) {
           groupedProps.push(drawQueue[pos].props);
         }
-
         getDrawCommand(featureMask)(groupedProps);
         groupedProps.length = 0;
       }
-
       drawQueue.length = 0;
     }
-
     const returnValue = function drawLines(props) {
       if (!props) return;
       if (!Array.isArray(props)) props = [props];
-
       for (const userProps of props) {
         const join = sanitizeJoinType(userProps.join);
         const cap = sanitizeCapType(userProps.cap);
         const isVAO = !!userProps.vao;
         let capRes2 = userProps.capResolution === undefined ? 12 : userProps.capResolution;
-
         if (cap === 'square') {
           capRes2 = 3;
         } else if (cap === 'none') {
           capRes2 = 1;
         }
-
         let joinRes2 = 1;
-
         if (join === 'round') {
           joinRes2 = userProps.joinResolution === undefined ? 8 : userProps.joinResolution;
-        } // We only ever use these in doubled-up form
+        }
 
-
+        // We only ever use these in doubled-up form
         capRes2 *= 2;
         joinRes2 *= 2;
         const miterLimit = join === 'bevel' ? 1 : userProps.miterLimit === undefined ? 4 : userProps.miterLimit;
@@ -843,7 +795,6 @@ void main() {
           miterLimit,
           insertCaps
         };
-
         if (userProps.endpointCount) {
           const endpointProps = {
             instances: 1,
@@ -852,7 +803,6 @@ void main() {
             ...sharedProps
           };
           let featureMask = getCacheKey(true, insertCaps, isVAO);
-
           if (isVAO) {
             if (meta.orientation) {
               const vao = {
@@ -860,7 +810,8 @@ void main() {
               };
               queue({
                 featureMask,
-                props: { ...endpointProps,
+                props: {
+                  ...endpointProps,
                   ...vao
                 }
               });
@@ -873,14 +824,16 @@ void main() {
               };
               queue({
                 featureMask,
-                props: { ...endpointProps,
+                props: {
+                  ...endpointProps,
                   ...startVao,
                   orientation: ORIENTATION.CAP_START,
                   splitCaps: true
                 }
               }, {
                 featureMask,
-                props: { ...endpointProps,
+                props: {
+                  ...endpointProps,
                   ...endVao,
                   orientation: ORIENTATION.CAP_END,
                   splitCaps: true
@@ -889,24 +842,26 @@ void main() {
             }
           } else {
             endpointProps.buffers = sanitizeBufferInputs(meta, userProps.endpointAttributes, true);
-
             if (meta.orientation) {
               queue({
                 featureMask,
-                props: { ...endpointProps,
+                props: {
+                  ...endpointProps,
                   splitCaps: false
                 }
               });
             } else {
               queue({
                 featureMask,
-                props: { ...endpointProps,
+                props: {
+                  ...endpointProps,
                   orientation: ORIENTATION.CAP_START,
                   splitCaps: true
                 }
               }, {
                 featureMask,
-                props: { ...endpointProps,
+                props: {
+                  ...endpointProps,
                   orientation: ORIENTATION.CAP_END,
                   splitCaps: true
                 }
@@ -914,11 +869,9 @@ void main() {
             }
           }
         }
-
         if (userProps.instances === undefined) {
           userProps.instances = 1;
         }
-
         if (userProps.vertexCount) {
           const featureMask = getCacheKey(false, insertCaps, isVAO);
           const props = {
@@ -926,33 +879,27 @@ void main() {
             ...userProps,
             ...sharedProps
           };
-
           if (isVAO) {
             props.vao = userProps.vao.vertices;
           } else {
             props.buffers = sanitizeBufferInputs(meta, userProps.vertexAttributes, false);
           }
-
           queue({
             featureMask,
             props
           });
         }
-
         flushDrawQueue();
       }
     };
-
     returnValue.vao = function (props) {
       const outputs = {};
       const cases = [['vertices', segmentSpec.attrs, props.vertexAttributes, false]];
-
       if (meta.orientation) {
         cases.push(['endpoints', endpointSpec.attrs, props.endpointAttributes, true, false, null]);
       } else {
         cases.push(['startCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_START], ['endCaps', endpointSpec.attrs, props.endpointAttributes, true, true, ORIENTATION.CAP_END]);
       }
-
       for (const [outputName, specAttrs, attrs, isEndpoints, splitCaps, orientation] of cases) {
         if (!attrs) continue;
         const fakeProps = {
@@ -961,23 +908,18 @@ void main() {
           orientation
         };
         const vaoData = [];
-
         for (const attr of indexAttributes.concat(specAttrs)) {
           const vaoEntry = {};
-
           for (const item of ['buffer', 'divisor', 'offset', 'stride', 'normalized', 'dimension']) {
             let value = attr.spec[item];
             if (value && value.data) value = value.data;
             if (typeof value === 'function') value = value({}, fakeProps);
             if (value !== undefined) vaoEntry[item] = value;
           }
-
           vaoData.push(vaoEntry);
         }
-
         outputs[outputName] = regl.vao(vaoData);
       }
-
       outputs.destroy = function destroy() {
         for (const [outputName] of cases) {
           if (!outputs[outputName]) continue;
@@ -985,10 +927,8 @@ void main() {
           delete outputs[outputName];
         }
       };
-
       return outputs;
     };
-
     return returnValue;
   }
 
