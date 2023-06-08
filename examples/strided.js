@@ -79,22 +79,22 @@ const lineData = {
     xy: {
       type: 'float32',
       buffer: verticesBuffer,
-      offset: 0,
-      stride: 16,
+      offset: Float32Array.BYTES_PER_ELEMENT * 0,
+      stride: Float32Array.BYTES_PER_ELEMENT * 4,
       // divisor: 1 // implicit (but configurable)
     },
     width: {
       type: 'float32',
       buffer: verticesBuffer,
-      offset: 8,
-      stride: 16,
+      offset: Float32Array.BYTES_PER_ELEMENT * 2,
+      stride: Float32Array.BYTES_PER_ELEMENT * 4,
     },
     color: {
       type: 'uint8',
       normalized: true,
       buffer: verticesBuffer,
-      offset: 12,
-      stride: 16,
+      offset: Float32Array.BYTES_PER_ELEMENT * 3,
+      stride: Float32Array.BYTES_PER_ELEMENT * 4,
     }
   },
   endpointCount: 2,
@@ -102,21 +102,21 @@ const lineData = {
     xy: {
       type: 'float32',
       buffer: endpointsBuffer,
-      offset: 0,
-      stride: 16,
+      offset: Float32Array.BYTES_PER_ELEMENT * 0,
+      stride: Float32Array.BYTES_PER_ELEMENT * 4,
     },
     width: {
       type: 'float32',
       buffer: endpointsBuffer,
-      offset: 8,
-      stride: 16,
+      offset: Float32Array.BYTES_PER_ELEMENT * 2,
+      stride: Float32Array.BYTES_PER_ELEMENT * 4,
     },
     color: {
       type: 'uint8',
       normalized: true,
       buffer: endpointsBuffer,
-      offset: 12,
-      stride: 16,
+      offset: Float32Array.BYTES_PER_ELEMENT * 3,
+      stride: Float32Array.BYTES_PER_ELEMENT * 4,
     }
   }
 };
