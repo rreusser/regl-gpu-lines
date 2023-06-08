@@ -31,6 +31,7 @@ function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
       type: NaN,
       stride: NaN,
       divisor: 1,
+      normalized: false,
       bytesPerElement: NaN
     };
 
@@ -53,6 +54,9 @@ function sanitizeBufferInput (metadata, buffersObj, isEndpoints) {
       }
       if (has(input, 'divisor')) {
         output.divisor = input.divisor;
+      }
+      if (has(input, 'normalized')) {
+          output.normalized = !!input.normalized;
       }
       if (has(input, 'stride')) output.stride = input.stride;
     } else {

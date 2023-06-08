@@ -1,8 +1,10 @@
 module.exports = createAttrSpecs;
 
 const ATTR_USAGE = require('./constants/attr-usage.js');
+const DTYPES = require('./constants/dtypes.json');
 const GLSL_TYPES = require('./constants/glsltypes.js');
 const ORIENTATION = require('./constants/orientation.json');
+const DTYPE_BY_CODE = new Map(Object.entries(DTYPES).map(a => a.reverse()));
 
 // This function returns regl props, used for constructing the attribute layout regl accessors
 // and corresponding GLSL up front.
@@ -31,6 +33,11 @@ function createAttrSpecs (meta, regl, isEndpoints) {
               : (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * (((props.orientation === ORIENTATION.CAP_START || !props.splitCaps) ? 0 : 3) + index),
             stride: (ctx, props) => props.buffers[attrName].stride * instanceStride * (props.splitCaps ? 2 : 1),
             divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor,
+            normalized: (ctx, props) => props.buffers[attrName].normalized === undefined ? false : props.buffers[attrName].normalized,
+            type: (ctx, props) => {
+                const attr = props.buffers[attrName];
+                return DTYPE_BY_CODE.get(attr.type === undefined ? attr.buffer._buffer.dtype : attr.type);
+            },
           }
         });
       } else {
@@ -41,6 +48,11 @@ function createAttrSpecs (meta, regl, isEndpoints) {
             offset: (ctx, props) => props.buffers[attrName].offset + props.buffers[attrName].stride * index,
             stride: (ctx, props) => props.buffers[attrName].stride,
             divisor: (ctx, props) => (attr.isInstanceAttr ? 1 : props.instances) * props.buffers[attrName].divisor,
+            normalized: (ctx, props) => props.buffers[attrName].normalized === undefined ? false : props.buffers[attrName].normalized,
+            type: (ctx, props) => {
+                const attr = props.buffers[attrName];
+                return DTYPE_BY_CODE.get(attr.type === undefined ? attr.buffer._buffer.dtype : attr.type);
+            },
           }
         });
       }
