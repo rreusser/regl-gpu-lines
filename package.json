@@ -48,7 +48,7 @@
     "controls-state": "^2.0.0",
     "eslint": "^8.2.0",
     "get-pixels": "^3.3.3",
-    "gl": "^4.9.2",
+    "gl": "^6.0.2",
     "gl-matrix": "^3.4.3",
     "glob": "^7.2.0",
     "hyperstream": "^1.2.2",
@@ -67,5 +67,6 @@
     "string-to-stream": "^3.0.1",
     "tape": "^5.3.1",
     "terser": "^5.9.0"
-  }
+  },
+  "dependencies": {}
 }

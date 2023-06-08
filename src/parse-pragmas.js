@@ -50,7 +50,7 @@ function parsePragma (pragma) {
         const attrMeta = meta.attrs.get(input);
         if (attrMeta.isInstanceAttr) return input;
         return (prefix || '') + input + label;
-      }).join(', ')})`
+      }).join(', ')})`;
     };
     return {type: 'property', property, returnType, name, inputs, generate};
   } else if ((match = pragma.match(VARYING_REGEX))) {
