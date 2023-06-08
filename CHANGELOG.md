@@ -1,3 +1,9 @@
+## 2.4.0
+
+### Features/Bugfixes
+
+- `normalized` and `type` keys were not respected for attributes, which prevented usage with more granular memory layout.
+
 ## 2.3.0
 
 ### Bugfixes
